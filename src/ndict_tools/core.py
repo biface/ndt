@@ -35,6 +35,7 @@ def from_dict(dictionary: dict) -> NestedDictionary:
     :return: a nested dictionary object
     :rtype: NestedDictionary
     """
+
     nested = NestedDictionary()
     for key, value in dictionary.items():
         if isinstance(value, dict):
@@ -204,6 +205,7 @@ class NestedDictionary(_StackedDict):
         :param args: the first one of the list must be a dictionary to instantiate an object.
         :param kwargs: enrichments settings
             * indent : indentation of the printable nested dictionary (used by json.dumps() function)
+            * strict : strict mode (False by default) define default answer to unknown key
         :type kwargs: dict
         """
         indent = 0
@@ -212,7 +214,15 @@ class NestedDictionary(_StackedDict):
             indent = kwargs['indent']
             del kwargs['indent']
 
-        super().__init__(NestedDictionary, **kwargs)
+        if kwargs and 'strict' in kwargs:
+            if kwargs.pop('strict') is True:
+                default_class = None
+            else:
+                default_class = NestedDictionary
+        else:
+            default_class = NestedDictionary
+
+        super().__init__(*args, **kwargs)
 
         if len(args) == 1:
             if isinstance(args[0], dict):
@@ -220,8 +230,9 @@ class NestedDictionary(_StackedDict):
                 self.update(nested)
 
         self.indent = indent
+        self.default_factory = default_class
 
-    def update(self, dictionary):
+    def update(self, dictionary: dict) -> None:
         """
         Updates a stacked dictionary with key/value pairs.
         :param dictionary: a simple dict.
@@ -230,10 +241,13 @@ class NestedDictionary(_StackedDict):
         """
         for key, value in dictionary.items():
             if isinstance(value, NestedDictionary):
+                value.indent = self.indent
+                value.default_factory = self.default_factory
                 super().update(key=key, value=value)
             elif isinstance(value, dict):
                 nested_dict = from_dict(value)
                 nested_dict.indent = self.indent
+                nested_dict.default_factory = self.default_factory
                 super().update(key=key, value=nested_dict)
             else:
                 self[key] = value
