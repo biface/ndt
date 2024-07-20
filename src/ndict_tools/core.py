@@ -222,7 +222,7 @@ class NestedDictionary(_StackedDict):
         else:
             default_class = NestedDictionary
 
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
 
         if len(args) == 1:
             if isinstance(args[0], dict):
