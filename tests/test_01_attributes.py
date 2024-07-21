@@ -42,7 +42,26 @@ def test_key_list():
     assert nd.key_list('third') == [('third',)]
 
 
+def test_unpacked_key():
+    assert ('second', 'first') in nd.unpacked_keys()
+    assert ('second', 'second') in nd.unpacked_keys()
+    assert ('third',) in nd.unpacked_keys()
+
+
 def test_item_list():
     assert nd.items_list('first') == ['first', 'second:first']
     assert nd.items_list('second') == ['second:first', 'second:second']
     assert nd.items_list('third') == ['third']
+
+
+def test_delete_simple_key():
+    with pytest.raises(KeyError):
+        del nd['third']
+        value = nd['third']
+
+
+def test_delete_nested_key():
+    with pytest.raises(KeyError):
+        del nd['second']
+        value = nd['second']['first']
+
