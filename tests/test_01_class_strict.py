@@ -20,11 +20,14 @@ nd['b']['a'] = 2
 
 def test_class_instance():
     assert isinstance(nd, NestedDictionary)
+
+
+def test_class_attributes_instances():
     assert isinstance(nd['a'], int)
     assert isinstance(nd['b']['a'], int)
 
 
-def test_class_values():
+def test_class_attributes_values():
     assert nd['a'] == 1
     assert nd['b']['a'] == 2
 
