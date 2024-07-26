@@ -39,11 +39,14 @@ class _StackedDict(defaultdict):
 
     def __init__(self, *args, **kwargs):
 
-        indent = kwargs.pop("indent")
-        default = kwargs.pop("default")
-        super().__init__(*args, **kwargs)
-        self.indent = indent
-        self.default_factory = default
+        if not ('indent' in kwargs and 'default' in kwargs):
+            raise StackedKeyError("Missing 'indent' or 'default' arguments")
+        else:
+            indent = kwargs.pop("indent")
+            default = kwargs.pop("default")
+            super().__init__(*args, **kwargs)
+            self.indent = indent
+            self.default_factory = default
 
     def __str__(self) -> str:
         """
