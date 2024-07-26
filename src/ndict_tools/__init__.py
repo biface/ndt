@@ -1,2 +1,2 @@
-from .exception import NestedDirectoryException
+from .exception import NestedDictionaryException
 from .core import NestedDictionary

@@ -21,15 +21,15 @@ class StackedDictionaryError(Exception):
         self.error = error
 
 
-class NestedDirectoryException(StackedDictionaryError):
+class NestedDictionaryException(StackedDictionaryError):
     """
-    Raised when a nested directory is invalid.
+    Raised when a nested dictionary is invalid.
     """
     pass
 
 
 class StackedKeyError(KeyError):
     """
-    Exception raised when a key is not a nested directory.
+    Exception raised when a key is not compatible with a stacked dictionary.
     """
     pass

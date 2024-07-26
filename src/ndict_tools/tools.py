@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 """
-Python module for creating nested directories, since standard python does not have nested directories.
+Python module for creating nested dictionaries, since standard python does not have nested dictionaries.
 """
 from collections import defaultdict
 from json import dumps
