@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 """
-Python module for creating nested directories, since standard python does not have nested directories.
+Python module for creating nested dictionaries, since standard python does not have nested dictionaries.
 """
 
 from .tools import _StackedDict
@@ -32,10 +32,11 @@ def from_dict(dictionary: dict) -> NestedDictionary:
 
 class NestedDictionary(_StackedDict):
     """
-    Nested directory class.
+    Nested dictionary class.
 
     This class is designed as a stacked dictionary. It represents a nest of dictionaries, that is to say that each
     key is a value or a nested dictionary. And so on...
+
     """
 
     def __init__(self, *args, **kwargs):
@@ -63,10 +64,18 @@ class NestedDictionary(_StackedDict):
 
         super().__init__(indent=indent, default=default_class)
 
-        if len(args) == 1:
-            if isinstance(args[0], dict):
-                nested = from_dict(args[0])
-                self.update(nested)
+        if len(args) >= 1:
+            for item in args:
+                if isinstance(item, dict):
+                    nested = from_dict(item)
+                    self.update(nested)
+                else:
+                    nested = from_dict(dict(item))
+                    self.update(nested)
+
+        if kwargs:
+            nested = from_dict(kwargs)
+            self.update(nested)
 
     def update(self, dictionary: dict) -> None:
         """
