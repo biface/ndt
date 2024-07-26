@@ -61,15 +61,12 @@ class NestedDictionary(_StackedDict):
         else:
             default_class = NestedDictionary
 
-        super().__init__(**kwargs)
+        super().__init__(indent=indent, default=default_class)
 
         if len(args) == 1:
             if isinstance(args[0], dict):
                 nested = from_dict(args[0])
                 self.update(nested)
-
-        self.indent = indent
-        self.default_factory = default_class
 
     def update(self, dictionary: dict) -> None:
         """

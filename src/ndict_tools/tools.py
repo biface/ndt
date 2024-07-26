@@ -38,8 +38,12 @@ class _StackedDict(defaultdict):
     """
 
     def __init__(self, *args, **kwargs):
+
+        indent = kwargs.pop("indent")
+        default = kwargs.pop("default")
         super().__init__(*args, **kwargs)
-        self.indent = 0
+        self.indent = indent
+        self.default_factory = default
 
     def __str__(self) -> str:
         """
