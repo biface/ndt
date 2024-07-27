@@ -36,6 +36,8 @@ class _StackedDict(defaultdict):
 
     This class is technical and is used to manage the processing of nested dictionaries.
     """
+    indent: int = 0
+    "indent is used to print dictionary with json indent."
 
     def __init__(self, *args, **kwargs):
 
@@ -51,6 +53,7 @@ class _StackedDict(defaultdict):
     def __str__(self) -> str:
         """
         Converts a nested dictionary to a string in json format
+
         :return: a string in json format
         :rtype: str
         """
@@ -59,7 +62,9 @@ class _StackedDict(defaultdict):
     def unpacked_items(self):
         """
         De-stacking items from a nested dictionary
+
         :return: generator that yields items from a nested dictionary
+        :rtype: generator
         """
         for key, value in unpack_items(self):
             yield key, value
@@ -67,7 +72,9 @@ class _StackedDict(defaultdict):
     def unpacked_keys(self):
         """
         De-stacking keys from a nested dictionary
+
         :return: generator that yields keys from a nested dictionary
+        :rtype: generator
         """
         for key, value in unpack_items(self):
             yield key
@@ -75,15 +82,19 @@ class _StackedDict(defaultdict):
     def unpacked_values(self):
         """
         De-stacking values from a nested dictionary
+
         :return: generator that yields values from a nested dictionary
+        :rtype: generator
         """
         for key, value in unpack_items(self):
             yield value
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         """
         Converts a nested dictionary to a dictionary
-        :return: dict
+
+        :return: a simple dictionary
+        :rtype: dict
         """
         unpacked_dict = {}
         for key in self.keys():
@@ -96,6 +107,7 @@ class _StackedDict(defaultdict):
     def update(self, **kwargs):
         """
         Updates a stacked dictionary with key/value pairs.
+
         :param kwargs: key/value pairs where values are _StackedDict instances.
         :type kwargs: dict
         :return: None
@@ -111,6 +123,7 @@ class _StackedDict(defaultdict):
     def is_key(self, key: str) -> bool:
         """
         Checks if a key is stacked or not.
+
         :param key: A possible key in a stacked dictionary.
         :type key: str
         :return: True if key is a stacked key, False otherwise
@@ -124,11 +137,12 @@ class _StackedDict(defaultdict):
 
     def occurrences(self, key: str) -> int:
         """
-        Returns the number of occurrences of a key in a stacked dictionary.
+        Returns the number of occurrences of a key in a stacked dictionary including 0 if the key is not a keys in a
+        stacked dictionary.
+
         :param key: A possible key in a stacked dictionary.
         :type key: str
-        :return: Number of occurrences of a key in a stacked dictionary including 0 if the key is not a keys in a
-        stacked dictionary.
+        :return: Number of occurrences of a key or 0
         :rtype: int
         """
         __occurrences = 0
@@ -143,6 +157,7 @@ class _StackedDict(defaultdict):
         """
         returns the list of unpacked keys containing the key from the stacked dictionary. If the key is not in the
         dictionary, it raises StackedKeyError (not a key).
+
         :param key: a possible key in a stacked dictionary.
         :type key: str
         :return: A list of unpacked keys containing the key from the stacked dictionary.
@@ -163,6 +178,7 @@ class _StackedDict(defaultdict):
         """
         returns the list of unpacked items associated to the key from the stacked dictionary. If the key is not in the
         dictionary, it raises StackedKeyError (not a key).
+
         :param key: a possible key in a stacked dictionary.
         :type key: str
         :return: A list of unpacked items associated the key from the stacked dictionary.
