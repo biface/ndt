@@ -48,6 +48,9 @@ def test_unpacked_key():
     assert ('third',) in nd.unpacked_keys()
 
 
+def test_to_dict():
+    assert d == nd.to_dict()
+
 def test_item_list():
     assert nd.items_list('first') == ['first', 'second:first']
     assert nd.items_list('second') == ['second:first', 'second:second']
