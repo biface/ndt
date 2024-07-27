@@ -12,6 +12,7 @@ from .tools import _StackedDict
 def from_dict(dictionary: dict) -> NestedDictionary:
     """
     This recursive function is used to transform a dictionary into a nested dictionary.
+
     :param dictionary: a dict object, even nested dict., to be transformed into a nested dictionary object class .
     :type dictionary: dict
     :return: a nested dictionary object
@@ -42,11 +43,27 @@ class NestedDictionary(_StackedDict):
     def __init__(self, *args, **kwargs):
         """
         This function initializes a nested dictionary.
+
         :param args: the first one of the list must be a dictionary to instantiate an object.
-        :param kwargs: enrichments settings
+        :type args: Iterable
+        :param kwargs: enrichments settings and
+
             * indent : indentation of the printable nested dictionary (used by json.dumps() function)
             * strict : strict mode (False by default) define default answer to unknown key
         :type kwargs: dict
+
+        Example
+        -------
+
+        ``NestedDictionary({'first': 1,'second': {'1': "2:1", '2': "2:2", '3': "3:2"}, 'third': 3, 'fourth': 4})``
+
+        ``NestedDictionary(zip(['first','second', 'third', 'fourth'],
+        [1, {'1': "2:1", '2': "2:2", '3': "3:2"}, 3, 4]))``
+
+        ``NestedDictionary([('first', 1), ('second', {'1': "2:1", '2': "2:2", '3': "3:2"}),
+        ('third', 3), ('fourth', 4)])``
+
+
         """
         indent = 0
 
@@ -80,6 +97,7 @@ class NestedDictionary(_StackedDict):
     def update(self, dictionary: dict) -> None:
         """
         Updates a stacked dictionary with key/value pairs.
+
         :param dictionary: a simple dict.
         :type dictionary: dict
         :return: None
