@@ -18,7 +18,7 @@ version = release
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-sys.path.insert(0, os.path.abspath('../../src/ndict_tools'))
+sys.path.insert(0, os.path.abspath('../../src/'))
 extensions = [
     'sphinx.ext.duration',
     'sphinx.ext.napoleon',
