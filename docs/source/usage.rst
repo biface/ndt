@@ -30,7 +30,7 @@ Instance
 Class attributes and methods
 ----------------------------
 
-.. py:module:: ndict_tools.core
+.. module:: ndict_tools.core
 .. autoclass:: NestedDictionary
 
     .. autoattribute:: indent
