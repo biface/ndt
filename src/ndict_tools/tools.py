@@ -1,8 +1,9 @@
-from __future__ import annotations
+"""
+This module provides an intermediate technical class and tools for manipulating nested dictionaries. This module is
+ hidden from the package's external view.
+ """
 
-"""
-Python module for creating nested dictionaries, since standard python does not have nested dictionaries.
-"""
+from __future__ import annotations
 from collections import defaultdict
 from json import dumps
 from .exception import StackedKeyError
@@ -12,7 +13,7 @@ from .exception import StackedKeyError
 
 def unpack_items(dictionary: dict):
     """
-    de-stacking items from a nested dictionary
+    This functions de-stacks items from a nested dictionary
 
     :param dictionary:
     :type dictionary: dict
@@ -33,16 +34,27 @@ def unpack_items(dictionary: dict):
 
 class _StackedDict(defaultdict):
     """
-    Internal upper class to stacked nested dictionaries.
-
-    This class is technical and is used to manage the processing of nested dictionaries.
+    This class is an internal class for stacking nested dictionaries. This class is technical and is used to manage
+    the processing of nested dictionaries. It inherits from defaultdict.
     """
 
     indent: int = 0
     "indent is used to print the dictionary with json indentation"
 
     def __init__(self, *args, **kwargs):
+        """
+        At instantiation, it has two mandatory parameters for its creation:
 
+            * **indent**, which is used to format the object's display.
+            * **default**, which initializes the default_factory attribute of its parent class defaultdict.
+
+        These parameters are passed using the kwargs dictionary.
+
+        :param args:
+        :type args: iterator
+        :param kwargs:
+        :type kwargs: dict
+        """
         if not ('indent' in kwargs and 'default' in kwargs):
             raise StackedKeyError("Missing 'indent' or 'default' arguments")
         else:
@@ -63,16 +75,18 @@ class _StackedDict(defaultdict):
 
     def unpacked_items(self):
         """
-        De-stacking items from a nested dictionary
+        This method de-stacks items from a nested dictionary. It calls internal unpack_items() function.
 
         :return: generator that yields items from a nested dictionary
+        :rtype: generator
         """
         for key, value in unpack_items(self):
             yield key, value
 
     def unpacked_keys(self):
         """
-        De-stacking keys from a nested dictionary
+        This method de-stacks keys from a nested dictionary and return them as keys. It calls internal unpack_items()
+        function.
 
         :return: generator that yields keys from a nested dictionary
         :rtype: generator
@@ -82,7 +96,8 @@ class _StackedDict(defaultdict):
 
     def unpacked_values(self):
         """
-        De-stacking values from a nested dictionary
+        This method de-stacks values from a nested dictionary and return them as values. It calls internal
+        unpack_items() function.
 
         :return: generator that yields values from a nested dictionary
         :rtype: generator
@@ -92,7 +107,7 @@ class _StackedDict(defaultdict):
 
     def to_dict(self) -> dict:
         """
-        Converts a nested dictionary to a dictionary
+        This method converts a nested dictionary to a classical dictionary
 
         :return: a dictionary
         :rtype: dict
