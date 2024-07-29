@@ -1,0 +1,45 @@
+Package reference
+=================
+
+For greater convenience, the modules remain hidden inside the package. These modules are exposed for development
+purposes only.
+
+.. module::ndict_tools
+   :no-index:
+
+Exceptions
+----------
+
+.. automodule:: ndict_tools.exception
+    :private-members: StackedDictionaryError, StackedKeyError
+.. autoexception:: NestedDictionaryException
+
+Tools
+-----
+
+.. automodule:: ndict_tools.tools
+.. autofunction:: unpack_items()
+.. autoclass:: _StackedDict
+
+    .. automethod:: __str__()
+    .. automethod:: unpacked_items()
+    .. automethod:: unpacked_keys()
+    .. automethod:: unpacked_values()
+    .. automethod:: to_dict()
+    .. automethod:: update()
+
+Core
+----
+.. automodule:: ndict_tools.core
+.. autofunction:: from_dict()
+.. autoclass:: NestedDictionary
+
+    .. autoattribute:: indent
+    .. autoattribute:: default_factory
+    .. automethod:: __str__()
+    .. automethod:: update()
+    .. automethod:: occurrences()
+    .. automethod:: is_key()
+    .. automethod:: key_list()
+    .. automethod:: items_list()
+    .. automethod:: to_dict()

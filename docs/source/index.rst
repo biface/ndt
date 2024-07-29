@@ -19,6 +19,7 @@ present in all the keys, or count its occurrences.
 .. toctree::
    install
    usage
+   api
    :numbered:
    :maxdepth: 2
    :caption: Content
@@ -46,6 +47,19 @@ Classical dictionary
    $ d = dict([('first', 1), ('third', 3)], second={'first': 1, 'second':2})
    $ d
    {'first': 1, 'third': 3, 'second': {'first': 1, 'second': 2}}
+
+   d= {dict:3}
+      'first' = {int} 1
+      'third' = {int} 3
+      'second' = {dict:2}
+         'first' = {int} 1
+         'second' = {int} 2
+         __len__ = {int} 2
+      __len__ = {int} 3
+
+   d's keys are :
+   ['first', 'third', 'second']
+
    $ d.keys()
    dict_keys(['first', 'third', 'second'])
 
@@ -54,10 +68,28 @@ Nested dictionary
 
 .. code-block:: console
 
+   $ from ndict import NestedDictionary
    $ nd = NestedDictionary([('first', 1), ('third', 3)], second={'first': 1, 'second':2})
    $ nd
    NestedDictionary(<class 'ndict_tools.core.NestedDictionary'>, {'first': 1, 'third': 3, 'second': NestedDictionary(<class 'ndict_tools.core.NestedDictionary'>, {'first': 1, 'second': 2})})
-   $ nd.keys()
+
+   nd = {NestedDictionary:3}
+      default_factory = {type} <class 'ndict_tools.core.NestedDictionary>
+      indent = {int} 0
+      'first' = {int} 1
+      'third' = {int} 3
+      'second' = {NestedDictionary:2}
+         default_factory = {type} <class 'ndict_tools.core.NestedDictionary>
+         indent = {int} 0
+         'first' = {int} 1
+         'second' = {int} 2
+         __len__ = {int} 2
+      __len__ = {int} 3
+
+   nd's keys are
+   [('first',), ('third',), ('second', 'first'), ('second', 'second')]
+
+   $ nd.keys() -- keep the same behavior as classical dictionary --
    dict_keys(['first', 'third', 'second'])
    $ nd.key_list('second')
    [('second', 'first'), ('second', 'second')]
@@ -66,4 +98,5 @@ Indices and tables
 ==================
 
 * :ref:`genindex`
+* :ref:`modindex`
 * :ref:`search`
