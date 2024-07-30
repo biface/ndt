@@ -64,7 +64,6 @@ Class attributes and methods
     .. automethod:: occurrences()
     .. automethod:: is_key()
     .. automethod:: key_list()
-    .. autoexception:: ndict_tools.exception.StackedKeyError
     .. automethod:: items_list()
     .. automethod:: to_dict()
 

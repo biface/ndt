@@ -48,6 +48,7 @@ class _StackedDict(defaultdict):
             * **indent**, which is used to format the object's display.
             * **default**, which initializes the default_factory attribute of its parent class defaultdict.
 
+
         These parameters are passed using the kwargs dictionary.
 
         :param args:
@@ -55,6 +56,7 @@ class _StackedDict(defaultdict):
         :param kwargs:
         :type kwargs: dict
         """
+
         if not ('indent' in kwargs and 'default' in kwargs):
             raise StackedKeyError("Missing 'indent' or 'default' arguments")
         else:
@@ -127,6 +129,8 @@ class _StackedDict(defaultdict):
         :param kwargs: key/value pairs where values are _StackedDict instances.
         :type kwargs: dict
         :return: None
+        :raise StackedKeyError: if any of the key/value pairs cannot be updated:
+        :raise KeyError: if key/value are missing or invalid.
         """
         if 'key' in kwargs and 'value' in kwargs:
             if isinstance(kwargs['value'], _StackedDict):
@@ -178,6 +182,7 @@ class _StackedDict(defaultdict):
         :type key: str
         :return: A list of unpacked keys containing the key from the stacked dictionary.
         :rtype: list
+        :raise StackedKeyError: if a key is not in a stacked dictionary.
         """
         __key_list = []
 
@@ -199,6 +204,7 @@ class _StackedDict(defaultdict):
         :type key: str
         :return: A list of unpacked items associated the key from the stacked dictionary.
         :rtype: list
+        :raise StackedKeyError: if a key is not in a stacked dictionary.
         """
         __items_list = []
 
