@@ -1,5 +1,6 @@
 """
-This module provides exception classes.
+This module provides specific exception classes for nested dictionaries.
+These exceptions extend the standard *Exception* and *KeyError* classes for future developments.
 """
 from __future__ import annotations
 
@@ -11,6 +12,7 @@ class StackedDictionaryError(Exception):
     def __init__(self, message: str = None, error: int = 0) -> None:
         """
         StackedDictionaryError exception class.
+
         :param message: a message describing the error.
         :type message: str
         :param error: an integer describing the error.

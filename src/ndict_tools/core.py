@@ -1,9 +1,9 @@
+"""
+This module provides tools and class for creating nested dictionaries, since standard python does not have nested
+dictionaries.
+"""
+
 from __future__ import annotations
-
-"""
-Python module for creating nested dictionaries, since standard python does not have nested dictionaries.
-"""
-
 from .tools import _StackedDict
 
 """Internal functions"""
