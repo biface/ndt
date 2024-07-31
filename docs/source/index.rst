@@ -33,8 +33,8 @@ Nested dictionaries are allowed in Python since the value of a key can be a dict
 keys in a nested dictionary are not manageable from the main dictionary. A NestedDictionary is one of
 the implementation to do so.
 
-Behavior
-^^^^^^^^
+Differences (from dict)
+^^^^^^^^^^^^^^^^^^^^^^^
 
 A NestedDictionary inherits from defaultdict. It has the same properties, except that items, keys
 and values can be de-nested.

@@ -24,6 +24,61 @@ as conventional keys.
 Behavior
 --------
 
+Nested dictionaries inherit from defaultdict_. The default_factory attribute characterizes the behavior of this class:
+
+If the nested dictionary is to behave strictly like a dictionary, then the default_factory attribute is set to None.
+If you request the value of a key that doesn't exist, you'll get a KeyError. The configuration parameter is
+``strict=True``
+
+.. code-block:: python
+
+    >>> from ndict_tools import NestedDictionary
+    >>> nd = NestedDictionary({'first': 1,
+                               'second': {'1': "2:1", '2': "2:2", '3': "3:2"},
+                               'third': 3,
+                               'fourth': 4},
+                               strict=True)
+    nd.default_factory
+
+    >>> nd['fifth']
+    Traceback (most recent call last):
+      File "/snap/pycharm-professional/401/plugins/python/helpers/pydev/pydevconsole.py", line 364, in runcode
+        coro = func()
+      File "<input>", line 1, in <module>
+    KeyError: 'fifth'
+
+If the nested dictionary is to have flexible behavior, then the default_factory attribute is set to NestedDictionary.
+If you request a key that doesn't exist, a NestedDictionary instance will be created accordingly and returned. The
+configuration parameter is ``strict=False`` or **no parameter**
+
+.. code-block:: python
+
+    >>> from ndict_tools import NestedDictionary
+    >>> nd = NestedDictionary({'first': 1,
+                               'second': {'1': "2:1", '2': "2:2", '3': "3:2"},
+                               'third': 3,
+                               'fourth': 4},
+                               strict=False)
+    >>> nd.default_factory
+    <class 'ndict_tools.core.NestedDictionary'>
+    >>> nd['fifth']
+    NestedDictionary(<class 'ndict_tools.core.NestedDictionary'>, {})
+
+And with **no parameter**
+
+.. code-block:: python
+
+    >>> from ndict_tools import NestedDictionary
+    >>> nd = NestedDictionary({'first': 1,
+                               'second': {'1': "2:1", '2': "2:2", '3': "3:2"},
+                               'third': 3,
+                               'fourth': 4})
+    >>> nd.default_factory
+    <class 'ndict_tools.core.NestedDictionary'>
+    >>> nd['fifth']
+    NestedDictionary(<class 'ndict_tools.core.NestedDictionary'>, {})
+
+
 Examples
 --------
 
@@ -67,3 +122,5 @@ Class attributes and methods
     .. automethod:: items_list()
     .. automethod:: to_dict()
 
+
+.. _defaultdict: https://docs.python.org/3/library/collections.html#collections.defaultdict
