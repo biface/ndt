@@ -109,7 +109,6 @@ Class attributes and methods
 ----------------------------
 
 .. module:: ndict_tools
-    :no-index:
 .. autoclass:: NestedDictionary
 
     .. autoattribute:: indent
