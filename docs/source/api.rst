@@ -11,7 +11,7 @@ Exceptions
 ----------
 
 .. automodule:: ndict_tools.exception
-    :private-members: StackedDictionaryError, StackedKeyError
+    :private-members: StackedDictionaryError, StackedKeyError, StackedAttributeError
 .. autoexception:: NestedDictionaryException
 
 Tools
@@ -19,6 +19,7 @@ Tools
 
 .. automodule:: ndict_tools.tools
 .. autofunction:: unpack_items()
+.. autofunction:: from_dict()
 .. autoclass:: _StackedDict
 
     .. automethod:: __str__()
@@ -31,7 +32,6 @@ Tools
 Core
 ----
 .. automodule:: ndict_tools.core
-.. autofunction:: from_dict()
 .. autoclass:: NestedDictionary
 
     .. autoattribute:: indent
