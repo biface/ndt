@@ -1,12 +1,19 @@
 """
-This module provides an intermediate technical class and tools for manipulating nested dictionaries. This module is
- hidden from the package's external view.
- """
+This module provides an intermediate technical class and tools for manipulating nested dictionaries.
+
+Although this module is hidden from the package's external view, its contents are important. The ``_StackedDict`` object
+class orchestrates the basic attributes, functions and methods required to initialize and manage nested dictionaries.
+
+This class could have been eliminated in favor of building all methods and tools into the main module containing the
+``NestedDictionary`` object class. However, this choice will enable us to build stacks of different dictionaries in the
+future, without necessarily using the properties specific to these dictionaries.
+"""
 
 from __future__ import annotations
 from collections import defaultdict
+from typing import Any, Dict, Generic, TypeVar
 from json import dumps
-from .exception import StackedKeyError
+from .exception import StackedKeyError, StackedAttributeError
 
 """Internal functions"""
 
@@ -27,6 +34,52 @@ def unpack_items(dictionary: dict):
                 yield (key,) + stacked_key, stacked_value
         else:
             yield (key,), value
+
+
+def from_dict(dictionary: dict, class_name: object, **class_options) -> _StackedDict:
+    """This recursive function is used to transform a dictionary into a stacked dictionary.
+
+    This function enhances and replaces the previous from_dict() function in core module of this package.
+    It allows you to create an object subclasses of a _StackedDict with initialization options if requested and
+    attributes to be set.
+
+    :param dictionary: dictionary to transform
+    :type dictionary: dict
+    :param class_name: name of the class to return
+    :type class_name: object
+    :param class_options: options to pass to the class or attributes of the class to be set
+
+        * init : parameters to initialize instances of the class, this should be from ``__init__`` function of the class
+        * attributes : attributes to set the class attributes
+    :type class_options: dict
+    :return: stacked dictionary or of subclasses of _StackedDict
+    :rtype: _StackedDict
+    :raise StackedKeyError: if attribute called is not an attribute of the hierarchy of classes
+    """
+
+    options = {'indent': 0, 'strict': False}
+
+    if 'init' in class_options:
+        options = class_options['init']
+
+    dict_object = class_name(**options)
+
+    if 'attributes' in class_options:
+        for attribute in class_options['attributes']:
+            if hasattr(dict_object, attribute):
+                dict_object.__setattr__(attribute, class_options['attributes'][attribute])
+            else:
+                raise StackedAttributeError("The key {} is not present in the class attributes".format(attribute))
+
+    for key, value in dictionary.items():
+        if isinstance(value, _StackedDict):
+            dict_object[key] = value
+        elif isinstance(value, dict):
+            dict_object[key] = from_dict(value, class_name, **class_options)
+        else:
+            dict_object[key] = value
+
+    return dict_object
 
 
 """Classes section"""
@@ -140,12 +193,12 @@ class _StackedDict(defaultdict):
         else:
             raise KeyError("Malformed dictionary parameters key and value are missing")
 
-    def is_key(self, key: str) -> bool:
+    def is_key(self, key: Any) -> bool:
         """
         Checks if a key is stacked or not.
 
         :param key: A possible key in a stacked dictionary.
-        :type key: str
+        :type key: Any
         :return: True if key is a stacked key, False otherwise
         :rtype: bool
         """
@@ -155,13 +208,13 @@ class _StackedDict(defaultdict):
                 __flag = True
         return __flag
 
-    def occurrences(self, key: str) -> int:
+    def occurrences(self, key: Any) -> int:
         """
         Returns the Number of occurrences of a key in a stacked dictionary including 0 if the key is not a keys in a
         stacked dictionary.
 
         :param key: A possible key in a stacked dictionary.
-        :type key: str
+        :type key: Any
         :return: Number of occurrences or 0
         :rtype: int
         """
@@ -173,13 +226,13 @@ class _StackedDict(defaultdict):
                         __occurrences += 1
         return __occurrences
 
-    def key_list(self, key: str) -> list:
+    def key_list(self, key: Any) -> list:
         """
         returns the list of unpacked keys containing the key from the stacked dictionary. If the key is not in the
         dictionary, it raises StackedKeyError (not a key).
 
         :param key: a possible key in a stacked dictionary.
-        :type key: str
+        :type key: Any
         :return: A list of unpacked keys containing the key from the stacked dictionary.
         :rtype: list
         :raise StackedKeyError: if a key is not in a stacked dictionary.
@@ -195,13 +248,13 @@ class _StackedDict(defaultdict):
 
         return __key_list
 
-    def items_list(self, key: str) -> list:
+    def items_list(self, key: Any) -> list:
         """
         returns the list of unpacked items associated to the key from the stacked dictionary. If the key is not in the
         dictionary, it raises StackedKeyError (not a key).
 
         :param key: a possible key in a stacked dictionary.
-        :type key: str
+        :type key: Any
         :return: A list of unpacked items associated the key from the stacked dictionary.
         :rtype: list
         :raise StackedKeyError: if a key is not in a stacked dictionary.
