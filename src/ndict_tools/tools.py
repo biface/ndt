@@ -11,21 +11,21 @@ future, without necessarily using the properties specific to these dictionaries.
 
 from __future__ import annotations
 from collections import defaultdict
-from typing import Any, Dict, Generic, TypeVar
+from typing import Union, List, Any, Tuple, Generator
 from json import dumps
 from .exception import StackedKeyError, StackedAttributeError
 
 """Internal functions"""
 
 
-def unpack_items(dictionary: dict):
+def unpack_items(dictionary: dict) -> Generator:
     """
     This functions de-stacks items from a nested dictionary
 
     :param dictionary:
     :type dictionary: dict
     :return: generator that yields items from a nested dictionary
-    :rtype: generator
+    :rtype: Generator
     """
     for key in dictionary.keys():
         value = dictionary[key]
@@ -128,34 +128,34 @@ class _StackedDict(defaultdict):
         """
         return dumps(self.to_dict(), indent=self.indent)
 
-    def unpacked_items(self):
+    def unpacked_items(self) -> Generator:
         """
         This method de-stacks items from a nested dictionary. It calls internal unpack_items() function.
 
         :return: generator that yields items from a nested dictionary
-        :rtype: generator
+        :rtype: Generator
         """
         for key, value in unpack_items(self):
             yield key, value
 
-    def unpacked_keys(self):
+    def unpacked_keys(self) -> Generator:
         """
         This method de-stacks keys from a nested dictionary and return them as keys. It calls internal unpack_items()
         function.
 
         :return: generator that yields keys from a nested dictionary
-        :rtype: generator
+        :rtype: Generator
         """
         for key, value in unpack_items(self):
             yield key
 
-    def unpacked_values(self):
+    def unpacked_values(self) -> Generator:
         """
         This method de-stacks values from a nested dictionary and return them as values. It calls internal
         unpack_items() function.
 
         :return: generator that yields values from a nested dictionary
-        :rtype: generator
+        :rtype: Generator
         """
         for key, value in unpack_items(self):
             yield value
