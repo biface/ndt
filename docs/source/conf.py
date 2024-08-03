@@ -28,12 +28,16 @@ extensions = [
     'sphinx.ext.duration',
     'sphinx.ext.napoleon',
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
+    'sphinx.ext.todo',
     'sphinx_rtd_theme',
 ]
 
 templates_path = ['source/_templates']
 exclude_patterns = []
 autoclass_content = 'both'
+
+todo_include_todos = True
 
 language = 'en'
 
