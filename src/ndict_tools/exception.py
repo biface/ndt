@@ -1,6 +1,6 @@
 """
 This module provides specific exception classes for nested dictionaries.
-These exceptions extend the standard *Exception* and *KeyError* classes for future developments.
+These exceptions extend the standard **Exception**, **KeyError** and **AttributeError** classes for future developments.
 """
 from __future__ import annotations
 
@@ -33,5 +33,12 @@ class NestedDictionaryException(StackedDictionaryError):
 class StackedKeyError(KeyError):
     """
     Exception raised when a key is not compatible with a stacked dictionary.
+    """
+    pass
+
+
+class StackedAttributeError(AttributeError):
+    """
+    This exception is raised when a key is not compatible with stacked dictionary attributes.
     """
     pass

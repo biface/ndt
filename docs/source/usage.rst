@@ -112,14 +112,21 @@ Class attributes and methods
 .. autoclass:: NestedDictionary
 
     .. autoattribute:: indent
+        :no-index:
     .. autoattribute:: default_factory
+        :no-index:
     .. automethod:: __str__()
     .. automethod:: update()
     .. automethod:: occurrences()
+        :no-index:
     .. automethod:: is_key()
+        :no-index:
     .. automethod:: key_list()
+        :no-index:
     .. automethod:: items_list()
+        :no-index:
     .. automethod:: to_dict()
+        :no-index:
 
 
 .. _defaultdict: https://docs.python.org/3/library/collections.html#collections.defaultdict

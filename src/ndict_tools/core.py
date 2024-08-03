@@ -5,28 +5,7 @@ dictionaries.
 
 from __future__ import annotations
 from .tools import _StackedDict
-
-"""Internal functions"""
-
-
-def from_dict(dictionary: dict) -> NestedDictionary:
-    """
-    This recursive function is used to transform a dictionary into a nested dictionary.
-
-    :param dictionary: a dict object, even nested dict., to be transformed into a nested dictionary object class .
-    :type dictionary: dict
-    :return: a nested dictionary object
-    :rtype: NestedDictionary
-    """
-
-    nested = NestedDictionary()
-    for key, value in dictionary.items():
-        if isinstance(value, dict):
-            nested[key] = from_dict(value)
-        else:
-            nested[key] = value
-    return nested
-
+from .tools import from_dict
 
 """Classes section"""
 
@@ -73,25 +52,30 @@ class NestedDictionary(_StackedDict):
 
         if kwargs and 'strict' in kwargs:
             if kwargs.pop('strict') is True:
+                strict = True
                 default_class = None
             else:
+                strict = False
                 default_class = NestedDictionary
         else:
+            strict = False
             default_class = NestedDictionary
 
+        options = {'indent': indent, 'strict': strict}
         super().__init__(indent=indent, default=default_class)
 
         if len(args) >= 1:
             for item in args:
-                if isinstance(item, dict):
-                    nested = from_dict(item)
-                    self.update(nested)
+                if isinstance(item, NestedDictionary):
+                    nested = item
+                elif isinstance(item, dict):
+                    nested = from_dict(item, NestedDictionary, init=options)
                 else:
-                    nested = from_dict(dict(item))
-                    self.update(nested)
+                    nested = from_dict(dict(item), NestedDictionary, init=options)
+                self.update(nested)
 
         if kwargs:
-            nested = from_dict(kwargs)
+            nested = from_dict(kwargs, NestedDictionary, init=options)
             self.update(nested)
 
     def update(self, dictionary: dict) -> None:
@@ -108,9 +92,8 @@ class NestedDictionary(_StackedDict):
                 value.default_factory = self.default_factory
                 super().update(key=key, value=value)
             elif isinstance(value, dict):
-                nested_dict = from_dict(value)
-                nested_dict.indent = self.indent
-                nested_dict.default_factory = self.default_factory
+                nested_dict = from_dict(value, NestedDictionary,
+                                        attributes={'indent': self.indent, 'default_factory': self.default_factory})
                 super().update(key=key, value=nested_dict)
             else:
                 self[key] = value
