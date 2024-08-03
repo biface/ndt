@@ -5,10 +5,6 @@
 # Required
 version: 2
 
-on:
-  pull_request:
-    branches: [ "master" ]
-
 
 # Set the OS, Python version and other tools you might need
 build:
