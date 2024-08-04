@@ -46,12 +46,12 @@ class NestedDictionary(_StackedDict):
         """
         indent = 0
 
-        if kwargs and 'indent' in kwargs:
-            indent = kwargs['indent']
-            del kwargs['indent']
+        if kwargs and "indent" in kwargs:
+            indent = kwargs["indent"]
+            del kwargs["indent"]
 
-        if kwargs and 'strict' in kwargs:
-            if kwargs.pop('strict') is True:
+        if kwargs and "strict" in kwargs:
+            if kwargs.pop("strict") is True:
                 strict = True
                 default_class = None
             else:
@@ -61,10 +61,10 @@ class NestedDictionary(_StackedDict):
             strict = False
             default_class = NestedDictionary
 
-        options = {'indent': indent, 'strict': strict}
+        options = {"indent": indent, "strict": strict}
         super().__init__(indent=indent, default=default_class)
 
-        if len(args) >= 1:
+        if len(args):
             for item in args:
                 if isinstance(item, NestedDictionary):
                     nested = item
@@ -92,8 +92,14 @@ class NestedDictionary(_StackedDict):
                 value.default_factory = self.default_factory
                 super().update(key=key, value=value)
             elif isinstance(value, dict):
-                nested_dict = from_dict(value, NestedDictionary,
-                                        attributes={'indent': self.indent, 'default_factory': self.default_factory})
+                nested_dict = from_dict(
+                    value,
+                    NestedDictionary,
+                    attributes={
+                        "indent": self.indent,
+                        "default_factory": self.default_factory,
+                    },
+                )
                 super().update(key=key, value=nested_dict)
             else:
                 self[key] = value

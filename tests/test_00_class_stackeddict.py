@@ -64,3 +64,40 @@ def test_from_dict_attribute_error():
     with pytest.raises(StackedAttributeError):
         from_dict({1: 'first', 2: {'first': 1, 'second': 2}, 3: 3}, NestedDictionary,
                   init={'indent': 2, 'strict': True}, attributes={'factor': True})
+
+
+def test_shallow_copy_dict():
+    sd = _StackedDict(indent=0, default=None)
+    sd[1] = "Integer"
+    sd[(1, 2)] = "Tuple"
+    sd['2'] = {'first': 1, 'second': 2}
+    sd_copy = sd.copy()
+    assert sd_copy[1] == "Integer"
+    assert sd_copy[(1, 2)] == "Tuple"
+    assert isinstance(sd_copy["2"], dict)
+    assert not isinstance(sd_copy["2"], _StackedDict)
+    sd_copy[1] = "Changed in string"
+    assert sd[1] == "Integer"
+    assert sd_copy[1] == "Changed in string"
+    assert isinstance(sd_copy["2"]["second"], int)
+    sd['2']['second'] = "3"
+    assert sd_copy['2']['second'] == "3"
+    assert isinstance(sd_copy['2']['second'], str)
+
+
+def test_deep_copy_dict():
+    sd = _StackedDict(indent=0, default=None)
+    sd[1] = "Integer"
+    sd[(1, 2)] = "Tuple"
+    sd['2'] = {'first': 1, 'second': 2}
+    sd_copy = sd.deepcopy()
+    assert sd_copy[1] == "Integer"
+    assert sd_copy[(1, 2)] == "Tuple"
+    assert isinstance(sd_copy["2"], dict)
+    sd_copy[1] = "Changed in string"
+    assert sd[1] == "Integer"
+    assert sd_copy[1] == "Changed in string"
+    assert isinstance(sd_copy["2"]["second"], int)
+    sd['2']['second'] = "3"
+    assert sd_copy['2']['second'] == 2
+    assert isinstance(sd_copy['2']['second'], int)
