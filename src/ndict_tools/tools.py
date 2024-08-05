@@ -10,9 +10,11 @@ future, without necessarily using the properties specific to these dictionaries.
 """
 
 from __future__ import annotations
+
+import json
 from collections import defaultdict
 from typing import Union, List, Any, Tuple, Generator
-from json import dumps
+from json import dumps, JSONEncoder
 from .exception import StackedKeyError, StackedAttributeError
 
 """Internal functions"""
@@ -91,6 +93,10 @@ def from_dict(dictionary: dict, class_name: object, **class_options) -> _Stacked
 """Classes section"""
 
 
+class JSONStackedValueDict(JSONEncoder):
+    pass
+
+
 class _StackedDict(defaultdict):
     """
     This class is an internal class for stacking nested dictionaries. This class is technical and is used to manage
@@ -132,7 +138,27 @@ class _StackedDict(defaultdict):
         :return: a string in json format
         :rtype: str
         """
-        return dumps(self.to_dict(), indent=self.indent)
+
+        def mapping_compatible_key_json(dictionary: dict) -> dict:
+            """
+
+            :param dictionary:
+            :return:
+            :rtype: dict
+            """
+            compatible_dict = {}
+            for key, value in dictionary.items():
+                if isinstance(value, dict):
+                    compatible_dict = mapping_compatible_key_json(value)
+                else:
+                    if isinstance(key, tuple):
+                        compatible_dict[str(key)] = value
+                    else:
+                        compatible_dict[key] = value
+
+            return compatible_dict
+
+        return dumps(mapping_compatible_key_json(self.to_dict()), indent=self.indent)
 
     def __copy__(self) -> _StackedDict:
         """
