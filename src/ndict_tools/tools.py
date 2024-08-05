@@ -149,7 +149,7 @@ class _StackedDict(defaultdict):
             compatible_dict = {}
             for key, value in dictionary.items():
                 if isinstance(value, dict):
-                    compatible_dict = mapping_compatible_key_json(value)
+                    compatible_dict[key] = mapping_compatible_key_json(value)
                 else:
                     if isinstance(key, tuple):
                         compatible_dict[str(key)] = value
