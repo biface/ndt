@@ -11,6 +11,7 @@ future, without necessarily using the properties specific to these dictionaries.
 
 from __future__ import annotations
 
+from textwrap import indent
 from collections import defaultdict
 from typing import Union, List, Any, Tuple, Generator
 
@@ -126,7 +127,7 @@ class _StackedDict(defaultdict):
             self.indent = indent
             self.default_factory = default
 
-    def __str__(self) -> str:
+    def __str__(self, padding=0) -> str:
         """
         Converts a nested dictionary to a string in json like format
 
@@ -135,13 +136,14 @@ class _StackedDict(defaultdict):
         """
 
         d_str = "{\n"
+        padding += self.indent
 
         for key, value in self.items():
             if isinstance(value, _StackedDict):
-                d_str += str(key) + " : " + value.__str__()
+                d_str += indent(str(key) + " : " + value.__str__(padding), padding * ' ')
             else:
-                d_str += str(key) + " : " + str(value)
-            d_str += "\n"
+                d_str += indent(str(key) + " : " + str(value), padding * ' ')
+            d_str += ",\n"
 
         d_str += "}"
 
