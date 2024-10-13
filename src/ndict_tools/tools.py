@@ -11,10 +11,9 @@ future, without necessarily using the properties specific to these dictionaries.
 
 from __future__ import annotations
 
-import json
 from collections import defaultdict
 from typing import Union, List, Any, Tuple, Generator
-from json import dumps, JSONEncoder
+
 from .exception import StackedKeyError, StackedAttributeError
 
 """Internal functions"""
@@ -93,10 +92,6 @@ def from_dict(dictionary: dict, class_name: object, **class_options) -> _Stacked
 """Classes section"""
 
 
-class JSONStackedValueDict(JSONEncoder):
-    pass
-
-
 class _StackedDict(defaultdict):
     """
     This class is an internal class for stacking nested dictionaries. This class is technical and is used to manage
@@ -133,32 +128,24 @@ class _StackedDict(defaultdict):
 
     def __str__(self) -> str:
         """
-        Converts a nested dictionary to a string in json format
+        Converts a nested dictionary to a string in json like format
 
-        :return: a string in json format
+        :return: a string in json like format
         :rtype: str
         """
 
-        def mapping_compatible_key_json(dictionary: dict) -> dict:
-            """
+        d_str = "{\n"
 
-            :param dictionary:
-            :return:
-            :rtype: dict
-            """
-            compatible_dict = {}
-            for key, value in dictionary.items():
-                if isinstance(value, dict):
-                    compatible_dict[key] = mapping_compatible_key_json(value)
-                else:
-                    if isinstance(key, tuple):
-                        compatible_dict[str(key)] = value
-                    else:
-                        compatible_dict[key] = value
+        for key, value in self.items():
+            if isinstance(value, _StackedDict):
+                d_str += str(key) + " : " + value.__str__()
+            else:
+                d_str += str(key) + " : " + str(value)
+            d_str += "\n"
 
-            return compatible_dict
+        d_str += "}"
 
-        return dumps(mapping_compatible_key_json(self.to_dict()), indent=self.indent)
+        return d_str
 
     def __copy__(self) -> _StackedDict:
         """
