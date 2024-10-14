@@ -131,6 +131,8 @@ class _StackedDict(defaultdict):
         """
         Converts a nested dictionary to a string in json like format
 
+        :param padding: whitespace indentation of dictionary content
+        :type padding: int
         :return: a string in json like format
         :rtype: str
         """
@@ -140,9 +142,11 @@ class _StackedDict(defaultdict):
 
         for key, value in self.items():
             if isinstance(value, _StackedDict):
-                d_str += indent(str(key) + " : " + value.__str__(padding), padding * ' ')
+                d_str += indent(
+                    str(key) + " : " + value.__str__(padding), padding * " "
+                )
             else:
-                d_str += indent(str(key) + " : " + str(value), padding * ' ')
+                d_str += indent(str(key) + " : " + str(value), padding * " ")
             d_str += ",\n"
 
         d_str += "}"
