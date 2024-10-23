@@ -10,9 +10,11 @@ future, without necessarily using the properties specific to these dictionaries.
 """
 
 from __future__ import annotations
+
+from textwrap import indent
 from collections import defaultdict
 from typing import Union, List, Any, Tuple, Generator
-from json import dumps
+
 from .exception import StackedKeyError, StackedAttributeError
 
 """Internal functions"""
@@ -29,7 +31,7 @@ def unpack_items(dictionary: dict) -> Generator:
     """
     for key in dictionary.keys():
         value = dictionary[key]
-        if hasattr(value, 'keys'):
+        if hasattr(value, "keys"):
             for stacked_key, stacked_value in unpack_items(value):
                 yield (key,) + stacked_key, stacked_value
         else:
@@ -57,19 +59,25 @@ def from_dict(dictionary: dict, class_name: object, **class_options) -> _Stacked
     :raise StackedKeyError: if attribute called is not an attribute of the hierarchy of classes
     """
 
-    options = {'indent': 0, 'strict': False}
+    options = {"indent": 0, "strict": False}
 
-    if 'init' in class_options:
-        options = class_options['init']
+    if "init" in class_options:
+        options = class_options["init"]
 
     dict_object = class_name(**options)
 
-    if 'attributes' in class_options:
-        for attribute in class_options['attributes']:
+    if "attributes" in class_options:
+        for attribute in class_options["attributes"]:
             if hasattr(dict_object, attribute):
-                dict_object.__setattr__(attribute, class_options['attributes'][attribute])
+                dict_object.__setattr__(
+                    attribute, class_options["attributes"][attribute]
+                )
             else:
-                raise StackedAttributeError("The key {} is not present in the class attributes".format(attribute))
+                raise StackedAttributeError(
+                    "The key {} is not present in the class attributes".format(
+                        attribute
+                    )
+                )
 
     for key, value in dictionary.items():
         if isinstance(value, _StackedDict):
@@ -110,7 +118,7 @@ class _StackedDict(defaultdict):
         :type kwargs: dict
         """
 
-        if not ('indent' in kwargs and 'default' in kwargs):
+        if not ("indent" in kwargs and "default" in kwargs):
             raise StackedKeyError("Missing 'indent' or 'default' arguments")
         else:
             indent = kwargs.pop("indent")
@@ -119,14 +127,56 @@ class _StackedDict(defaultdict):
             self.indent = indent
             self.default_factory = default
 
-    def __str__(self) -> str:
+    def __str__(self, padding=0) -> str:
         """
-        Converts a nested dictionary to a string in json format
+        Converts a nested dictionary to a string in json like format
 
-        :return: a string in json format
+        :param padding: whitespace indentation of dictionary content
+        :type padding: int
+        :return: a string in json like format
         :rtype: str
         """
-        return dumps(self.to_dict(), indent=self.indent)
+
+        d_str = "{\n"
+        padding += self.indent
+
+        for key, value in self.items():
+            if isinstance(value, _StackedDict):
+                d_str += indent(
+                    str(key) + " : " + value.__str__(padding), padding * " "
+                )
+            else:
+                d_str += indent(str(key) + " : " + str(value), padding * " ")
+            d_str += ",\n"
+
+        d_str += "}"
+
+        return d_str
+
+    def __copy__(self) -> _StackedDict:
+        """
+        This internal function is used to create a shallow copy of a stacked dictionary.
+        :return: a shallow copy of a stacked dictionary
+        :rtype: _StackedDict or a subclass of _StackedDict
+        """
+
+        new = self.__class__(indent=self.indent, default=self.default_factory)
+        for key, value in self.items():
+            new[key] = value
+        return new
+
+    def __deepcopy__(self) -> _StackedDict:
+        """
+        This internal function is used to create a complete copy of a stacked dictionary.
+        :return: a complete copy of a stacked dictionary
+        :rtype: _StackedDict or a subclass of _StackedDict
+        """
+
+        return from_dict(
+            self.to_dict(),
+            self.__class__,
+            init={"indent": self.indent, "default": self.default_factory},
+        )
 
     def unpacked_items(self) -> Generator:
         """
@@ -175,6 +225,24 @@ class _StackedDict(defaultdict):
                 unpacked_dict[key] = self[key]
         return unpacked_dict
 
+    def copy(self) -> _StackedDict:
+        """
+        This method copies stacked dictionaries to a copy of the dictionary.
+        :return: a shallow copy of the dictionary
+        :rtype: _StackedDict: a _StackedDict of subclasses of _StackedDict
+        """
+        return self.__copy__()
+
+    def deepcopy(self) -> _StackedDict:
+        """
+        This method copies a stacked dictionaries to a deep copy of the dictionary.
+
+        :return: a deep copy of the dictionary
+        :rtype: _StackedDict: a _StackedDict of subclasses of _StackedDict
+        """
+
+        return self.__deepcopy__()
+
     def update(self, **kwargs):
         """
         Updates a stacked dictionary with key/value pairs.
@@ -185,11 +253,13 @@ class _StackedDict(defaultdict):
         :raise StackedKeyError: if any of the key/value pairs cannot be updated:
         :raise KeyError: if key/value are missing or invalid.
         """
-        if 'key' in kwargs and 'value' in kwargs:
-            if isinstance(kwargs['value'], _StackedDict):
-                self[kwargs['key']] = kwargs['value']
+        if "key" in kwargs and "value" in kwargs:
+            if isinstance(kwargs["value"], _StackedDict):
+                self[kwargs["key"]] = kwargs["value"]
             else:
-                raise StackedKeyError("Cannot update a stacked dictionary with an invalid key/value types")
+                raise StackedKeyError(
+                    "Cannot update a stacked dictionary with an invalid key/value types"
+                )
         else:
             raise KeyError("Malformed dictionary parameters key and value are missing")
 
@@ -244,7 +314,9 @@ class _StackedDict(defaultdict):
                 if key in keys:
                     __key_list.append(keys)
         else:
-            raise StackedKeyError("Cannot find the key : {} in a stacked dictionary : ".format(key))
+            raise StackedKeyError(
+                "Cannot find the key : {} in a stacked dictionary : ".format(key)
+            )
 
         return __key_list
 
@@ -266,6 +338,8 @@ class _StackedDict(defaultdict):
                 if key in items[0]:
                     __items_list.append(items[1])
         else:
-            raise StackedKeyError("Cannot find the key : {} in a stacked dictionary : ".format(key))
+            raise StackedKeyError(
+                "Cannot find the key : {} in a stacked dictionary : ".format(key)
+            )
 
         return __items_list
