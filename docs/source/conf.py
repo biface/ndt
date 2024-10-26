@@ -12,7 +12,7 @@ import sys
 project = 'Nested Dictionary Tools'
 copyright = '2024, biface'
 author = 'biface'
-release = '0.0.3'
+release = '0.0.5'
 version = release
 
 # -- General configuration ---------------------------------------------------
