@@ -20,3 +20,9 @@ From github
 This package is also released on `GitHub <https://github.com/biface/ndt>`_. You can collect from
 the `release directory <https://github.com/biface/ndt/releases>`_ the desired version and unpack
 it in your project.
+
+Versions
+--------
+
+.. versionadded:: 0.0.6
+    Introducing nested keys with python lists : sd[[1, 2, 3]] eq sd[1][2][3]

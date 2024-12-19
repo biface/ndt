@@ -128,7 +128,7 @@ class _StackedDict(defaultdict):
 
     def __str__(self, padding=0) -> str:
         """
-        Converts a nested dictionary to a string in json like format
+        Override __str__ to converts a nested dictionary to a string in json like format
 
         :param padding: whitespace indentation of dictionary content
         :type padding: int
@@ -154,7 +154,8 @@ class _StackedDict(defaultdict):
 
     def __copy__(self) -> _StackedDict:
         """
-        This internal function is used to create a shallow copy of a stacked dictionary.
+        Override __copy__ to create a shallow copy of a stacked dictionary.
+
         :return: a shallow copy of a stacked dictionary
         :rtype: _StackedDict or a subclass of _StackedDict
         """
@@ -166,7 +167,8 @@ class _StackedDict(defaultdict):
 
     def __deepcopy__(self) -> _StackedDict:
         """
-        This internal function is used to create a complete copy of a stacked dictionary.
+        Override __deepcopy__ to create a complete copy of a stacked dictionary.
+
         :return: a complete copy of a stacked dictionary
         :rtype: _StackedDict or a subclass of _StackedDict
         """
@@ -177,10 +179,17 @@ class _StackedDict(defaultdict):
             init={"indent": self.indent, "default": self.default_factory},
         )
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value) -> None:
         """
         Override __setitem__ to handle hierarchical keys.
-        Raises a TypeError if a nested list is found within the key.
+
+        :param key: key to set
+        :type key: object
+        :param value: value to set
+        :type value: object
+        :return: None
+        :rtype: None
+        :raises TypeError: if a nested list is found within the key
         """
         if isinstance(key, list):
             # Check for nested lists and raise an error
@@ -202,7 +211,12 @@ class _StackedDict(defaultdict):
     def __getitem__(self, key):
         """
         Override __getitem__ to handle hierarchical keys.
-        Raises a TypeError if a nested list is found within the key.
+
+        :param key: key to set
+        :type key: object
+        :return: value
+        :rtype: object
+        :raises TypeError: if a nested list is found within the key
         """
         if isinstance(key, list):
             # Check for nested lists and raise an error
@@ -219,8 +233,12 @@ class _StackedDict(defaultdict):
 
     def __delitem__(self, key):
         """
-        Interprète les listes comme des hiérarchies pour supprimer des sous-dictionnaires imbriqués.
-        Les autres types sont traités comme des clés simples.
+        Override __delitem__ to handle hierarchical keys.
+
+        :param key: key to set
+        :type key: object
+        :return: None
+        :rtype: None
         """
         if isinstance(key, list):  # Une liste est interprétée comme une hiérarchie de clés
             current = self
