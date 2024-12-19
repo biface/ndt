@@ -92,7 +92,6 @@ def from_dict(dictionary: dict, class_name: object, **class_options) -> _Stacked
 
 """Classes section"""
 
-
 class _StackedDict(defaultdict):
     """
     This class is an internal class for stacking nested dictionaries. This class is technical and is used to manage
@@ -177,6 +176,65 @@ class _StackedDict(defaultdict):
             self.__class__,
             init={"indent": self.indent, "default": self.default_factory},
         )
+
+    def __setitem__(self, key, value):
+        """
+        Override __setitem__ to handle hierarchical keys.
+        Raises a TypeError if a nested list is found within the key.
+        """
+        if isinstance(key, list):
+            # Check for nested lists and raise an error
+            for sub_key in key:
+                if isinstance(sub_key, list):
+                    raise TypeError("Nested lists are not allowed as keys in _StackedDict.")
+
+            # Handle hierarchical keys
+            current = self
+            for sub_key in key[:-1]:  # Traverse the hierarchy
+                if sub_key not in current or not isinstance(current[sub_key], _StackedDict):
+                    current[sub_key] = self.__class__(indent=self.indent, default=self.default_factory)
+                current = current[sub_key]
+            current[key[-1]] = value
+        else:
+            # Flat keys are handled as usual
+            super().__setitem__(key, value)
+
+    def __getitem__(self, key):
+        """
+        Override __getitem__ to handle hierarchical keys.
+        Raises a TypeError if a nested list is found within the key.
+        """
+        if isinstance(key, list):
+            # Check for nested lists and raise an error
+            for sub_key in key:
+                if isinstance(sub_key, list):
+                    raise TypeError("Nested lists are not allowed as keys in _StackedDict.")
+
+            # Handle hierarchical keys
+            current = self
+            for sub_key in key:
+                current = current[sub_key]
+            return current
+        return super().__getitem__(key)
+
+    def __delitem__(self, key):
+        """
+        Interprète les listes comme des hiérarchies pour supprimer des sous-dictionnaires imbriqués.
+        Les autres types sont traités comme des clés simples.
+        """
+        if isinstance(key, list):  # Une liste est interprétée comme une hiérarchie de clés
+            current = self
+            parents = []
+            for sub_key in key[:-1]:  # Parcourt tous les sous-clés sauf la dernière
+                parents.append((current, sub_key))  # Garde une trace des parents pour nettoyer ensuite
+                current = current[sub_key]
+            del current[key[-1]]  # Supprime la dernière clé
+            # Nettoie les parents s'ils deviennent vides
+            for parent, sub_key in reversed(parents):
+                if not parent[sub_key]:
+                    del parent[sub_key]
+        else:  # Autres types traités comme des clés simples
+            super().__delitem__(key)
 
     def unpacked_items(self) -> Generator:
         """
