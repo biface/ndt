@@ -116,15 +116,22 @@ class _StackedDict(defaultdict):
         :param kwargs:
         :type kwargs: dict
         """
+        ind: int = 0
+        default = None
 
-        if not ("indent" in kwargs and "default" in kwargs):
-            raise StackedKeyError("Missing 'indent' or 'default' arguments")
+        if not "indent" in kwargs:
+            raise StackedKeyError("Missing 'indent' arguments")
         else:
-            indent = kwargs.pop("indent")
+            ind = kwargs.pop("indent")
+
+        if not "default" in kwargs:
+            default = None
+        else:
             default = kwargs.pop("default")
-            super().__init__(*args, **kwargs)
-            self.indent = indent
-            self.default_factory = default
+
+        super().__init__(*args, **kwargs)
+        self.indent = ind
+        self.default_factory = default
 
     def __str__(self, padding=0) -> str:
         """
@@ -201,7 +208,8 @@ class _StackedDict(defaultdict):
             current = self
             for sub_key in key[:-1]:  # Traverse the hierarchy
                 if sub_key not in current or not isinstance(current[sub_key], _StackedDict):
-                    current[sub_key] = self.__class__(indent=self.indent, default=self.default_factory)
+                    current[sub_key] = self.__class__(indent=self.indent)
+                    current[sub_key].__setattr__("default_factory", self.default_factory)
                 current = current[sub_key]
             current[key[-1]] = value
         else:
