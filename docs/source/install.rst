@@ -24,5 +24,6 @@ it in your project.
 Versions
 --------
 
-.. versionadded:: 0.0.6
-    Introducing nested keys with python lists : sd[[1, 2, 3]] eq sd[1][2][3]
+.. versionadded:: 0.6.0
+    Introducing nested keys with python lists : ``sd[[1, 2, 3]] eq sd[1][2][3]``
+    Pay particular attention to the use of double brackets ``[[...]]`` to manage the key list.
