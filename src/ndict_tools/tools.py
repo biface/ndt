@@ -92,7 +92,6 @@ def from_dict(dictionary: dict, class_name: object, **class_options) -> _Stacked
 
 """Classes section"""
 
-
 class _StackedDict(defaultdict):
     """
     This class is an internal class for stacking nested dictionaries. This class is technical and is used to manage
@@ -117,19 +116,26 @@ class _StackedDict(defaultdict):
         :param kwargs:
         :type kwargs: dict
         """
+        ind: int = 0
+        default = None
 
-        if not ("indent" in kwargs and "default" in kwargs):
-            raise StackedKeyError("Missing 'indent' or 'default' arguments")
+        if not "indent" in kwargs:
+            raise StackedKeyError("Missing 'indent' arguments")
         else:
-            indent = kwargs.pop("indent")
+            ind = kwargs.pop("indent")
+
+        if not "default" in kwargs:
+            default = None
+        else:
             default = kwargs.pop("default")
-            super().__init__(*args, **kwargs)
-            self.indent = indent
-            self.default_factory = default
+
+        super().__init__(*args, **kwargs)
+        self.indent = ind
+        self.default_factory = default
 
     def __str__(self, padding=0) -> str:
         """
-        Converts a nested dictionary to a string in json like format
+        Override __str__ to converts a nested dictionary to a string in json like format
 
         :param padding: whitespace indentation of dictionary content
         :type padding: int
@@ -155,7 +161,8 @@ class _StackedDict(defaultdict):
 
     def __copy__(self) -> _StackedDict:
         """
-        This internal function is used to create a shallow copy of a stacked dictionary.
+        Override __copy__ to create a shallow copy of a stacked dictionary.
+
         :return: a shallow copy of a stacked dictionary
         :rtype: _StackedDict or a subclass of _StackedDict
         """
@@ -167,7 +174,8 @@ class _StackedDict(defaultdict):
 
     def __deepcopy__(self) -> _StackedDict:
         """
-        This internal function is used to create a complete copy of a stacked dictionary.
+        Override __deepcopy__ to create a complete copy of a stacked dictionary.
+
         :return: a complete copy of a stacked dictionary
         :rtype: _StackedDict or a subclass of _StackedDict
         """
@@ -177,6 +185,82 @@ class _StackedDict(defaultdict):
             self.__class__,
             init={"indent": self.indent, "default": self.default_factory},
         )
+
+    def __setitem__(self, key, value) -> None:
+        """
+        Override __setitem__ to handle hierarchical keys.
+
+        :param key: key to set
+        :type key: object
+        :param value: value to set
+        :type value: object
+        :return: None
+        :rtype: None
+        :raises TypeError: if a nested list is found within the key
+        """
+        if isinstance(key, list):
+            # Check for nested lists and raise an error
+            for sub_key in key:
+                if isinstance(sub_key, list):
+                    raise TypeError("Nested lists are not allowed as keys in _StackedDict.")
+
+            # Handle hierarchical keys
+            current = self
+            for sub_key in key[:-1]:  # Traverse the hierarchy
+                if sub_key not in current or not isinstance(current[sub_key], _StackedDict):
+                    current[sub_key] = self.__class__(indent=self.indent)
+                    current[sub_key].__setattr__("default_factory", self.default_factory)
+                current = current[sub_key]
+            current[key[-1]] = value
+        else:
+            # Flat keys are handled as usual
+            super().__setitem__(key, value)
+
+    def __getitem__(self, key):
+        """
+        Override __getitem__ to handle hierarchical keys.
+
+        :param key: key to set
+        :type key: object
+        :return: value
+        :rtype: object
+        :raises TypeError: if a nested list is found within the key
+        """
+        if isinstance(key, list):
+            # Check for nested lists and raise an error
+            for sub_key in key:
+                if isinstance(sub_key, list):
+                    raise TypeError("Nested lists are not allowed as keys in _StackedDict.")
+
+            # Handle hierarchical keys
+            current = self
+            for sub_key in key:
+                current = current[sub_key]
+            return current
+        return super().__getitem__(key)
+
+    def __delitem__(self, key):
+        """
+        Override __delitem__ to handle hierarchical keys.
+
+        :param key: key to set
+        :type key: object
+        :return: None
+        :rtype: None
+        """
+        if isinstance(key, list):  # Une liste est interprétée comme une hiérarchie de clés
+            current = self
+            parents = []
+            for sub_key in key[:-1]:  # Parcourt tous les sous-clés sauf la dernière
+                parents.append((current, sub_key))  # Garde une trace des parents pour nettoyer ensuite
+                current = current[sub_key]
+            del current[key[-1]]  # Supprime la dernière clé
+            # Nettoie les parents s'ils deviennent vides
+            for parent, sub_key in reversed(parents):
+                if not parent[sub_key]:
+                    del parent[sub_key]
+        else:  # Autres types traités comme des clés simples
+            super().__delitem__(key)
 
     def unpacked_items(self) -> Generator:
         """

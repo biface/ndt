@@ -25,6 +25,11 @@ Tools
     .. autoattribute:: indent
     .. autoattribute:: default_factory
     .. automethod:: __str__()
+    .. automethod:: __copy__()
+    .. automethod:: __deepcopy__()
+    .. automethod:: __setitem__()
+    .. automethod:: __getitem__()
+    .. automethod:: __delitem__()
     .. automethod:: unpacked_items()
     .. automethod:: unpacked_keys()
     .. automethod:: unpacked_values()
