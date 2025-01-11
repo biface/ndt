@@ -40,3 +40,10 @@ def test_strict_option():
 def test_strict_behavior():
     with pytest.raises(KeyError):
         value = nd['b']['b']
+
+
+def test_nested_nested():
+    nd_2 = NestedDictionary(nd, indent=2, strict=True)
+    assert nd.indent == 0
+    assert nd_2.indent == 2
+    assert nd_2['a'] == nd['a']

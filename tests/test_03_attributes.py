@@ -16,12 +16,15 @@ def test_indent():
 def test_len():
     assert len(nd) == 3
 
+def test_str_outpout():
+    assert nd.__str__() == '{\n  first : first,\n  second : {\n      first : second:first,\n      second : second:second,\n  },\n  third : third,\n}'
 
 def test_values():
     assert nd['first'] == "first"
     assert nd['second']['first'] == "second:first"
+    assert nd[['second','first']] == "second:first"
     assert nd['second']['second'] == "second:second"
-
+    assert nd[['second','second']] == "second:second"
 
 def test_occurrences():
     assert nd.occurrences('first') == 2
@@ -35,6 +38,7 @@ def test_is_key():
     assert nd.is_key('second') is True
     assert nd.is_key('third') is True
     assert nd.is_key('fourth') is False
+    assert nd.is_key('third') is True
 
 
 def test_key_list():
@@ -67,4 +71,3 @@ def test_delete_nested_key():
     with pytest.raises(KeyError):
         del nd['second']
         value = nd['second']['first']
-

@@ -2,7 +2,13 @@ import pytest
 
 from ndict_tools.tools import _StackedDict, from_dict
 from ndict_tools.core import NestedDictionary
-from ndict_tools.exception import StackedKeyError, StackedAttributeError
+from ndict_tools.exception import StackedKeyError, StackedAttributeError, StackedDictionaryError
+
+
+def test_unused_error():
+    e = StackedDictionaryError("This is an unused class", 1000)
+    assert str(e) == "This is an unused class"
+    assert e.error == 1000
 
 
 def test_stacked_dict_init_error():
@@ -28,12 +34,6 @@ def test_stacked_dict_any_keys():
     assert sd[(1, 2)] == "tuple"
 
 
-"""def test_stacked_dict_typeerror_key_list():
-    sd = _StackedDict(indent=0, default=None)
-    with pytest.raises(TypeError):
-        assert sd[[1, 2]] == "list"
-"""
-
 def test_stacked_dict_typeerror_key_dict():
     sd = _StackedDict(indent=0, default=None)
     with pytest.raises(TypeError):
@@ -46,6 +46,15 @@ def test_from_dict():
     assert isinstance(nd, NestedDictionary)
     assert nd.indent == 2
     assert nd.default_factory is None
+
+
+def test_unpacked_values():
+    sd = _StackedDict(indent=0, default=None)
+    sd[1] = 'first'
+    sd[2] = {'first': 1, 'second': 2}
+    sd[3] = 3
+    assert list(sd.unpacked_keys()) == [(1,), (2, 'first'), (2, 'second'), (3,)]
+    assert list(sd.unpacked_values()) == ['first', 1, 2, 3]
 
 
 def test_from_nested_dict():
@@ -64,6 +73,23 @@ def test_from_dict_attribute_error():
     with pytest.raises(StackedAttributeError):
         from_dict({1: 'first', 2: {'first': 1, 'second': 2}, 3: 3}, NestedDictionary,
                   init={'indent': 2, 'strict': True}, attributes={'factor': True})
+
+
+def test_key_error():
+    sd = _StackedDict(indent=0, default=None)
+    sd[1] = 'first'
+    sd[2] = {'first': 1, 'second': 2}
+    sd[3] = 3
+    with pytest.raises(KeyError):
+        sd.update(test="test", exp="test")
+    with pytest.raises(StackedKeyError):
+        sd.update(key=4, value="four")
+    with pytest.raises(StackedKeyError):
+        sd.items_list(4)
+    with pytest.raises(StackedKeyError):
+        sd.key_list(4)
+    with pytest.raises(StackedKeyError):
+        sd.is_key([2,'first'])
 
 
 def test_shallow_copy_dict():
