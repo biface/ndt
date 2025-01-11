@@ -349,18 +349,18 @@ class _StackedDict(defaultdict):
 
     def is_key(self, key: Any) -> bool:
         """
-        Checks if a key is stacked or not.
+        Checks if a key exists at any level in the _StackedDict hierarchy using unpack_items().
+        This works for both flat keys (e.g., 1) and hierarchical keys (e.g., [1, 2, 3]).
 
-        :param key: A possible key in a stacked dictionary.
-        :type key: Any
-        :return: True if key is a stacked key, False otherwise
-        :rtype: bool
+        :param key: A key to check. Can be a single key or a part of a hierarchical path.
+        :return: True if the key exists at any level, False otherwise.
         """
-        __flag = False
-        for keys in self.unpacked_keys():
-            if key in keys:
-                __flag = True
-        return __flag
+        # Normalize the key (convert lists to tuples for uniform comparison)
+        if isinstance(key, list):
+            raise StackedKeyError("This function manage only atomic keys")
+
+        # Check directly if the key exists in unpacked keys
+        return any(key in keys for keys in self.unpacked_keys())
 
     def occurrences(self, key: Any) -> int:
         """
