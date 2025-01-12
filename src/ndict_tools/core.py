@@ -66,7 +66,7 @@ class NestedDictionary(_StackedDict):
         if len(args):
             for item in args:
                 if isinstance(item, NestedDictionary):
-                    nested = item
+                    nested = item.deepcopy()
                 elif isinstance(item, dict):
                     nested = from_dict(item, NestedDictionary, init=options)
                 else:
