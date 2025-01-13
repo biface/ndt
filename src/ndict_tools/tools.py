@@ -429,3 +429,64 @@ class _StackedDict(defaultdict):
             )
 
         return __items_list
+
+    def dict_paths(self):
+        """
+        Returns a view object for all hierarchical paths in the _StackedDict.
+        """
+        return DictPaths(self)
+
+
+class DictPaths:
+    """
+    A view object that provides a dict-like interface for accessing hierarchical keys as lists.
+    Similar to `dict_keys`, but for hierarchical paths in a _StackedDict.
+    """
+    def __init__(self, stacked_dict):
+        self._stacked_dict = stacked_dict
+
+    def __iter__(self):
+        """
+        Iterates over all hierarchical paths in the _StackedDict as lists.
+        """
+        yield from self._iterate_paths(self._stacked_dict)
+
+    def _iterate_paths(self, current_dict, current_path=None):
+        if current_path is None:
+            current_path = []
+        for key, value in current_dict.items():
+            if isinstance(value, dict) and not isinstance(value, _StackedDict):
+                # Non _StackedDict dicts are treated as regular dicts
+                value = _StackedDict(value)
+            if isinstance(value, _StackedDict):
+                if not value:  # Handle empty dictionaries
+                    yield current_path + [key]
+                else:
+                    yield from self._iterate_paths(value, current_path + [key])
+            else:
+                yield current_path + [key]
+
+    def __len__(self):
+        """
+        Returns the number of hierarchical paths in the _StackedDict.
+        """
+        return sum(1 for _ in self)
+
+    def __contains__(self, path):
+        """
+        Checks if a hierarchical path exists in the _StackedDict.
+        """
+        current = self._stacked_dict
+        for key in path:
+            if key not in current:
+                return False
+            current = current[key]
+            if not isinstance(current, _StackedDict):
+                break
+        return True
+
+    def __repr__(self):
+        """
+        Returns a string representation of the DictPaths object.
+        """
+        return f"{self.__class__.__name__}({list(self)})"
