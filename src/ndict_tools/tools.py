@@ -22,19 +22,21 @@ from .exception import StackedKeyError, StackedAttributeError
 
 def unpack_items(dictionary: dict) -> Generator:
     """
-    This functions de-stacks items from a nested dictionary
+    This function de-stacks items from a nested dictionary.
 
-    :param dictionary:
+    :param dictionary: Dictionary to unpack.
     :type dictionary: dict
-    :return: generator that yields items from a nested dictionary
+    :return: Generator that yields items from a nested dictionary.
     :rtype: Generator
     """
-    for key in dictionary.keys():
-        value = dictionary[key]
-        if hasattr(value, "keys"):
-            for stacked_key, stacked_value in unpack_items(value):
-                yield (key,) + stacked_key, stacked_value
-        else:
+    for key, value in dictionary.items():
+        if isinstance(value, dict):  # Check if the value is a dictionary
+            if not value:  # Handle empty dictionaries
+                yield (key,), value
+            else:  # Recursive case for non-empty dictionaries
+                for stacked_key, stacked_value in unpack_items(value):
+                    yield (key,) + stacked_key, stacked_value
+        else:  # Base case for non-dictionary values
             yield (key,), value
 
 
