@@ -11,11 +11,11 @@ future, without necessarily using the properties specific to these dictionaries.
 
 from __future__ import annotations
 
-from textwrap import indent
 from collections import defaultdict
-from typing import Union, List, Any, Tuple, Generator
+from textwrap import indent
+from typing import Any, Generator, List, Tuple, Union
 
-from .exception import StackedKeyError, StackedAttributeError
+from .exception import StackedAttributeError, StackedKeyError
 
 """Internal functions"""
 
@@ -94,6 +94,7 @@ def from_dict(dictionary: dict, class_name: object, **class_options) -> _Stacked
 
 """Classes section"""
 
+
 class _StackedDict(defaultdict):
     """
     This class is an internal class for stacking nested dictionaries. This class is technical and is used to manage
@@ -121,12 +122,12 @@ class _StackedDict(defaultdict):
         ind: int = 0
         default = None
 
-        if not "indent" in kwargs:
+        if "indent" not in kwargs:
             raise StackedKeyError("Missing 'indent' arguments")
         else:
             ind = kwargs.pop("indent")
 
-        if not "default" in kwargs:
+        if "default" not in kwargs:
             default = None
         else:
             default = kwargs.pop("default")
@@ -204,14 +205,20 @@ class _StackedDict(defaultdict):
             # Check for nested lists and raise an error
             for sub_key in key:
                 if isinstance(sub_key, list):
-                    raise TypeError("Nested lists are not allowed as keys in _StackedDict.")
+                    raise TypeError(
+                        "Nested lists are not allowed as keys in _StackedDict."
+                    )
 
             # Handle hierarchical keys
             current = self
             for sub_key in key[:-1]:  # Traverse the hierarchy
-                if sub_key not in current or not isinstance(current[sub_key], _StackedDict):
+                if sub_key not in current or not isinstance(
+                    current[sub_key], _StackedDict
+                ):
                     current[sub_key] = self.__class__(indent=self.indent)
-                    current[sub_key].__setattr__("default_factory", self.default_factory)
+                    current[sub_key].__setattr__(
+                        "default_factory", self.default_factory
+                    )
                 current = current[sub_key]
             current[key[-1]] = value
         else:
@@ -232,7 +239,9 @@ class _StackedDict(defaultdict):
             # Check for nested lists and raise an error
             for sub_key in key:
                 if isinstance(sub_key, list):
-                    raise TypeError("Nested lists are not allowed as keys in _StackedDict.")
+                    raise TypeError(
+                        "Nested lists are not allowed as keys in _StackedDict."
+                    )
 
             # Handle hierarchical keys
             current = self
@@ -250,11 +259,15 @@ class _StackedDict(defaultdict):
         :return: None
         :rtype: None
         """
-        if isinstance(key, list):  # Une liste est interprétée comme une hiérarchie de clés
+        if isinstance(
+            key, list
+        ):  # Une liste est interprétée comme une hiérarchie de clés
             current = self
             parents = []
             for sub_key in key[:-1]:  # Parcourt tous les sous-clés sauf la dernière
-                parents.append((current, sub_key))  # Garde une trace des parents pour nettoyer ensuite
+                parents.append(
+                    (current, sub_key)
+                )  # Garde une trace des parents pour nettoyer ensuite
                 current = current[sub_key]
             del current[key[-1]]  # Supprime la dernière clé
             # Nettoie les parents s'ils deviennent vides
@@ -442,6 +455,7 @@ class DictPaths:
     A view object that provides a dict-like interface for accessing hierarchical keys as lists.
     Similar to `dict_keys`, but for hierarchical paths in a _StackedDict.
     """
+
     def __init__(self, stacked_dict):
         self._stacked_dict = stacked_dict
 

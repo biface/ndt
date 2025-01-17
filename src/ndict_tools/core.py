@@ -4,6 +4,7 @@ dictionaries.
 """
 
 from __future__ import annotations
+
 from .tools import _StackedDict, from_dict
 
 """Classes section"""
