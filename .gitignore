@@ -63,6 +63,7 @@ coverage.xml
 *.cover 
 .hypothesis/
 tests/coverage
+coverage/
 
 
 # Jupyter Notebook 
