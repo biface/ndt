@@ -31,5 +31,5 @@ jobs:
         python -m pip install --upgrade pip
         pip install tox
 
-    - name: Run gh-ci-check environment with tox
-      run: tox -e gh-ci-check
+    - name: Run check online environment with tox
+      run: tox -e gh-ci
