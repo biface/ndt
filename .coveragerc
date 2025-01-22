@@ -1,0 +1,24 @@
+[run]
+branch = True
+source =
+    src/
+    src/ndict_tools
+omit =
+    */.tox/*
+    */docs/*
+    */tests/*
+    */.venv/*
+
+[report]
+show_missing = True
+exclude_lines =
+    pragma: no cover
+    if __name__ = "__main__"
+    def __repr__
+
+[html]
+directory = coverage/coverage_html
+title = Code coverage Report
+
+[xml]
+output = coverage/coverage.xml
