@@ -342,6 +342,48 @@ class _StackedDict(defaultdict):
 
         return self.__deepcopy__()
 
+    def pop(self, key: Union[Any, List[Any]], default=None) -> Any:
+        """
+        Removes the specified key (or hierarchical key) and returns its value.
+        If the key does not exist, returns the default value if provided, or raises a KeyError.
+
+        :param key: The key or hierarchical key to remove.
+        :type key: Union[Any, List[Any]]
+        :param default: The value to return if the key does not exist.
+        :type default: Any
+        :return: The value associated with the removed key.
+        :rtype: Any
+        :raises KeyError: If the key does not exist and no default is provided.
+        """
+        if isinstance(key, list):
+            # Handle hierarchical keys
+            current = self
+            parents = []  # Track parent dictionaries for cleanup
+            for sub_key in key[:-1]:  # Traverse up to the last key
+                if sub_key not in current:
+                    if default is not None:
+                        return default
+                    raise KeyError(f"Key path {key} does not exist.")
+                parents.append((current, sub_key))
+                current = current[sub_key]
+
+            # Pop the final key
+            if key[-1] in current:
+                value = current.pop(key[-1])
+                # Clean up empty parents
+                for parent, sub_key in reversed(parents):
+                    if not parent[sub_key]:  # Remove empty dictionaries
+                        parent.pop(sub_key)
+                return value
+            else:
+                if default is not None:
+                    return default
+                raise KeyError(f"Key path {key} does not exist.")
+        else:
+            # Handle flat keys
+            return super().pop(key, default)
+
+
     def update(self, **kwargs):
         """
         Updates a stacked dictionary with key/value pairs.
