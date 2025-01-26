@@ -383,7 +383,6 @@ class _StackedDict(defaultdict):
             # Handle flat keys
             return super().pop(key, default)
 
-
     def update(self, **kwargs):
         """
         Updates a stacked dictionary with key/value pairs.
