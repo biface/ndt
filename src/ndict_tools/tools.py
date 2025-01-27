@@ -383,6 +383,47 @@ class _StackedDict(defaultdict):
             # Handle flat keys
             return super().pop(key, default)
 
+    def popitem(self):
+        """
+        Removes and returns the last item in the most deeply nested dictionary as a (path, value) pair.
+        The path is represented as a list of keys leading to the value.
+        If the dictionary is empty, raises a KeyError.
+
+        The method follows a depth-first search (DFS) traversal to locate the last item,
+        removing it from the nested structure before returning.
+
+        :return: A tuple containing the hierarchical path (list of keys) and the value.
+        :rtype: tuple
+        :raises KeyError: If the dictionary is empty.
+        """
+        if not self:  # Handle empty dictionary
+            raise KeyError("popitem(): _StackedDict is empty")
+
+        # Initialize a stack to traverse the dictionary
+        stack = [(self, [])]  # Each entry is (current_dict, current_path)
+
+        while stack:
+            current, path = stack.pop()  # Get the current dictionary and path
+
+            if isinstance(current, dict):  # Ensure we are at a dictionary level
+                keys = list(current.keys())
+                if keys:  # If there are keys in the current dictionary
+                    key = keys[-1]  # Select the last key
+                    new_path = path + [key]  # Update the path
+                    stack.append((current[key], new_path))  # Continue with this branch
+            else:
+                # If the current value is not a dictionary, we have reached a leaf
+                break
+
+        # Remove the item from the dictionary using the found path
+        container = self  # Start from the root dictionary
+        for key in path[:-1]:  # Traverse to the parent of the target key
+            container = container[key]
+        value = container.pop(path[-1])  # Remove the last key-value pair
+
+        return path, value
+
+
     def update(self, **kwargs):
         """
         Updates a stacked dictionary with key/value pairs.
