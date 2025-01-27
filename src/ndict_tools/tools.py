@@ -11,7 +11,7 @@ future, without necessarily using the properties specific to these dictionaries.
 
 from __future__ import annotations
 
-from collections import defaultdict
+from collections import defaultdict, deque
 from textwrap import indent
 from typing import Any, Generator, List, Tuple, Union
 
@@ -530,6 +530,51 @@ class _StackedDict(defaultdict):
         Returns a view object for all hierarchical paths in the _StackedDict.
         """
         return DictPaths(self)
+
+    def dfs(self, node=None, path=None) -> Generator[Tuple[List, Any], None, None]:
+        """
+        Depth-First Search (DFS) traversal of the stacked dictionary.
+
+        This method recursively traverses the dictionary in a depth-first manner.
+        It yields each hierarchical path as a list and its corresponding value.
+
+        :param node: The current dictionary node being traversed. Defaults to the root if None.
+        :type node: Optional[dict]
+        :param path: The current hierarchical path being constructed. Defaults to an empty list if None.
+        :type path: Optional[List]
+        :return: A generator that yields tuples of hierarchical paths and their corresponding values.
+        :rtype: Generator[Tuple[List, Any], None, None]
+        """
+        if node is None:
+            node = self
+        if path is None:
+            path = []
+
+        for key, value in node.items():
+            current_path = path + [key]
+            yield (current_path, value)
+            if isinstance(value, dict):  # Check if the value is a nested dictionary
+                yield from self.dfs(value, current_path)  # Recursively traverse the nested dictionary
+
+    def bfs(self) -> Generator[Tuple[Tuple, Any], None, None]:
+        """
+        Breadth-First Search (BFS) traversal of the stacked dictionary.
+
+        This method iteratively traverses the dictionary in a breadth-first manner.
+        It uses a queue to ensure that all nodes at a given depth are visited before moving deeper.
+
+        :return: A generator that yields tuples of hierarchical paths (as tuples) and their corresponding values.
+        :rtype: Generator[Tuple[Tuple, Any], None, None]
+        """
+        queue = deque([((), self)])  # Start with an empty path and the top-level dictionary
+        while queue:
+            path, current_dict = queue.popleft()  # Dequeue the first dictionary
+            for key, value in current_dict.items():
+                new_path = path + (key,)  # Extend the path with the current key
+                if isinstance(value, _StackedDict):  # Check if the value is a nested _StackedDict
+                    queue.append((new_path, value))  # Enqueue the nested dictionary with its path
+                else:
+                    yield new_path, value  # Yield the current path and value
 
 
 class DictPaths:
