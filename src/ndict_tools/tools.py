@@ -423,7 +423,6 @@ class _StackedDict(defaultdict):
 
         return path, value
 
-
     def update(self, **kwargs):
         """
         Updates a stacked dictionary with key/value pairs.
@@ -554,7 +553,9 @@ class _StackedDict(defaultdict):
             current_path = path + [key]
             yield (current_path, value)
             if isinstance(value, dict):  # Check if the value is a nested dictionary
-                yield from self.dfs(value, current_path)  # Recursively traverse the nested dictionary
+                yield from self.dfs(
+                    value, current_path
+                )  # Recursively traverse the nested dictionary
 
     def bfs(self) -> Generator[Tuple[Tuple, Any], None, None]:
         """
@@ -566,13 +567,19 @@ class _StackedDict(defaultdict):
         :return: A generator that yields tuples of hierarchical paths (as tuples) and their corresponding values.
         :rtype: Generator[Tuple[Tuple, Any], None, None]
         """
-        queue = deque([((), self)])  # Start with an empty path and the top-level dictionary
+        queue = deque(
+            [((), self)]
+        )  # Start with an empty path and the top-level dictionary
         while queue:
             path, current_dict = queue.popleft()  # Dequeue the first dictionary
             for key, value in current_dict.items():
                 new_path = path + (key,)  # Extend the path with the current key
-                if isinstance(value, _StackedDict):  # Check if the value is a nested _StackedDict
-                    queue.append((new_path, value))  # Enqueue the nested dictionary with its path
+                if isinstance(
+                    value, _StackedDict
+                ):  # Check if the value is a nested _StackedDict
+                    queue.append(
+                        (new_path, value)
+                    )  # Enqueue the nested dictionary with its path
                 else:
                     yield new_path, value  # Yield the current path and value
 
@@ -593,19 +600,27 @@ class DictPaths:
         yield from self._iterate_paths(self._stacked_dict)
 
     def _iterate_paths(self, current_dict, current_path=None):
+        """
+        Recursively iterates over all hierarchical paths in the _StackedDict.
+
+        This function now records both intermediate nodes and leaves.
+
+        :param current_dict: The current dictionary being traversed.
+        :param current_path: The path accumulated so far.
+        :yield: A list representing the hierarchical path.
+        """
         if current_path is None:
             current_path = []
+
         for key, value in current_dict.items():
+            new_path = current_path + [key]  # Current path including this key
+            yield new_path  # Register the node itself
+
             if isinstance(value, dict) and not isinstance(value, _StackedDict):
-                # Non _StackedDict dicts are treated as regular dicts
-                value = _StackedDict(value)
+                value = _StackedDict(value)  # Convert normal dicts to _StackedDict
+
             if isinstance(value, _StackedDict):
-                if not value:  # Handle empty dictionaries
-                    yield current_path + [key]
-                else:
-                    yield from self._iterate_paths(value, current_path + [key])
-            else:
-                yield current_path + [key]
+                yield from self._iterate_paths(value, new_path)  # Continue recursion
 
     def __len__(self):
         """
@@ -613,17 +628,24 @@ class DictPaths:
         """
         return sum(1 for _ in self)
 
-    def __contains__(self, path):
+    def __contains__(self, path) -> bool:
         """
         Checks if a hierarchical path exists in the _StackedDict.
+
+        A path is considered valid if it leads to a stored value or a sub-dictionary.
+
+        :param path: A list representing a hierarchical path.
+        :type path: List
+        :return: True if the path exists, False otherwise.
+        :rtype: bool
         """
         current = self._stacked_dict
         for key in path:
-            if key not in current:
+            if not isinstance(current, dict) or key not in current:
                 return False
             current = current[key]
-            if not isinstance(current, _StackedDict):
-                break
+
+        # The path is valid as long as we have reached a valid key, regardless of its type
         return True
 
     def __repr__(self):
