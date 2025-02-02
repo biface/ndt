@@ -20,12 +20,15 @@ paths = list(nd.dict_paths())
     "index, expected_path",
     [
         (0, ["h"]),
-        (1, ["f", "g"]),
-        (2, ["a", "e"]),
-        (3, ["a", "b", "c"]),
-        (4, ["a", "b", "d"]),
-        (5, [(1, 2)]),
-        (6, [("i", "j")]),
+        (1, ["f"]),
+        (2, ["f", "g"]),
+        (3, ["a"]),
+        (4, ["a", "e"]),
+        (5, ["a", "b"]),
+        (6, ["a", "b", "c"]),
+        (7, ["a", "b", "d"]),
+        (8, [(1, 2)]),
+        (9, [("i", "j")]),
     ],
 )
 def test_paths(index, expected_path):
@@ -37,7 +40,11 @@ def test_paths(index, expected_path):
     [
         (["h"], True),
         (["f", "g"], True),
+        (["a"], True),
+        (["a", "b"], True),
+        (["a", "b", "c"], True),
         ([(1, 2)], True),
+        ([(1, 2), (3, 4)], False),
         ([("i", "k")], False),
         (["y"], False),
     ],
