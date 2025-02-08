@@ -583,6 +583,58 @@ class _StackedDict(defaultdict):
                 else:
                     yield new_path, value  # Yield the current path and value
 
+    def height(self) -> int:
+        """
+        Computes the height of the _StackedDict, defined as the length of the longest path.
+
+        :return: The height of the dictionary.
+        :rtype: int
+        """
+        return max((len(path) for path in self.dict_paths()), default=0)
+
+    def size(self) -> int:
+        """
+        Computes the size of the _StackedDict, defined as the total number of keys (nodes) in the structure.
+
+        :return: The total number of nodes in the dictionary.
+        :rtype: int
+        """
+        return sum(1 for _ in self.unpacked_items())
+
+    def leaves(self) -> list:
+        """
+        Extracts the leaf nodes of the _StackedDict.
+
+        :return: A list of leaf values.
+        :rtype: list
+        """
+        return [value for _, value in self.dfs() if not isinstance(value, _StackedDict)]
+
+    def is_balanced(self) -> bool:
+        """
+        Checks if the _StackedDict is balanced.
+        A balanced dictionary is one where the height difference between any two subtrees is at most 1.
+
+        :return: True if balanced, False otherwise.
+        :rtype: bool
+        """
+
+        def check_balance(node):
+            if not isinstance(node, _StackedDict) or not node:
+                return 0, True  # Height, is_balanced
+            heights = []
+            for key in node:
+                height, balanced = check_balance(node[key])
+                if not balanced:
+                    return 0, False
+                heights.append(height)
+            if not heights:
+                return 1, True
+            return max(heights) + 1, max(heights) - min(heights) <= 1
+
+        _, balanced = check_balance(self)
+        return balanced
+
 
 class DictPaths:
     """

@@ -72,3 +72,32 @@ dfs_p = list(nd.dfs(path=["k", "l"]))
 )
 def test_dfs(index, expected):
     assert dfs_p[index] == expected
+
+
+@pytest.mark.parametrize(
+    "value, exp_assert",
+    [
+        (400, True),
+        (200, True),
+        (43, False),
+        (84, True),
+        (451, False),
+        (475, True),
+        (500, False),
+    ],
+)
+def test_leaves(value, exp_assert):
+    assert (value in nd.leaves()) is exp_assert
+
+
+def test_height():
+    assert nd.height() == 3
+
+
+def test_size():
+    assert nd.size() == 7
+
+
+def test_balanced():
+    assert nd.is_balanced() == False
+    assert nd[["a", "b"]].is_balanced() == True
