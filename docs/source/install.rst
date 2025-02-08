@@ -24,6 +24,9 @@ it in your project.
 Versions
 --------
 
+.. versionadded:: 0.6.1
+    Added path and tree like management functions. These functions are still in the early stages of testing and are not
+    expected to be fully integrated before stable version 1.0.0.
 .. versionadded:: 0.6.0
     Introducing nested keys with python lists : ``sd[[1, 2, 3]] eq sd[1][2][3]``
     Pay particular attention to the use of double brackets ``[[...]]`` to manage the key list.
