@@ -1,3 +1,6 @@
+![Python](https://img.shields.io/badge/Language-python-green.svg)
+
+--------------
 # Lecteur français
 
 En Python standard, il est possible d'avoir des dictionnaires à l'intérieur d'autres dictionnaires, créant ainsi des
