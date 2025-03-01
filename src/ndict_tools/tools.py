@@ -353,7 +353,7 @@ class _StackedDict(defaultdict):
         :type default: Any
         :return: The value associated with the removed key.
         :rtype: Any
-        :raises KeyError: If the key does not exist and no default is provided.
+        :raises StackedKeyError: If the key does not exist and no default is provided.
         """
         if isinstance(key, list):
             # Handle hierarchical keys
@@ -394,7 +394,7 @@ class _StackedDict(defaultdict):
 
         :return: A tuple containing the hierarchical path (list of keys) and the value.
         :rtype: tuple
-        :raises KeyError: If the dictionary is empty.
+        :raises StackedKeyError: If the dictionary is empty.
         """
         if not self:  # Handle empty dictionary
             raise StackedKeyError("popitem(): _StackedDict is empty")

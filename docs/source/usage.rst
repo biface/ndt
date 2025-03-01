@@ -47,7 +47,9 @@ For example, consider the following nested dictionary:
     }
 
 In this dictionary:
+
 - The path ``['a', 'b', 'c']`` leads to the value ``1``.
+- The path ``['a', 'b']`` leads to the dictionary ``{'c': 1}``.
 - The path ``['a', 'd']`` leads to the value ``2``.
 - The path ``['e']`` leads to the value ``3``.
 
