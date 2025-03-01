@@ -4,6 +4,7 @@
 
 import pytest
 from ndict_tools import NestedDictionary
+from ndict_tools.exception import StackedKeyError
 
 nd = NestedDictionary(
     {
@@ -37,7 +38,7 @@ def test_popitem(expected):
 
 
 def test_pop_function_invalid_path():
-    with pytest.raises(KeyError):
+    with pytest.raises(StackedKeyError):
         nd.pop(["a", "b", "e"])
 
 
@@ -48,5 +49,5 @@ def test_pop_function_default():
 def test_popitem_empty_stack():
     nd.pop(["f"])
     nd.pop(["a"])
-    with pytest.raises(KeyError):
+    with pytest.raises(StackedKeyError):
         nd.popitem()

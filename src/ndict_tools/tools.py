@@ -363,7 +363,7 @@ class _StackedDict(defaultdict):
                 if sub_key not in current:
                     if default is not None:
                         return default
-                    raise KeyError(f"Key path {key} does not exist.")
+                    raise StackedKeyError(f"Key path {key} does not exist.")
                 parents.append((current, sub_key))
                 current = current[sub_key]
 
@@ -378,7 +378,7 @@ class _StackedDict(defaultdict):
             else:
                 if default is not None:
                     return default
-                raise KeyError(f"Key path {key} does not exist.")
+                raise StackedKeyError(f"Key path {key} does not exist.")
         else:
             # Handle flat keys
             return super().pop(key, default)
@@ -397,7 +397,7 @@ class _StackedDict(defaultdict):
         :raises KeyError: If the dictionary is empty.
         """
         if not self:  # Handle empty dictionary
-            raise KeyError("popitem(): _StackedDict is empty")
+            raise StackedKeyError("popitem(): _StackedDict is empty")
 
         # Initialize a stack to traverse the dictionary
         stack = [(self, [])]  # Each entry is (current_dict, current_path)
