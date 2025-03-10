@@ -1,4 +1,4 @@
-![Python](https://img.shields.io/badge/Language-python-green.svg)
+![Python](https://img.shields.io/badge/Language-python-green.svg) ![GitHub Release](https://img.shields.io/github/v/release/biface/ndt) ![PyPI - Version](https://img.shields.io/pypi/v/ndict-tools)
 
 --------------
 # Lecteur français
