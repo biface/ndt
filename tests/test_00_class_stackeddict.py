@@ -92,6 +92,7 @@ def test_from_dict_attribute_error():
             attributes={"factor": True},
         )
 
+
 def test_shallow_copy_dict():
     sd = _StackedDict(indent=0, default=None)
     sd[1] = "Integer"

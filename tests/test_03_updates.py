@@ -36,7 +36,7 @@ def test_top():
     assert isinstance(suit["top"]["coat"], NestedDictionary)
     assert isinstance(suit["top"]["jacket"], NestedDictionary)
     assert isinstance(suit["top"]["vest"], NestedDictionary)
-    suit["top"].update(coat=NestedDictionary(zip(['size', 'color'], ["long", "black"])))
+    suit["top"].update(coat=NestedDictionary(zip(["size", "color"], ["long", "black"])))
     assert isinstance(suit["top"]["coat"]["size"], str)
 
 
