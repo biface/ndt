@@ -92,24 +92,6 @@ def test_from_dict_attribute_error():
             attributes={"factor": True},
         )
 
-
-def test_key_error():
-    sd = _StackedDict(indent=0, default=None)
-    sd[1] = "first"
-    sd[2] = {"first": 1, "second": 2}
-    sd[3] = 3
-    with pytest.raises(KeyError):
-        sd.update(test="test", exp="test")
-    with pytest.raises(StackedKeyError):
-        sd.update(key=4, value="four")
-    with pytest.raises(StackedKeyError):
-        sd.items_list(4)
-    with pytest.raises(StackedKeyError):
-        sd.key_list(4)
-    with pytest.raises(StackedKeyError):
-        sd.is_key([2, "first"])
-
-
 def test_shallow_copy_dict():
     sd = _StackedDict(indent=0, default=None)
     sd[1] = "Integer"

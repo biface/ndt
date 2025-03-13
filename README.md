@@ -1,4 +1,5 @@
-![Python](https://img.shields.io/badge/Language-python-green.svg) ![GitHub Release](https://img.shields.io/github/v/release/biface/ndt) ![PyPI - Version](https://img.shields.io/pypi/v/ndict-tools)
+![Python](https://img.shields.io/badge/Language-python-green.svg) ![GitHub Release](https://img.shields.io/github/v/release/biface/ndt)
+![Test](https://github.com/biface/ndt/actions/workflows/python-ci.yaml/badge.svg?branch=master)![PyPI - Version](https://img.shields.io/pypi/v/ndict-tools)
 
 --------------
 # Lecteur français

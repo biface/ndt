@@ -423,25 +423,52 @@ class _StackedDict(defaultdict):
 
         return path, value
 
-    def update(self, **kwargs):
+    def update(self, dictionary: dict = None, **kwargs) -> None:
         """
-        Updates a stacked dictionary with key/value pairs.
+        Updates a stacked dictionary with key/value pairs from a dictionary or keyword arguments.
 
-        :param kwargs: key/value pairs where values are _StackedDict instances.
+        :param dictionary: A dictionary with key/value pairs to update.
+        :type dictionary: dict
+        :param kwargs: Additional key/value pairs to update.
         :type kwargs: dict
         :return: None
-        :raise StackedKeyError: if any of the key/value pairs cannot be updated:
-        :raise KeyError: if key/value are missing or invalid.
         """
-        if "key" in kwargs and "value" in kwargs:
-            if isinstance(kwargs["value"], _StackedDict):
-                self[kwargs["key"]] = kwargs["value"]
-            else:
-                raise StackedKeyError(
-                    "Cannot update a stacked dictionary with an invalid key/value types"
+        if dictionary:
+            for key, value in dictionary.items():
+                if isinstance(value, _StackedDict):
+                    value.indent = self.indent
+                    value.default_factory = self.default_factory
+                    self[key] = value
+                elif isinstance(value, dict):
+                    nested_dict = from_dict(
+                        value,
+                        self.__class__,
+                        init={
+                            "indent": self.indent,
+                            "default_factory": self.default_factory,
+                        },
+                    )
+                    self[key] = nested_dict
+                else:
+                    self[key] = value
+
+        for key, value in kwargs.items():
+            if isinstance(value, _StackedDict):
+                value.indent = self.indent
+                value.default_factory = self.default_factory
+                self[key] = value
+            elif isinstance(value, dict):
+                nested_dict = from_dict(
+                    value,
+                    self.__class__,
+                    init={
+                        "indent": self.indent,
+                        "default_factory": self.default_factory,
+                    },
                 )
-        else:
-            raise KeyError("Malformed dictionary parameters key and value are missing")
+                self[key] = nested_dict
+            else:
+                self[key] = value
 
     def is_key(self, key: Any) -> bool:
         """
