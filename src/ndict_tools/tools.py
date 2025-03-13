@@ -394,10 +394,10 @@ class _StackedDict(defaultdict):
 
         :return: A tuple containing the hierarchical path (list of keys) and the value.
         :rtype: tuple
-        :raises StackedKeyError: If the dictionary is empty.
+        :raises IndexError: If the dictionary is empty.
         """
         if not self:  # Handle empty dictionary
-            raise StackedKeyError("popitem(): _StackedDict is empty")
+            raise IndexError("popitem(): _StackedDict is empty")
 
         # Initialize a stack to traverse the dictionary
         stack = [(self, [])]  # Each entry is (current_dict, current_path)
@@ -661,6 +661,24 @@ class _StackedDict(defaultdict):
 
         _, balanced = check_balance(self)
         return balanced
+
+    def ancestors(self, value):
+        """
+        Finds the ancestors (keys) of a given value in the nested dictionary.
+
+        :param value: The value to search for in the nested dictionary.
+        :type value: Any
+        :return: A list of keys representing the path to the value.
+        :rtype: List[Any]
+        :raises ValueError: If the value is not found in the dictionary.
+        """
+        for path, val in self.dfs():
+            if val == value:
+                return path[
+                    :-1
+                ]  # Return all keys except the last one (the direct key of the value)
+
+        raise ValueError(f"Value {value} not found in the dictionary.")
 
 
 class DictPaths:

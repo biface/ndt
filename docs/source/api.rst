@@ -46,6 +46,7 @@ Tools
     .. automethod:: size()
     .. automethod:: leaves()
     .. automethod:: is_balanced()
+    .. automethod:: ancestors()
 
 Core
 ----

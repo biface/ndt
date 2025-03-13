@@ -49,5 +49,5 @@ def test_pop_function_default():
 def test_popitem_empty_stack():
     nd.pop(["f"])
     nd.pop(["a"])
-    with pytest.raises(StackedKeyError):
+    with pytest.raises(IndexError):
         nd.popitem()
