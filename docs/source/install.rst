@@ -1,32 +1,33 @@
 Installation
 ============
 
-Command line
+Command Line
 ------------
 
-This package is available on Python Package Index PyPI_ and easy to isntall. Simply use PIP as below
+This package is available on the Python Package Index (PyPI_) and is easy to install. Simply use pip as shown below:
 
 .. code-block:: console
 
     (.venv) $ pip3 install ndict-tools
 
-or use your IDE usual interface to install this package from PyPI_
+Alternatively, use your IDE's interface to install this package from PyPI_.
 
 .. _PyPI: https://pypi.org/project/ndict-tools/
 
-From github
+From GitHub
 -----------
 
-This package is also released on `GitHub <https://github.com/biface/ndt>`_. You can collect from
-the `release directory <https://github.com/biface/ndt/releases>`_ the desired version and unpack
-it in your project.
+This package is also available on `GitHub <https://github.com/biface/ndt>`_. You can download the desired version from the `release directory <https://github.com/biface/ndt/releases>`_ and unpack it into your project.
 
 Versions
 --------
 
+.. versionchanged:: 0.7.0
+    Moved the update method exclusively to the ``_StackedDict`` class to standardize updates for future subclasses.
+
 .. versionadded:: 0.6.1
-    Added path and tree like management functions. These functions are still in the early stages of testing and are not
-    expected to be fully integrated before stable version 1.0.0.
+    Added path and tree-like management functions. These functions are still in the early testing stages and are not expected to be fully integrated until the stable version 1.0.0.
+
 .. versionadded:: 0.6.0
-    Introducing nested keys with python lists : ``sd[[1, 2, 3]] eq sd[1][2][3]``
-    Pay particular attention to the use of double brackets ``[[...]]`` to manage the key list.
+    Introduced nested keys with Python lists: ``sd[[1, 2, 3]] == sd[1][2][3]``.
+    Note the use of double brackets ``[[...]]`` to manage the key list.

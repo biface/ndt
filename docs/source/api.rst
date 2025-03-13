@@ -53,4 +53,3 @@ Core
 .. autoclass:: NestedDictionary
 
     .. automethod:: __str__()
-    .. automethod:: update()
