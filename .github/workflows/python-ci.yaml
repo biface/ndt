@@ -33,3 +33,9 @@ jobs:
 
     - name: Run check online environment with tox
       run: tox -e gh-ci
+
+    - name: Upload coverage reports to Codecov
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
