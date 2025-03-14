@@ -6,6 +6,8 @@
 import os
 import sys
 
+from sphinx.ext.graphviz import graphviz
+
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
@@ -31,6 +33,8 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.todo',
     'sphinx_rtd_theme',
+    'sphinx.ext.graphviz',
+    'sphinx.ext.mathjax',
 ]
 
 templates_path = ['source/_templates']
@@ -46,3 +50,9 @@ language = 'en'
 
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
+
+mathjax_path = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'
+mathjax3_config = {'chtml': {'displayAlign': 'left', 'displayIndent': '2em'}}
+
+
+graphviz_output_format = 'svg'

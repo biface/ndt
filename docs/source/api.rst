@@ -33,6 +33,8 @@ Tools
     .. automethod:: unpacked_items()
     .. automethod:: unpacked_keys()
     .. automethod:: unpacked_values()
+    .. automethod:: pop()
+    .. automethod:: popitem()
     .. automethod:: to_dict()
     .. automethod:: update()
     .. automethod:: occurrences()
@@ -40,6 +42,11 @@ Tools
     .. automethod:: key_list()
     .. automethod:: items_list()
     .. automethod:: to_dict()
+    .. automethod:: height()
+    .. automethod:: size()
+    .. automethod:: leaves()
+    .. automethod:: is_balanced()
+    .. automethod:: ancestors()
 
 Core
 ----
@@ -47,4 +54,3 @@ Core
 .. autoclass:: NestedDictionary
 
     .. automethod:: __str__()
-    .. automethod:: update()

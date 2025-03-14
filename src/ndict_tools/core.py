@@ -4,6 +4,7 @@ dictionaries.
 """
 
 from __future__ import annotations
+
 from .tools import _StackedDict, from_dict
 
 """Classes section"""
@@ -66,7 +67,7 @@ class NestedDictionary(_StackedDict):
         if len(args):
             for item in args:
                 if isinstance(item, NestedDictionary):
-                    nested = item
+                    nested = item.deepcopy()
                 elif isinstance(item, dict):
                     nested = from_dict(item, NestedDictionary, init=options)
                 else:
@@ -76,29 +77,3 @@ class NestedDictionary(_StackedDict):
         if kwargs:
             nested = from_dict(kwargs, NestedDictionary, init=options)
             self.update(nested)
-
-    def update(self, dictionary: dict) -> None:
-        """
-        Updates a stacked dictionary with key/value pairs.
-
-        :param dictionary: a simple dict.
-        :type dictionary: dict
-        :return: None
-        """
-        for key, value in dictionary.items():
-            if isinstance(value, NestedDictionary):
-                value.indent = self.indent
-                value.default_factory = self.default_factory
-                super().update(key=key, value=value)
-            elif isinstance(value, dict):
-                nested_dict = from_dict(
-                    value,
-                    NestedDictionary,
-                    attributes={
-                        "indent": self.indent,
-                        "default_factory": self.default_factory,
-                    },
-                )
-                super().update(key=key, value=nested_dict)
-            else:
-                self[key] = value

@@ -1,6 +1,7 @@
 import pytest
 from ndict_tools.tools import _StackedDict
 
+
 @pytest.fixture
 def stacked_dict():
     """Fixture to initialize a _StackedDict with default parameters."""
@@ -70,16 +71,19 @@ def test_hierarchical_access_error(stacked_dict):
     with pytest.raises(KeyError):
         _ = stacked_dict[[1, 2]]
 
+
 def test_simple_list_as_hierarchy(stacked_dict):
     """Test: A flat list should create a hierarchical structure."""
     stacked_dict[[1, 2, 3]] = "value"
     assert stacked_dict[1][2][3] == "value"
+
 
 def test_nested_list_access_error(stacked_dict):
     """Test: Accessing with a nested list should raise a TypeError."""
     stacked_dict[[1, 2, 3]] = "value"
     with pytest.raises(TypeError):
         _ = stacked_dict[[1, [2, 3]]]
+
 
 def test_nested_list_key_error(stacked_dict):
     """Test: A nested list within the key should raise a TypeError."""

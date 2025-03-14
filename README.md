@@ -1,3 +1,10 @@
+![Python](https://img.shields.io/badge/Language-python-green.svg)
+![GitHub Release](https://img.shields.io/github/v/release/biface/ndt)
+![Test](https://github.com/biface/ndt/actions/workflows/python-ci.yaml/badge.svg?branch=master)
+![PyPI - Version](https://img.shields.io/pypi/v/ndict-tools)
+![Codecov](https://img.shields.io/codecov/c/github/biface/ndt)
+
+--------------
 # Lecteur français
 
 En Python standard, il est possible d'avoir des dictionnaires à l'intérieur d'autres dictionnaires, créant ainsi des
