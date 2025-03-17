@@ -4,6 +4,8 @@
 ![Codecov](https://img.shields.io/codecov/c/github/biface/ndt)
 ![GitHub Release](https://img.shields.io/github/v/release/biface/ndt)
 ![PyPI - Version](https://img.shields.io/pypi/v/ndict-tools)
+![PyPI - License](https://img.shields.io/pypi/l/ndict-tools)
+
 
 --------------
 # Lecteur français

@@ -61,6 +61,8 @@ def from_dict(dictionary: dict, class_name: object, **class_options) -> _Stacked
     :raise StackedKeyError: if attribute called is not an attribute of the hierarchy of classes
     """
 
+    #FIXME : Improving _StackedDict and subclasses inner attributes management
+
     options = {"indent": 0, "strict": False}
 
     if "init" in class_options:
@@ -121,6 +123,8 @@ class _StackedDict(defaultdict):
         """
         ind: int = 0
         default = None
+
+        #FIXME : Improving inner class and subclasses attributes
 
         if "indent" not in kwargs:
             raise StackedKeyError("Missing 'indent' arguments")
