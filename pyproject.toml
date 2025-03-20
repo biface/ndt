@@ -4,17 +4,21 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ndict-tools"
-version = "0.7.0"
+version = "0.7.0-1"
 authors = [
     {name="biface"}
 ]
 description = "An implementation of nested dictionaries"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "License :: CeCILL-C Free Software License Agreement (CECILL-C)",
     "Operating System :: OS Independent",
     "Topic :: Utilities",
@@ -28,7 +32,7 @@ Issues = "https://github.com/biface/ndt/issues"
 
 [tool.tox]
 minversion = "3.24.5"
-envlist = ["py38", "py39", "py310", "py311", "py312", "lint", "isort", "black", "fix", "coverage", "bandit", "local", "gh-ci"]
+envlist = ["py39", "py310", "py311", "py312", "lint", "isort", "black", "fix", "coverage", "bandit", "local", "gh-ci"]
 
 [tool.tox.testenv]
 setenv = { PYTHONPATH = "{toxinidir}/src" }
