@@ -83,8 +83,8 @@ commands = ["bandit -r src"]
 description = "Run fix, lint, bandit, and coverage in sequence"
 deps = ["black", "isort", "bandit", "pytest", "pytest-cov"]
 commands = [
-    "black src",
-    "isort src",
+    "black src tests",
+    "isort src tests",
     "bandit -r src",
     "pytest --cov=src --cov-report=term-missing --cov-report=xml:coverage/coverage.xml --cov-report=html:coverage/coverage_html tests"
 ]
