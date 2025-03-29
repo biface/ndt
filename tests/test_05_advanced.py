@@ -3,6 +3,7 @@ Testing advanced graph and tree functions
 """
 
 import pytest
+
 from ndict_tools import NestedDictionary
 
 nd = NestedDictionary(

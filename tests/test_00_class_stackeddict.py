@@ -1,12 +1,12 @@
 import pytest
 
-from ndict_tools.tools import _StackedDict, from_dict
 from ndict_tools.core import NestedDictionary
 from ndict_tools.exception import (
-    StackedKeyError,
     StackedAttributeError,
     StackedDictionaryError,
+    StackedKeyError,
 )
+from ndict_tools.tools import _StackedDict, from_dict
 
 
 def test_unused_error():

@@ -3,6 +3,7 @@ Test Nested Attributes
 """
 
 import pytest
+
 from ndict_tools import NestedDictionary
 from ndict_tools.exception import StackedKeyError
 
@@ -89,4 +90,3 @@ def test_delete_nested_key():
     with pytest.raises(KeyError):
         del nd["second"]
         value = nd["second"]["first"]
-

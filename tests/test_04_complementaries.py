@@ -3,6 +3,7 @@ Testing complementary dictionary functions
 """
 
 import pytest
+
 from ndict_tools import NestedDictionary
 from ndict_tools.exception import StackedKeyError
 
