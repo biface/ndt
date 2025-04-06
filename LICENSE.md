@@ -1,4 +1,4 @@
-# Lecteur français
+# Lecteur francophone
 
 Ce module python permet de gérer des dictionnaires imbriqués en conservant une structure héritée des dictionnaires
 python. Ce module est développé sour la licence [CeCILL-C](http://www.cecill.info/licences/Licence_CeCILL-C_V1-fr.html).

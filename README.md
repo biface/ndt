@@ -9,7 +9,7 @@
 ![PyPI - License](https://img.shields.io/pypi/l/ndict-tools)
 
 --------------
-# Lecteur français
+# Lecteur francophone
 
 En Python standard, il est possible d'avoir des dictionnaires à l'intérieur d'autres dictionnaires, créant ainsi des
 structures de données imbriquées. Cependant, bien que cette fonctionnalité existe, Python ne propose pas de moyens
