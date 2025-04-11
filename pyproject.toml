@@ -35,7 +35,7 @@ minversion = "3.24.5"
 envlist = ["py39", "py310", "py311", "py312", "lint", "isort", "black", "fix", "coverage", "bandit", "local", "gh-ci"]
 
 [tool.tox.testenv]
-setenv = { PYTHONPATH = "{toxinidir}/src" }
+setenv = { PYTHONPATH = "{toxinidir}/src:{toxinidir}/tests" }
 deps = [
     "pytest",
     "pytest-cov"
