@@ -1,5 +1,6 @@
 import pytest
 
+from ndict_tools.exception import StackedTypeError
 from ndict_tools.tools import _StackedDict
 
 
@@ -62,8 +63,8 @@ def test_empty_structure_cleaning(stacked_dict):
 
 
 def test_invalid_key_type(stacked_dict):
-    """Test: Ensure a non-hashable key raises a TypeError."""
-    with pytest.raises(TypeError):
+    """Test: Ensure a non-hashable key raises a StackedTypeError."""
+    with pytest.raises(StackedTypeError):
         stacked_dict[[1, [2, 3]]] = "invalid"
 
 
@@ -80,15 +81,15 @@ def test_simple_list_as_hierarchy(stacked_dict):
 
 
 def test_nested_list_access_error(stacked_dict):
-    """Test: Accessing with a nested list should raise a TypeError."""
+    """Test: Accessing with a nested list should raise a StackedTypeError."""
     stacked_dict[[1, 2, 3]] = "value"
-    with pytest.raises(TypeError):
+    with pytest.raises(StackedTypeError):
         _ = stacked_dict[[1, [2, 3]]]
 
 
 def test_nested_list_key_error(stacked_dict):
-    """Test: A nested list within the key should raise a TypeError."""
-    with pytest.raises(TypeError):
+    """Test: A nested list within the key should raise a StackedTypeError."""
+    with pytest.raises(StackedTypeError):
         stacked_dict[[1, [2, 3]]] = "value"
 
 
