@@ -15,7 +15,13 @@ from collections import defaultdict, deque
 from textwrap import indent
 from typing import Any, Generator, List, Tuple, Union
 
-from .exception import StackedAttributeError, StackedKeyError
+from .exception import (
+    StackedAttributeError,
+    StackedIndexError,
+    StackedKeyError,
+    StackedTypeError,
+    StackedValueError,
+)
 
 """Internal functions"""
 
@@ -78,9 +84,8 @@ def from_dict(dictionary: dict, class_name: object, **class_options) -> _Stacked
                 )
             else:
                 raise StackedAttributeError(
-                    "The key {} is not present in the class attributes".format(
-                        attribute
-                    )
+                    f"The key {attribute} is not present in the class attributes",
+                    attribute=attribute,
                 )
 
     for key, value in dictionary.items():
@@ -127,7 +132,7 @@ class _StackedDict(defaultdict):
         # FIXME : Improving inner class and subclasses attributes
 
         if "indent" not in kwargs:
-            raise StackedKeyError("Missing 'indent' arguments")
+            raise StackedKeyError("Missing 'indent' arguments", key="indent")
         else:
             ind = kwargs.pop("indent")
 
@@ -203,14 +208,17 @@ class _StackedDict(defaultdict):
         :type value: object
         :return: None
         :rtype: None
-        :raises TypeError: if a nested list is found within the key
+        :raises StackedTypeError: if a nested list is found within the key
         """
         if isinstance(key, list):
             # Check for nested lists and raise an error
             for sub_key in key:
                 if isinstance(sub_key, list):
-                    raise TypeError(
-                        "Nested lists are not allowed as keys in _StackedDict."
+                    raise StackedTypeError(
+                        "Nested lists are not allowed as keys in _StackedDict.",
+                        expected_type=str,
+                        actual_type=list,
+                        path=key[: key.index(sub_key)],
                     )
 
             # Handle hierarchical keys
@@ -237,14 +245,17 @@ class _StackedDict(defaultdict):
         :type key: object
         :return: value
         :rtype: object
-        :raises TypeError: if a nested list is found within the key
+        :raises StackedTypeError: if a nested list is found within the key
         """
         if isinstance(key, list):
             # Check for nested lists and raise an error
             for sub_key in key:
                 if isinstance(sub_key, list):
-                    raise TypeError(
-                        "Nested lists are not allowed as keys in _StackedDict."
+                    raise StackedTypeError(
+                        "Nested lists are not allowed as keys in _StackedDict.",
+                        expected_type=str,
+                        actual_type=list,
+                        path=key[: key.index(sub_key)],
                     )
 
             # Handle hierarchical keys
@@ -367,7 +378,9 @@ class _StackedDict(defaultdict):
                 if sub_key not in current:
                     if default is not None:
                         return default
-                    raise StackedKeyError(f"Key path {key} does not exist.")
+                    raise StackedKeyError(
+                        f"Key path {key} does not exist.", key=key, path=key[:-1]
+                    )
                 parents.append((current, sub_key))
                 current = current[sub_key]
 
@@ -382,7 +395,9 @@ class _StackedDict(defaultdict):
             else:
                 if default is not None:
                     return default
-                raise StackedKeyError(f"Key path {key} does not exist.")
+                raise StackedKeyError(
+                    f"Key path {key} does not exist.", key=key[-1], path=key[:-1]
+                )
         else:
             # Handle flat keys
             return super().pop(key, default)
@@ -398,10 +413,10 @@ class _StackedDict(defaultdict):
 
         :return: A tuple containing the hierarchical path (list of keys) and the value.
         :rtype: tuple
-        :raises IndexError: If the dictionary is empty.
+        :raises StackedIndexError: If the dictionary is empty.
         """
         if not self:  # Handle empty dictionary
-            raise IndexError("popitem(): _StackedDict is empty")
+            raise StackedIndexError("popitem(): _StackedDict is empty")
 
         # Initialize a stack to traverse the dictionary
         stack = [(self, [])]  # Each entry is (current_dict, current_path)
@@ -488,7 +503,7 @@ class _StackedDict(defaultdict):
         """
         # Normalize the key (convert lists to tuples for uniform comparison)
         if isinstance(key, list):
-            raise StackedKeyError("This function manage only atomic keys")
+            raise StackedKeyError("This function manages only atomic keys", key=key)
 
         # Check directly if the key exists in unpacked keys
         return any(key in keys for keys in self.unpacked_keys())
@@ -530,7 +545,7 @@ class _StackedDict(defaultdict):
                     __key_list.append(keys)
         else:
             raise StackedKeyError(
-                "Cannot find the key : {} in a stacked dictionary : ".format(key)
+                f"Cannot find the key: {key} in the stacked dictionary", key=key
             )
 
         return __key_list
@@ -554,7 +569,7 @@ class _StackedDict(defaultdict):
                     __items_list.append(items[1])
         else:
             raise StackedKeyError(
-                "Cannot find the key : {} in a stacked dictionary : ".format(key)
+                f"Cannot find the key: {key} in the stacked dictionary", key=key
             )
 
         return __items_list
@@ -686,7 +701,9 @@ class _StackedDict(defaultdict):
                     :-1
                 ]  # Return all keys except the last one (the direct key of the value)
 
-        raise ValueError(f"Value {value} not found in the dictionary.")
+        raise StackedValueError(
+            f"Value {value} not found in the dictionary.", value=value
+        )
 
 
 class DictPaths:
