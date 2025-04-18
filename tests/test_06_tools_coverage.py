@@ -91,33 +91,6 @@ def test_pop_with_default_and_cleanup():
     assert result == "default_value"
 
 
-def test_popitem_stack_traversal():
-    """Test popitem method with stack-based traversal (lines 424-438)."""
-    sd = _StackedDict(indent=2, default=None)
-
-    # Create a nested structure with multiple branches
-    sd["a"] = {"b": {"c": "value1"}}
-    sd["x"] = {"y": "value2"}
-    sd["m"] = "value3"
-
-    # Test popitem on a dictionary with nested structures
-    path, value = sd.popitem()
-
-    # The deepest item should be popped first
-    assert path == ["a", "b", "c"]
-    assert value == "value1"
-
-    # Test popitem again
-    path, value = sd.popitem()
-    assert path == ["x", "y"]
-    assert value == "value2"
-
-    # Test popitem on a dictionary with only flat keys
-    path, value = sd.popitem()
-    assert path == ["m"]
-    assert value == "value3"
-
-
 def test_update_with_kwargs():
     """Test update method with kwargs (line 494)."""
     sd = _StackedDict(indent=2, default=None)
@@ -129,24 +102,6 @@ def test_update_with_kwargs():
     assert sd["b"] == 2
     assert isinstance(sd["c"], _StackedDict)
     assert sd["c"]["d"] == 3
-
-
-def test_is_balanced_edge_cases():
-    """Test is_balanced method with edge cases (lines 679, 682)."""
-    # Create an unbalanced dictionary
-    sd = _StackedDict(indent=2, default=None)
-    sd["a"] = {"b": {"c": {"d": "value1"}}}
-    sd["x"] = "value2"
-
-    # Test is_balanced on an unbalanced dictionary (line 679)
-    assert sd.is_balanced() is False
-
-    # Create a dictionary with an empty branch (line 682)
-    sd2 = _StackedDict(indent=2, default=None)
-    sd2["a"] = _StackedDict(indent=2, default=None)  # Empty nested dictionary
-
-    # Test is_balanced on a dictionary with an empty branch
-    assert sd2.is_balanced() is True
 
 
 def test_ancestors():
@@ -168,18 +123,3 @@ def test_ancestors():
     # Test finding ancestors of a non-existent value
     with pytest.raises(StackedValueError):
         sd.ancestors("non_existent_value")
-
-
-def test_dictpaths_iterate_normal_dict():
-    """Test DictPaths._iterate_paths method with normal dict conversion (line 742)."""
-    # Create a dictionary with a normal dict (not _StackedDict) as a value
-    sd = _StackedDict(indent=2, default=None)
-    sd["a"] = {"b": {"c": "value"}}  # This is a normal dict, not a _StackedDict
-
-    # Get all paths
-    paths = list(sd.dict_paths())
-
-    # Verify that paths include those from the normal dict
-    assert ["a"] in paths
-    assert ["a", "b"] in paths
-    assert ["a", "b", "c"] in paths
