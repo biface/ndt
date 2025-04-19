@@ -11,7 +11,12 @@ Exceptions
 ----------
 
 .. automodule:: ndict_tools.exception
-    :private-members: StackedDictionaryError, StackedKeyError, StackedAttributeError
+.. autoexception:: StackedAttributeError
+.. autoexception:: StackedDictionaryError
+.. autoexception:: StackedIndexError
+.. autoexception:: StackedKeyError
+.. autoexception:: StackedTypeError
+.. autoexception:: StackedValueError
 .. autoexception:: NestedDictionaryException
 
 Tools
@@ -35,6 +40,20 @@ Tools
     .. automethod:: unpacked_values()
     .. automethod:: pop()
     .. automethod:: popitem()
+    .. important:: If a nested dictionary is emptied after using popitem(), it appears as an empty dictionary.
+    .. code-block:: console
+
+            $ sd = _StackedDict(indent=2, default=None)
+
+            $ sd["x"] = "value3"
+            $ sd["a"] = {"b": {"c": "value1"}}
+
+            $ sd.popitem()
+            (['a', 'b', 'c'], 'value1')
+
+            $ sd
+            _StackedDict(None, {'x': 'value3', 'a': {'b': {}}})
+
     .. automethod:: to_dict()
     .. automethod:: update()
     .. automethod:: occurrences()
