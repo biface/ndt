@@ -25,6 +25,42 @@ operations.
 
     $ a['second']['1'] = "2:1"
 
+Initializing and Using Nested Dictionaries
+------------------------------------------
+
+``NestedDictionary`` provides an intuitive interface for working with nested dictionaries, simplifying access and
+manipulation of keys at various depth levels. Although ``NestedDictionary`` is the public class, the core of the library
+lies in the ``_StackedDict`` class. This central class is responsible for internal data and attribute management, enabling
+``NestedDictionary`` to operate seamlessly.
+
+
+To initialize a ``NestedDictionary``, you can use syntax similar to that of a classical dictionary.
+Here is a basic example:
+
+.. code-block:: console
+
+    $ from ndict import NestedDictionary
+
+    $ nd = NestedDictionary(
+        [('first', 1), ('third', 3)],
+        second={'first': 1, 'second': 2},
+        indent=2,   # Sets the indentation level to 2 spaces for displaying nested structures
+        strict=True # Enables strict mode for data validation, ensuring compliance with expected rules
+      )
+
+    $
+
+In this example, we create a ``NestedDictionary`` with key-value pairs at the top level and a nested dictionary under
+the key 'second'. The indent parameter defines the number of spaces used for indentation at each level of nesting,
+making the output more readable. The strict parameter, when set to ``True``, enforces stricter rules for data insertion,
+helping to maintain data integrity. When strict is set to ``False``, the ``NestedDictionary`` operates in a more lenient
+mode, allowing for greater flexibility in data insertion but potentially at the cost of reduced validation and error
+checking.
+
+In future versions, ``_StackedDict`` will evolve to handle specific attributes. This evolution will generalize the
+management of attributes specific to nested dictionary classes, offering greater flexibility and advanced features
+for users.
+
 Understanding Paths in Nested Dictionaries
 ------------------------------------------
 
@@ -188,12 +224,6 @@ Class attributes and methods
 
     .. autoattribute:: indent
     .. autoattribute:: default_factory
-    .. automethod:: update()
-    .. automethod:: occurrences()
-    .. automethod:: is_key()
-    .. automethod:: key_list()
-    .. automethod:: items_list()
-    .. automethod:: to_dict()
         :no-index:
 
 
