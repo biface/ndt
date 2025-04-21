@@ -23,6 +23,9 @@ def test_flat_key_assignment(stacked_dict):
     stacked_dict[(1, 2)] = "tuple_value"
     assert (1, 2) in stacked_dict
     assert stacked_dict[(1, 2)] == "tuple_value"
+    stacked_dict["h"] = "new_string_value"
+    assert stacked_dict["h"] == "new_string_value"
+    assert "h" in stacked_dict
 
 
 def test_mixed_key_access(stacked_dict):

@@ -47,13 +47,14 @@ def unpack_items(dictionary: dict) -> Generator:
 
 
 def from_dict(dictionary: dict, class_name: object, **class_options) -> _StackedDict:
-    """This recursive function is used to transform a dictionary into a stacked dictionary.
+    """
+    This recursive function is used to transform a dictionary into a stacked dictionary.
 
-    This function enhances and replaces the previous from_dict() function in core module of this package.
-    It allows you to create an object subclasses of a _StackedDict with initialization options if requested and
+    This function enhances and replaces the previous from_dict() function in the core module of this package.
+    It allows you to create an object subclass of a _StackedDict with initialization options if requested and
     attributes to be set.
 
-    :param dictionary: dictionary to transform
+    :param dictionary: The dictionary to transform
     :type dictionary: dict
     :param class_name: name of the class to return
     :type class_name: object
@@ -64,7 +65,7 @@ def from_dict(dictionary: dict, class_name: object, **class_options) -> _Stacked
     :type class_options: dict
     :return: stacked dictionary or of subclasses of _StackedDict
     :rtype: _StackedDict
-    :raise StackedKeyError: if attribute called is not an attribute of the hierarchy of classes
+    :raise StackedKeyError: if attribute called is not an attribute of the class hierarchy.
     """
 
     # FIXME : Improving _StackedDict and subclasses inner attributes management
