@@ -40,19 +40,23 @@ Tools
     .. automethod:: unpacked_values()
     .. automethod:: pop()
     .. automethod:: popitem()
-    .. important:: If a nested dictionary is emptied after using popitem(), it appears as an empty dictionary.
-    .. code-block:: console
+    .. important::
 
-            $ sd = _StackedDict(indent=2, default=None)
+        If a nested dictionary is emptied after using popitem() and is nested in another nested dictionary. It will
+        appear as an empty dictionary.
 
-            $ sd["x"] = "value3"
-            $ sd["a"] = {"b": {"c": "value1"}}
+        .. code-block:: console
 
-            $ sd.popitem()
-            (['a', 'b', 'c'], 'value1')
+                $ sd = _StackedDict(indent=2, default=None)
 
-            $ sd
-            _StackedDict(None, {'x': 'value3', 'a': {'b': {}}})
+                $ sd["x"] = "value3"
+                $ sd["a"] = {"b": {"c": "value1"}}
+
+                $ sd.popitem()
+                (['a', 'b', 'c'], 'value1')
+
+                $ sd
+                _StackedDict(None, {'x': 'value3', 'a': {'b': {}}})
 
     .. automethod:: to_dict()
     .. automethod:: update()

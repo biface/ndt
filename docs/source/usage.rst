@@ -57,9 +57,11 @@ helping to maintain data integrity. When strict is set to ``False``, the ``Neste
 mode, allowing for greater flexibility in data insertion but potentially at the cost of reduced validation and error
 checking.
 
-In future versions, ``_StackedDict`` will evolve to handle specific attributes. This evolution will generalize the
-management of attributes specific to nested dictionary classes, offering greater flexibility and advanced features
-for users.
+.. note::
+
+    In future versions, ``_StackedDict`` will evolve to handle specific attributes. This evolution will generalize
+    the management of attributes specific to nested dictionary classes, offering greater flexibility and advanced
+    features for users.
 
 Understanding Paths in Nested Dictionaries
 ------------------------------------------
