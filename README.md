@@ -8,9 +8,14 @@
 ![GitHub Release](https://img.shields.io/github/v/release/biface/ndt)
 ![PyPI - Version](https://img.shields.io/pypi/v/ndict-tools)
 
-
 --------------
 # Lecteur francophone
+=======
+![GitHub Release](https://img.shields.io/github/v/release/biface/ndt)
+![Test](https://github.com/biface/ndt/actions/workflows/python-ci.yaml/badge.svg?branch=master)
+![PyPI - Version](https://img.shields.io/pypi/v/ndict-tools)
+![Codecov](https://img.shields.io/codecov/c/github/biface/ndt)
+
 
 En Python standard, il est possible d'avoir des dictionnaires à l'intérieur d'autres dictionnaires, créant ainsi des
 structures de données imbriquées. Cependant, bien que cette fonctionnalité existe, Python ne propose pas de moyens

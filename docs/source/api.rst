@@ -57,7 +57,7 @@ Tools
 
                 $ sd
                 _StackedDict(None, {'x': 'value3', 'a': {'b': {}}})
-
+                
     .. automethod:: to_dict()
     .. automethod:: update()
     .. automethod:: occurrences()
