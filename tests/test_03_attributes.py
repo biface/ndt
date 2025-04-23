@@ -3,7 +3,9 @@ Test Nested Attributes
 """
 
 import pytest
+
 from ndict_tools import NestedDictionary
+from ndict_tools.exception import StackedKeyError
 
 d = {
     "first": "first",
@@ -49,12 +51,15 @@ def test_is_key():
     assert nd.is_key("third") is True
     assert nd.is_key("fourth") is False
     assert nd.is_key("third") is True
+    with pytest.raises(StackedKeyError):
+        assert nd.is_key(["fourth", ["third", "fourth"]])
 
 
 def test_key_list():
     assert nd.key_list("first") == [("first",), ("second", "first")]
     assert nd.key_list("third") == [("third",)]
-
+    with pytest.raises(StackedKeyError):
+        assert nd.key_list("not_in_key")
 
 def test_unpacked_key():
     assert ("second", "first") in nd.unpacked_keys()
@@ -70,6 +75,8 @@ def test_item_list():
     assert nd.items_list("first") == ["first", "second:first"]
     assert nd.items_list("second") == ["second:first", "second:second"]
     assert nd.items_list("third") == ["third"]
+    with pytest.raises(StackedKeyError):
+        assert nd.items_list("not_in_key")
 
 
 def test_delete_simple_key():

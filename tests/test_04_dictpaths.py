@@ -1,4 +1,5 @@
 import pytest
+
 from ndict_tools import NestedDictionary
 
 nd = NestedDictionary(

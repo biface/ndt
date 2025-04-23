@@ -44,6 +44,7 @@ class NestedDictionary(_StackedDict):
 
 
         """
+        # FIXME : Improving inner superclass attributes management
         indent = 0
 
         if kwargs and "indent" in kwargs:

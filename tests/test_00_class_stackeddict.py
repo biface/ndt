@@ -1,18 +1,19 @@
 import pytest
 
-from ndict_tools.tools import _StackedDict, from_dict
 from ndict_tools.core import NestedDictionary
 from ndict_tools.exception import (
-    StackedKeyError,
     StackedAttributeError,
     StackedDictionaryError,
+    StackedKeyError,
+    StackedTypeError,
 )
+from ndict_tools.tools import _StackedDict, from_dict
 
 
 def test_unused_error():
     e = StackedDictionaryError("This is an unused class", 1000)
     assert str(e) == "This is an unused class"
-    assert e.error == 1000
+    assert e.error_code == 1000
 
 
 def test_stacked_dict_init_error():
