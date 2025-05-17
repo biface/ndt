@@ -61,6 +61,7 @@ def test_key_list():
     with pytest.raises(StackedKeyError):
         assert nd.key_list("not_in_key")
 
+
 def test_unpacked_key():
     assert ("second", "first") in nd.unpacked_keys()
     assert ("second", "second") in nd.unpacked_keys()
