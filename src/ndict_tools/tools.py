@@ -109,9 +109,9 @@ class _StackedDict(defaultdict):
     the processing of nested dictionaries. It inherits from defaultdict.
     """
 
-    #indent: int = 0
-    #"indent is used to print the dictionary with json indentation"
-    #default_setup: list = []
+    # indent: int = 0
+    # "indent is used to print the dictionary with json indentation"
+    # default_setup: list = []
 
     def __init__(self, *args, **kwargs):
         """
@@ -133,7 +133,7 @@ class _StackedDict(defaultdict):
         default = None
         setup = []
 
-        self.indent: int =0
+        self.indent: int = 0
         "indent is used to print the dictionary with json indentation"
         self.default_setup: list = []
         "default_setup is ued to disseminate default parameters to stacked objects"
@@ -158,7 +158,7 @@ class _StackedDict(defaultdict):
 
         super().__init__(*args, **kwargs)
         self.default_setup = setup
-        for (key, value) in self.default_setup:
+        for key, value in self.default_setup:
             self.__setattr__(key, value)
 
     def __str__(self, padding=0) -> str:
