@@ -109,8 +109,9 @@ class _StackedDict(defaultdict):
     the processing of nested dictionaries. It inherits from defaultdict.
     """
 
-    indent: int = 0
-    "indent is used to print the dictionary with json indentation"
+    #indent: int = 0
+    #"indent is used to print the dictionary with json indentation"
+    #default_setup: list = []
 
     def __init__(self, *args, **kwargs):
         """
@@ -127,24 +128,38 @@ class _StackedDict(defaultdict):
         :param kwargs:
         :type kwargs: dict
         """
+
         ind: int = 0
         default = None
+        setup = []
 
-        # FIXME : Improving inner class and subclasses attributes
+        self.indent: int =0
+        "indent is used to print the dictionary with json indentation"
+        self.default_setup: list = []
+        "default_setup is ued to disseminate default parameters to stacked objects"
 
-        if "indent" not in kwargs:
-            raise StackedKeyError("Missing 'indent' arguments", key="indent")
+        # FIXME : Improving inner class and subclasses
+
+        if "setup" not in kwargs:
+            if "indent" not in kwargs:
+                raise StackedKeyError("Missing 'indent' arguments", key="indent")
+            else:
+                ind = kwargs.pop("indent")
+
+            if "default" not in kwargs:
+                default = None
+            else:
+                default = kwargs.pop("default")
+            setup = [("indent", ind), ("default_factory", default)]
         else:
-            ind = kwargs.pop("indent")
-
-        if "default" not in kwargs:
-            default = None
-        else:
-            default = kwargs.pop("default")
+            settings = kwargs.pop("setup")
+            for key, value in settings.items():
+                setup.append((key, value))
 
         super().__init__(*args, **kwargs)
-        self.indent = ind
-        self.default_factory = default
+        self.default_setup = setup
+        for (key, value) in self.default_setup:
+            self.__setattr__(key, value)
 
     def __str__(self, padding=0) -> str:
         """
@@ -232,6 +247,7 @@ class _StackedDict(defaultdict):
                     current[sub_key].__setattr__(
                         "default_factory", self.default_factory
                     )
+                    current[sub_key].__setattr__("default_setup", self.default_setup)
                 current = current[sub_key]
             current[key[-1]] = value
         else:
@@ -248,6 +264,7 @@ class _StackedDict(defaultdict):
         :rtype: object
         :raises StackedTypeError: if a nested list is found within the key
         """
+
         if isinstance(key, list):
             # Check for nested lists and raise an error
             for sub_key in key:
@@ -264,7 +281,11 @@ class _StackedDict(defaultdict):
             for sub_key in key:
                 current = current[sub_key]
             return current
-        return super().__getitem__(key)
+
+        if isinstance(key, str) and key in self.__dict__.keys():
+            return self.__getattribute__(key)
+        else:
+            return super().__getitem__(key)
 
     def __delitem__(self, key):
         """
@@ -291,6 +312,7 @@ class _StackedDict(defaultdict):
                 if not parent[sub_key]:
                     del parent[sub_key]
         else:  # Autres types traités comme des clés simples
+            # FIXME : Must not delete an attribute - to be controlled as in __getitem__ and raise an error
             super().__delitem__(key)
 
     def unpacked_items(self) -> Generator:
