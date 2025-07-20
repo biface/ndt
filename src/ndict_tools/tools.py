@@ -72,22 +72,25 @@ def from_dict(dictionary: dict, class_name: object, **class_options) -> _Stacked
 
     options = {"indent": 0, "strict": False}
 
-    if "init" in class_options:
-        options = class_options["init"]
+    if "setup" in class_options:
+        dict_object = class_name(**class_options)
+    else:
+        if "init" in class_options:
+            options = class_options["init"]
 
-    dict_object = class_name(**options)
+        dict_object = class_name(**options)
 
-    if "attributes" in class_options:
-        for attribute in class_options["attributes"]:
-            if hasattr(dict_object, attribute):
-                dict_object.__setattr__(
-                    attribute, class_options["attributes"][attribute]
-                )
-            else:
-                raise StackedAttributeError(
-                    f"The key {attribute} is not present in the class attributes",
-                    attribute=attribute,
-                )
+        if "attributes" in class_options:
+            for attribute in class_options["attributes"]:
+                if hasattr(dict_object, attribute):
+                    dict_object.__setattr__(
+                        attribute, class_options["attributes"][attribute]
+                    )
+                else:
+                    raise StackedAttributeError(
+                        f"The key {attribute} is not present in the class attributes",
+                        attribute=attribute,
+                    )
 
     for key, value in dictionary.items():
         if isinstance(value, _StackedDict):
