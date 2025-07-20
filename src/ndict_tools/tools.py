@@ -211,11 +211,7 @@ class _StackedDict(defaultdict):
         :rtype: _StackedDict or a subclass of _StackedDict
         """
 
-        return from_dict(
-            self.to_dict(),
-            self.__class__,
-            init={"indent": self.indent, "default": self.default_factory},
-        )
+        return from_dict(self.to_dict(), self.__class__, setup=dict(self.default_setup))
 
     def __setitem__(self, key, value) -> None:
         """
@@ -486,14 +482,7 @@ class _StackedDict(defaultdict):
                     self[key] = value
                 elif isinstance(value, dict):
                     nested_dict = from_dict(
-                        value,
-                        self.__class__,
-                        init={
-                            "indent": self.indent,
-                        },
-                        attributes={
-                            "default_factory": self.default_factory,
-                        },
+                        value, self.__class__, setup=dict(self.default_setup)
                     )
                     self[key] = nested_dict
                 else:
@@ -506,14 +495,7 @@ class _StackedDict(defaultdict):
                 self[key] = value
             elif isinstance(value, dict):
                 nested_dict = from_dict(
-                    value,
-                    self.__class__,
-                    init={
-                        "indent": self.indent,
-                    },
-                    attributes={
-                        "default_factory": self.default_factory,
-                    },
+                    value, self.__class__, setup=dict(self.default_setup)
                 )
                 self[key] = nested_dict
             else:
