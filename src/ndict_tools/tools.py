@@ -72,8 +72,16 @@ def from_dict(dictionary: dict, class_name: object, **class_options) -> _Stacked
 
     options = {"indent": 0, "strict": False}
 
-    if "setup" in class_options:
+    if "default_setup" in class_options:
         dict_object = class_name(**class_options)
+        for attribute, value in class_options["default_setup"].items():
+            if hasattr(dict_object, attribute):
+                dict_object.__setattr__(attribute, value)
+            else:
+                raise StackedAttributeError(
+                    f"The key {attribute} is not present in the class attributes",
+                    attribute=attribute,
+                )
     else:
         if "init" in class_options:
             options = class_options["init"]
@@ -112,10 +120,6 @@ class _StackedDict(defaultdict):
     the processing of nested dictionaries. It inherits from defaultdict.
     """
 
-    # indent: int = 0
-    # "indent is used to print the dictionary with json indentation"
-    # default_setup: list = []
-
     def __init__(self, *args, **kwargs):
         """
         At instantiation, it has two mandatory parameters for its creation:
@@ -143,7 +147,7 @@ class _StackedDict(defaultdict):
 
         # FIXME : Improving inner class and subclasses
 
-        if "setup" not in kwargs:
+        if "default_setup" not in kwargs:
             if "indent" not in kwargs:
                 raise StackedKeyError("Missing 'indent' arguments", key="indent")
             else:
@@ -155,14 +159,25 @@ class _StackedDict(defaultdict):
                 default = kwargs.pop("default")
             setup = [("indent", ind), ("default_factory", default)]
         else:
-            settings = kwargs.pop("setup")
+            settings = kwargs.pop("default_setup")
+            if not "indent" in settings.keys():
+                raise StackedKeyError(
+                    "Missing 'indent' argument in default settings", key="indent"
+                )
+            if not "default_factory" in settings.keys():
+                raise StackedKeyError(
+                    "Missing 'default_factory' argument in default settings",
+                    key="default_factory",
+                )
+
             for key, value in settings.items():
                 setup.append((key, value))
 
-        super().__init__(*args, **kwargs)
+        super().__init__()
         self.default_setup = setup
         for key, value in self.default_setup:
             self.__setattr__(key, value)
+        # FIXME Add update with args and kwargs
 
     def __str__(self, padding=0) -> str:
         """
@@ -211,7 +226,9 @@ class _StackedDict(defaultdict):
         :rtype: _StackedDict or a subclass of _StackedDict
         """
 
-        return from_dict(self.to_dict(), self.__class__, setup=dict(self.default_setup))
+        return from_dict(
+            self.to_dict(), self.__class__, default_setup=dict(self.default_setup)
+        )
 
     def __setitem__(self, key, value) -> None:
         """
@@ -482,7 +499,7 @@ class _StackedDict(defaultdict):
                     self[key] = value
                 elif isinstance(value, dict):
                     nested_dict = from_dict(
-                        value, self.__class__, setup=dict(self.default_setup)
+                        value, self.__class__, default_setup=dict(self.default_setup)
                     )
                     self[key] = nested_dict
                 else:
@@ -495,7 +512,7 @@ class _StackedDict(defaultdict):
                 self[key] = value
             elif isinstance(value, dict):
                 nested_dict = from_dict(
-                    value, self.__class__, setup=dict(self.default_setup)
+                    value, self.__class__, default_setup=dict(self.default_setup)
                 )
                 self[key] = nested_dict
             else:
