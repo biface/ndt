@@ -145,7 +145,7 @@ class _StackedDict(defaultdict):
         self.default_setup: list = []
         "default_setup is ued to disseminate default parameters to stacked objects"
 
-        # FIXME : Improving inner class and subclasses
+        # TODO : Optimize management of parameters default_setup and indent/default_factory
 
         if "default_setup" not in kwargs:
             if "indent" not in kwargs:
@@ -177,7 +177,31 @@ class _StackedDict(defaultdict):
         self.default_setup = setup
         for key, value in self.default_setup:
             self.__setattr__(key, value)
-        # FIXME Add update with args and kwargs
+
+        if len(args):
+            for item in args:
+                if isinstance(item, self.__class__):
+                    nested = item.deepcopy()
+                elif isinstance(item, dict):
+                    nested = from_dict(
+                        item, self.__class__, default_setup=dict(self.default_setup)
+                    )
+                else:
+                    nested = from_dict(
+                        dict(item),
+                        self.__class__,
+                        default_setup=dict(self.default_setup),
+                    )
+                self.update(nested)
+        # TODO : Manage pop default_setup in first part of __init__ method
+        kwargs.pop("default_setup", None)
+        if kwargs:
+            nested = from_dict(
+                kwargs,
+                self.__class__,
+                default_setup=dict(self.default_setup),
+            )
+            self.update(nested)
 
     def __str__(self, padding=0) -> str:
         """

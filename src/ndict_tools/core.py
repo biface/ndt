@@ -5,7 +5,7 @@ dictionaries.
 
 from __future__ import annotations
 
-from .tools import _StackedDict, from_dict
+from .tools import _StackedDict
 
 """Classes section"""
 
@@ -44,60 +44,15 @@ class NestedDictionary(_StackedDict):
 
 
         """
-        # FIXME : Improving inner superclass attributes management
+        # TODO : Organize default_setuo, indent and strict parameters
+
         indent = kwargs.pop("indent", 0)
         strict = kwargs.pop("strict", False)
+        default_setup = kwargs.pop("default_setup", None)
         default_class = None if strict else NestedDictionary
 
-        """if kwargs and "indent" in kwargs:
-            indent = kwargs["indent"]
-            del kwargs["indent"]
-
-        if kwargs and "strict" in kwargs:
-            if kwargs.pop("strict") is True:
-                strict = True
-                default_class = None
-            else:
-                strict = False
-                default_class = NestedDictionary
-        else:
-            strict = False
-            default_class = NestedDictionary"""
-
-        options = {"indent": indent, "strict": strict}
         super().__init__(
-            default_setup={"indent": indent, "default_factory": default_class}
+            *args,
+            **kwargs,
+            default_setup={"indent": indent, "default_factory": default_class},
         )
-
-        if len(args):
-            for item in args:
-                if isinstance(item, NestedDictionary):
-                    nested = item.deepcopy()
-                elif isinstance(item, dict):
-                    nested = from_dict(
-                        item,
-                        NestedDictionary,
-                        default_setup={
-                            "indent": indent,
-                            "default_factory": default_class,
-                        },
-                    )
-                else:
-                    nested = from_dict(
-                        dict(item),
-                        NestedDictionary,
-                        default_setup={
-                            "indent": indent,
-                            "default_factory": default_class,
-                        },
-                    )
-                self.update(nested)
-
-        kwargs.pop("default_setup", None)
-        if kwargs:
-            nested = from_dict(
-                kwargs,
-                NestedDictionary,
-                default_setup={"indent": indent, "default_factory": default_class},
-            )
-            self.update(nested)
