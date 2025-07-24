@@ -49,7 +49,7 @@ def test_from_dict():
     nd = from_dict(
         {1: "first", 2: {"first": 1, "second": 2}, 3: 3},
         NestedDictionary,
-        init={"indent": 2, "strict": True},
+        default_setup={"indent": 2, "default_factory": None},
     )
     assert isinstance(nd, NestedDictionary)
     assert nd.indent == 2
@@ -69,18 +69,18 @@ def test_from_nested_dict():
     nd = from_dict(
         {1: "first", 2: {"first": 1, "second": 2}, 3: 3},
         NestedDictionary,
-        init={"indent": 2, "strict": True},
+        default_setup={"indent": 2, "default_factory": NestedDictionary},
     )
     nd2 = from_dict(
         {1: nd, 2: {"first": 1, "second": 2}, 3: 3},
         NestedDictionary,
-        init={"indent": 4},
+        default_setup={"indent": 4, "default_factory": None},
     )
     assert isinstance(nd2, NestedDictionary)
     assert nd2.indent == 4
-    assert nd2.default_factory is NestedDictionary
+    assert nd2.default_factory is None
     assert isinstance(nd2[1], NestedDictionary)
-    assert nd2[1].default_factory is None
+    assert nd2[1].default_factory is NestedDictionary
     assert nd2[1].indent == 2
 
 

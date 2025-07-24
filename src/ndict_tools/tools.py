@@ -74,14 +74,6 @@ def from_dict(dictionary: dict, class_name: object, **class_options) -> _Stacked
 
     if "default_setup" in class_options:
         dict_object = class_name(**class_options)
-        for attribute, value in class_options["default_setup"].items():
-            if hasattr(dict_object, attribute):
-                dict_object.__setattr__(attribute, value)
-            else:
-                raise StackedAttributeError(
-                    f"The key {attribute} is not present in the class attributes",
-                    attribute=attribute,
-                )
     else:
         if "init" in class_options:
             options = class_options["init"]
@@ -176,6 +168,7 @@ class _StackedDict(defaultdict):
         super().__init__()
         self.default_setup = setup
         for key, value in self.default_setup:
+            # TODO You must verify attributes is existing (must be declare in __init__ first)
             self.__setattr__(key, value)
 
         if len(args):
@@ -283,11 +276,14 @@ class _StackedDict(defaultdict):
                 if sub_key not in current or not isinstance(
                     current[sub_key], _StackedDict
                 ):
-                    current[sub_key] = self.__class__(indent=self.indent)
+                    current[sub_key] = self.__class__(
+                        default_setup=dict(self.default_setup)
+                    )
+                    """current[sub_key] = self.__class__(indent=self.indent)
                     current[sub_key].__setattr__(
                         "default_factory", self.default_factory
                     )
-                    current[sub_key].__setattr__("default_setup", self.default_setup)
+                    current[sub_key].__setattr__("default_setup", self.default_setup)"""
                 current = current[sub_key]
             current[key[-1]] = value
         else:

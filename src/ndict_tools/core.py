@@ -51,8 +51,36 @@ class NestedDictionary(_StackedDict):
         default_setup = kwargs.pop("default_setup", None)
         default_class = None if strict else NestedDictionary
 
+        if not default_setup:
+            default_setup = {"indent": indent, "default_factory": default_class}
+
         super().__init__(
             *args,
             **kwargs,
-            default_setup={"indent": indent, "default_factory": default_class},
+            default_setup=default_setup,
+        )
+
+
+class StrictNestedDictionary(NestedDictionary):
+
+    def __init__(self, *args, **kwargs):
+
+        setup = kwargs.pop("default_setup", None)
+        if setup:
+            setup["indent"] = setup.pop("indent", 0)
+            setup["default_factory"] = setup.pop(
+                "default_factory", StrictNestedDictionary
+            )
+        else:
+            setup = {"indent": 0, "default_factory": StrictNestedDictionary}
+
+        super().__init__(*args, **kwargs, default_setup=setup)
+
+
+class SmoothNestedDictionary(NestedDictionary):
+
+    def __init__(self, *args, **kwargs):
+
+        super().__init__(
+            *args, **kwargs, default_setup={"indent": 0, "default_factory": None}
         )
