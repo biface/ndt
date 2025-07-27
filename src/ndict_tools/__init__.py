@@ -1,4 +1,4 @@
-from .core import NestedDictionary
+from .core import NestedDictionary, SmoothNestedDictionary, StrictNestedDictionary
 from .exception import (
     NestedDictionaryException,
     StackedAttributeError,
@@ -14,6 +14,8 @@ __author__ = "biface"
 
 __all__ = [
     "NestedDictionary",
+    "SmoothNestedDictionary",
+    "StrictNestedDictionary",
     "NestedDictionaryException",
     "StackedDictionaryError",
     "StackedKeyError",
