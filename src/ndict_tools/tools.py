@@ -68,10 +68,6 @@ def from_dict(dictionary: dict, class_name: object, **class_options) -> _Stacked
     :raise StackedKeyError: if attribute called is not an attribute of the class hierarchy.
     """
 
-    # FIXME : Improving _StackedDict and subclasses inner attributes management
-
-    options = {"indent": 0, "strict": False}
-
     if "default_setup" in class_options:
         dict_object = class_name(**class_options)
     else:
@@ -127,11 +123,10 @@ class _StackedDict(defaultdict):
         self.default_setup: list = []
         "default_setup is ued to disseminate default parameters to stacked objects"
 
-        # TODO : Optimize management of parameters default_setup and indent/default_factory
         # Manage init parameters
+        settings = kwargs.pop("default_setup", None)
 
-        if "default_setup" not in kwargs:
-            print("Init -> Must be changed")
+        if settings is None:
             if "indent" not in kwargs:
                 raise StackedKeyError("Missing 'indent' arguments", key="indent")
             else:
@@ -143,9 +138,8 @@ class _StackedDict(defaultdict):
                 default = kwargs.pop("default")
             setup = [("indent", ind), ("default_factory", default)]
         else:
-            settings = kwargs.pop("default_setup")
-
             if not "indent" in settings.keys():
+                print("verifed")
                 raise StackedKeyError(
                     "Missing 'indent' argument in default settings", key="indent"
                 )
@@ -158,12 +152,15 @@ class _StackedDict(defaultdict):
             for key, value in settings.items():
                 setup.append((key, value))
 
+        # Initializing instance
+
         super().__init__()
         self.default_setup = setup
         for key, value in self.default_setup:
             if hasattr(self, key):
                 self.__setattr__(key, value)
             else:
+                # You cannot initialize undefined attributes
                 raise StackedAttributeError(
                     f"The key {key} is not an attribute of the {self.__class__} class.",
                     attribute=key,
@@ -186,8 +183,7 @@ class _StackedDict(defaultdict):
                         default_setup=dict(self.default_setup),
                     )
                 self.update(nested)
-        # TODO : Manage pop default_setup in first part of __init__ method
-        kwargs.pop("default_setup", None)
+
         if kwargs:
             nested = from_dict(
                 kwargs,
