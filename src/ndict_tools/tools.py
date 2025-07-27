@@ -75,22 +75,10 @@ def from_dict(dictionary: dict, class_name: object, **class_options) -> _Stacked
     if "default_setup" in class_options:
         dict_object = class_name(**class_options)
     else:
-        if "init" in class_options:
-            options = class_options["init"]
-
-        dict_object = class_name(**options)
-
-        if "attributes" in class_options:
-            for attribute in class_options["attributes"]:
-                if hasattr(dict_object, attribute):
-                    dict_object.__setattr__(
-                        attribute, class_options["attributes"][attribute]
-                    )
-                else:
-                    raise StackedAttributeError(
-                        f"The key {attribute} is not present in the class attributes",
-                        attribute=attribute,
-                    )
+        raise StackedKeyError(
+            f"The key 'default_setup' must be present in class options : {class_options}",
+            key="default_setup",
+        )
 
     for key, value in dictionary.items():
         if isinstance(value, _StackedDict):
@@ -132,14 +120,18 @@ class _StackedDict(defaultdict):
         default = None
         setup = []
 
+        # Initialize instance attributes
+
         self.indent: int = 0
         "indent is used to print the dictionary with json indentation"
         self.default_setup: list = []
         "default_setup is ued to disseminate default parameters to stacked objects"
 
         # TODO : Optimize management of parameters default_setup and indent/default_factory
+        # Manage init parameters
 
         if "default_setup" not in kwargs:
+            print("Init -> Must be changed")
             if "indent" not in kwargs:
                 raise StackedKeyError("Missing 'indent' arguments", key="indent")
             else:
@@ -152,6 +144,7 @@ class _StackedDict(defaultdict):
             setup = [("indent", ind), ("default_factory", default)]
         else:
             settings = kwargs.pop("default_setup")
+
             if not "indent" in settings.keys():
                 raise StackedKeyError(
                     "Missing 'indent' argument in default settings", key="indent"
@@ -168,8 +161,15 @@ class _StackedDict(defaultdict):
         super().__init__()
         self.default_setup = setup
         for key, value in self.default_setup:
-            # TODO You must verify attributes is existing (must be declare in __init__ first)
-            self.__setattr__(key, value)
+            if hasattr(self, key):
+                self.__setattr__(key, value)
+            else:
+                raise StackedAttributeError(
+                    f"The key {key} is not an attribute of the {self.__class__} class.",
+                    attribute=key,
+                )
+
+        # Update dictionary
 
         if len(args):
             for item in args:
@@ -230,7 +230,7 @@ class _StackedDict(defaultdict):
         :rtype: _StackedDict or a subclass of _StackedDict
         """
 
-        new = self.__class__(indent=self.indent, default=self.default_factory)
+        new = self.__class__(default_setup=dict(self.default_setup))
         for key, value in self.items():
             new[key] = value
         return new
@@ -279,11 +279,6 @@ class _StackedDict(defaultdict):
                     current[sub_key] = self.__class__(
                         default_setup=dict(self.default_setup)
                     )
-                    """current[sub_key] = self.__class__(indent=self.indent)
-                    current[sub_key].__setattr__(
-                        "default_factory", self.default_factory
-                    )
-                    current[sub_key].__setattr__("default_setup", self.default_setup)"""
                 current = current[sub_key]
             current[key[-1]] = value
         else:
@@ -348,7 +343,6 @@ class _StackedDict(defaultdict):
                 if not parent[sub_key]:
                     del parent[sub_key]
         else:  # Autres types traités comme des clés simples
-            # FIXME : Must not delete an attribute - to be controlled as in __getitem__ and raise an error
             super().__delitem__(key)
 
     def unpacked_items(self) -> Generator:

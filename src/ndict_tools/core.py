@@ -44,7 +44,6 @@ class NestedDictionary(_StackedDict):
 
 
         """
-        # TODO : Organize default_setuo, indent and strict parameters
 
         indent = kwargs.pop("indent", 0)
         strict = kwargs.pop("strict", False)
@@ -68,11 +67,10 @@ class StrictNestedDictionary(NestedDictionary):
         setup = kwargs.pop("default_setup", None)
         if setup:
             setup["indent"] = setup.pop("indent", 0)
-            setup["default_factory"] = setup.pop(
-                "default_factory", StrictNestedDictionary
-            )
+            setup["default_factory"] = None
+
         else:
-            setup = {"indent": 0, "default_factory": StrictNestedDictionary}
+            setup = {"indent": 0, "default_factory": None}
 
         super().__init__(*args, **kwargs, default_setup=setup)
 
@@ -81,6 +79,12 @@ class SmoothNestedDictionary(NestedDictionary):
 
     def __init__(self, *args, **kwargs):
 
-        super().__init__(
-            *args, **kwargs, default_setup={"indent": 0, "default_factory": None}
-        )
+        setup = kwargs.pop("default_setup", None)
+        if setup:
+            setup["indent"] = setup.pop("indent", 0)
+            setup["default_factory"] = SmoothNestedDictionary
+
+        else:
+            setup = {"indent": 0, "default_factory": SmoothNestedDictionary}
+
+        super().__init__(*args, **kwargs, default_setup=setup)
