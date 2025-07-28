@@ -22,6 +22,15 @@ This package is also available on `GitHub <https://github.com/biface/ndt>`_. You
 Versions
 --------
 
+.. versionremoved:: 1.2.0
+    Removal of ``NestedDictionary`` class-specific definition attributes for systematic use of class-specific attribute initialization.
+
+.. deprecated:: 1.0.0
+    Use of the ``NestedDictionary`` class's specific parameterization at instance initialization (``indent`` and ``strict`` keys of the ``__init__`` method)
+
+.. versionadded:: 0.8.0
+    Introduction of generalized handling of specific attributes of ``_StackedDict`` child classes. This addition will be explained later in a section for developers.
+
 .. versionchanged:: 0.7.0
     Moved the update method exclusively to the ``_StackedDict`` class to standardize updates for future subclasses.
 

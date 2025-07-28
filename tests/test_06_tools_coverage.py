@@ -13,7 +13,9 @@ def test_from_dict_with_init():
     """Test from_dict function with 'init' parameter (lines 74-77)."""
     # Create a dictionary with custom init parameters
     custom_dict = from_dict(
-        {"a": 1, "b": {"c": 2}}, _StackedDict, init={"indent": 4, "default": None}
+        {"a": 1, "b": {"c": 2}},
+        _StackedDict,
+        default_setup={"indent": 4, "default_factory": None},
     )
 
     assert isinstance(custom_dict, _StackedDict)
@@ -25,7 +27,7 @@ def test_from_dict_with_init():
 
 def test_setitem_create_intermediate_keys():
     """Test __setitem__ method with intermediate keys that need to be created (lines 227-234)."""
-    sd = _StackedDict(indent=2, default=lambda: 0)
+    sd = _StackedDict(default_setup={"indent": 0, "default_factory": None})
 
     # Set a value with a hierarchical key where intermediate keys don't exist
     sd[["a", "b", "c", "d"]] = "value"
@@ -43,7 +45,7 @@ def test_setitem_create_intermediate_keys():
 
 def test_delitem_cleanup_empty_parents():
     """Test __delitem__ method with cleaning up empty parent dictionaries (lines 290-291)."""
-    sd = _StackedDict(indent=2, default=None)
+    sd = _StackedDict(default_setup={"indent": 0, "default_factory": None})
 
     # Create a nested structure
     sd[["a", "b", "c"]] = "value"
@@ -69,7 +71,7 @@ def test_delitem_cleanup_empty_parents():
 
 def test_pop_with_default_and_cleanup():
     """Test pop method with default values and cleanup (lines 380, 393, 397)."""
-    sd = _StackedDict(indent=2, default=None)
+    sd = _StackedDict(default_setup={"indent": 0, "default_factory": None})
 
     # Create a nested structure
     sd[["a", "b", "c"]] = "value"
@@ -93,7 +95,7 @@ def test_pop_with_default_and_cleanup():
 
 def test_update_with_kwargs():
     """Test update method with kwargs (line 494)."""
-    sd = _StackedDict(indent=2, default=None)
+    sd = _StackedDict(default_setup={"indent": 0, "default_factory": None})
 
     # Update with kwargs
     sd.update(a=1, b=2, c={"d": 3})
@@ -106,7 +108,7 @@ def test_update_with_kwargs():
 
 def test_ancestors():
     """Test ancestors method (line 700)."""
-    sd = _StackedDict(indent=2, default=None)
+    sd = _StackedDict(default_setup={"indent": 0, "default_factory": None})
 
     # Create a nested structure
     sd["a"] = {"b": {"c": "target_value"}}

@@ -2,88 +2,88 @@ import pytest
 
 from ndict_tools import NestedDictionary
 
-d = {"1": 1, "2": {"1": "2:1", "2": "2:2", "3": "3:2"}, "3": 3, "4": 4}
 
-ref_smooth_nd = NestedDictionary(d)
+@pytest.fixture
+def ref_smooth_nd():
+    return NestedDictionary(
+        {"1": 1, "2": {"1": "2:1", "2": "2:2", "3": "3:2"}, "3": 3, "4": 4},
+        default_setup={
+            "indent": 3,
+            "default_factory": NestedDictionary,
+        },
+    )
 
 
-def test_verify_smooth_ref():
+@pytest.fixture
+def ref_strict_nd():
+    return NestedDictionary(
+        {"1": 1, "2": {"1": "2:1", "2": "2:2", "3": "3:2"}, "3": 3, "4": 4},
+        default_setup={
+            "indent": 10,
+            "default_factory": None,
+        },
+    )
+
+
+@pytest.fixture
+def ref_mixed_nd():
+    return NestedDictionary(
+        {
+            "first": 1,
+            "second": {"1": "2:1", "2": "2:2", "3": "3:2"},
+            "third": 3,
+            "fourth": 4,
+        },
+        default_setup={
+            "indent": 5,
+            "default_factory": True,
+        },
+    )
+
+
+def test_verify_smooth_ref(ref_smooth_nd):
     assert ref_smooth_nd.default_factory == NestedDictionary
-    assert ref_smooth_nd.indent == 0
+    assert ref_smooth_nd.indent == 3
 
 
-def test_smooth_zip_source():
-    zip_nd = NestedDictionary(
-        zip(["1", "2", "3", "4"], [1, {"1": "2:1", "2": "2:2", "3": "3:2"}, 3, 4])
-    )
-    assert zip_nd == ref_smooth_nd
-
-
-def test_smooth_list_source():
-    list_nd = NestedDictionary(
-        [("1", 1), ("2", {"1": "2:1", "2": "2:2", "3": "3:2"}), ("3", 3), ("4", 4)]
-    )
-    assert list_nd == ref_smooth_nd
-
-
-def test_smooth_unordered_source():
-    ulist_nd = NestedDictionary(
-        [("3", 3), ("1", 1), ("2", {"1": "2:1", "2": "2:2", "3": "3:2"}), ("4", 4)]
-    )
-    assert ulist_nd == ref_smooth_nd
-
-
-ref_strict_nd = NestedDictionary(d, indent=2, strict=True)
-
-
-def test_verify_strict_ref():
-    assert ref_strict_nd.default_factory is None
-    assert ref_strict_nd.indent == 2
-
-
-def test_strict_zip_source():
-    zip_nd = NestedDictionary(
+@pytest.mark.parametrize(
+    "source",
+    [
         zip(["1", "2", "3", "4"], [1, {"1": "2:1", "2": "2:2", "3": "3:2"}, 3, 4]),
-        indent=2,
-        strict=True,
-    )
-    assert zip_nd == ref_strict_nd
-
-
-def test_strict_list_source():
-    list_nd = NestedDictionary(
         [("1", 1), ("2", {"1": "2:1", "2": "2:2", "3": "3:2"}), ("3", 3), ("4", 4)],
-        indent=2,
-        strict=True,
-    )
-    assert list_nd == ref_smooth_nd
-
-
-def test_strict_unordered_source():
-    ulist_nd = NestedDictionary(
         [("3", 3), ("1", 1), ("2", {"1": "2:1", "2": "2:2", "3": "3:2"}), ("4", 4)],
-        indent=2,
-        strict=True,
+    ],
+)
+def test_smooth_sources(ref_smooth_nd, source):
+    source_nd = NestedDictionary(source)
+    assert source_nd == ref_smooth_nd
+
+
+def test_verify_strict_ref(ref_strict_nd):
+    assert ref_strict_nd.default_factory is None
+    assert ref_strict_nd.indent == 10
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        zip(["1", "2", "3", "4"], [1, {"1": "2:1", "2": "2:2", "3": "3:2"}, 3, 4]),
+        [("1", 1), ("2", {"1": "2:1", "2": "2:2", "3": "3:2"}), ("3", 3), ("4", 4)],
+        [("3", 3), ("1", 1), ("2", {"1": "2:1", "2": "2:2", "3": "3:2"}), ("4", 4)],
+    ],
+)
+def test_strict_sources(ref_strict_nd, source):
+    source_nd = NestedDictionary(
+        source, default_setup={"indent": 10, "default_factory": None}
     )
-    assert ulist_nd == ref_strict_nd
+    assert source_nd == ref_strict_nd
 
 
-d = {
-    "first": 1,
-    "second": {"1": "2:1", "2": "2:2", "3": "3:2"},
-    "third": 3,
-    "fourth": 4,
-}
-
-ref_nd = NestedDictionary(d, indent=2, strict=True)
-
-
-def test_mixed_sources():
+def test_mixed_sources(ref_mixed_nd):
     mixed_nd = NestedDictionary(
         [("first", 1), ("fourth", 4)],
         third=3,
-        indent=2,
         second={"1": "2:1", "2": "2:2", "3": "3:2"},
-        strict=True,
+        default_setup={"indent": 10, "default_factory": True},
     )
-    assert mixed_nd == ref_nd
+    assert mixed_nd == ref_mixed_nd

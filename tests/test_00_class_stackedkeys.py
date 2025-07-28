@@ -7,7 +7,7 @@ from ndict_tools.tools import _StackedDict
 @pytest.fixture
 def stacked_dict():
     """Fixture to initialize a _StackedDict with default parameters."""
-    return _StackedDict(indent=2, default=None)
+    return _StackedDict(default_setup={"indent": 0, "default_factory": None})
 
 
 def test_hierarchical_key_assignment(stacked_dict):

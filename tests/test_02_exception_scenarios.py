@@ -17,7 +17,9 @@ from ndict_tools.tools import _StackedDict
 
 def test_key_error_in_nested_access():
     """Test StackedKeyError when accessing a non-existent nested key."""
-    nd = NestedDictionary({"a": {"b": 1}}, strict=True)
+    nd = NestedDictionary(
+        {"a": {"b": 1}}, default_setup={"indent": 0, "default_factory": None}
+    )
 
     # Access a non-existent key at the top level
     with pytest.raises(KeyError) as excinfo:
@@ -47,8 +49,11 @@ def test_attribute_error_in_from_dict():
         nd = from_dict(
             {"a": 1, "b": 2},
             NestedDictionary,
-            init={"indent": 2},
-            attributes={"non_existent_attr": True},
+            default_setup={
+                "indent": 2,
+                "default_factory": None,
+                "non_existent_attr": True,
+            },
         )
 
     assert "non_existent_attr" in str(excinfo.value)
@@ -57,7 +62,7 @@ def test_attribute_error_in_from_dict():
 
 def test_type_error_with_nested_lists():
     """Test StackedTypeError when using nested lists as keys."""
-    sd = _StackedDict(indent=2, default=None)
+    sd = _StackedDict(default_setup={"indent": 0, "default_factory": None})
 
     # Try to use a nested list as a key
     with pytest.raises(StackedTypeError) as excinfo:

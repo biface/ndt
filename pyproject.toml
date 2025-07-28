@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ndict-tools"
-version = "0.7.0-1"
+version = "0.8.0"
 authors = [
     {name="biface"}
 ]

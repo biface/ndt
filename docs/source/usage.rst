@@ -59,9 +59,13 @@ checking.
 
 .. note::
 
-    In future versions, ``_StackedDict`` will evolve to handle specific attributes. This evolution will generalize
-    the management of attributes specific to nested dictionary classes, offering greater flexibility and advanced
-    features for users.
+    Introduced in version 0.8.0, ``_StackedDict`` manages specific attributes. This evolution generalizes the handling
+    of attributes specific to nested dictionary classes, providing greater flexibility and advanced features for users.
+
+    ``_StackedDict`` handles the genericity of attributes to propagate in the ``default_setup`` attribute. It manages two
+    of its own attributes, ``indent`` and ``default_factory``, but any subclass can define as many as needed
+    (see below the section for developers).
+
 
 Understanding Paths in Nested Dictionaries
 ------------------------------------------
@@ -218,15 +222,41 @@ Examples
     a == b == c == d == e
 
 
-Class attributes and methods
-----------------------------
+For Developers
+==============
 
-.. module:: ndict_tools
-.. autoclass:: NestedDictionary
+The core class of the ``ndict_tools`` package is the internal class ``_StackedDict`` within the module. This class
+orchestrates all tasks related to the nesting of dictionaries.
 
-    .. autoattribute:: indent
-    .. autoattribute:: default_factory
-        :no-index:
+This class can be extended for other uses by adhering to the following rules:
+
+  **R1**: Instance attributes must be initialized in the ``__init__`` function of the new class.
+
+  **R2**: Instance attributes to be propagated should be characterized in the ``default_setup`` parameter.
+
+  **R3**: The management of class attribute parameterization must be performed before calling the ``__init__`` function of the parent class.
+
+Here is an example from test evaluations :
+
+.. code-block:: python
+
+    from ndict_tools.tools import _StackedDict
+
+    class BDict(_StackedDict):
+
+        def __init__(self, *args, **kwargs):
+
+            # initialize proper attributes
+            self.balanced = False
+
+            # manage default_setup settings parameters
+            settings = kwargs.pop("default_setup", {})
+            settings["indent"] = 4
+            settings["default_factory"] = None
+            settings["balanced"] = True
+
+            # call __init__
+            super().__init__(*args, **kwargs, default_setup=settings)
 
 
 .. _defaultdict: https://docs.python.org/3/library/collections.html#collections.defaultdict

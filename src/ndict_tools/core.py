@@ -5,7 +5,7 @@ dictionaries.
 
 from __future__ import annotations
 
-from .tools import _StackedDict, from_dict
+from .tools import _StackedDict
 
 """Classes section"""
 
@@ -44,37 +44,63 @@ class NestedDictionary(_StackedDict):
 
 
         """
-        # FIXME : Improving inner superclass attributes management
-        indent = 0
 
-        if kwargs and "indent" in kwargs:
-            indent = kwargs["indent"]
-            del kwargs["indent"]
+        indent = kwargs.pop("indent", 0)
+        strict = kwargs.pop("strict", False)
+        default_setup = kwargs.pop("default_setup", None)
+        default_class = None if strict else NestedDictionary
 
-        if kwargs and "strict" in kwargs:
-            if kwargs.pop("strict") is True:
-                strict = True
-                default_class = None
-            else:
-                strict = False
-                default_class = NestedDictionary
+        if not default_setup:
+            default_setup = {"indent": indent, "default_factory": default_class}
+
+        super().__init__(
+            *args,
+            **kwargs,
+            default_setup=default_setup,
+        )
+
+
+class StrictNestedDictionary(NestedDictionary):
+    """
+    Strict nested dictionary class.
+
+    This class is designed to implement a non-default answer to an unknown key.
+    """
+
+    def __init__(self, *args, **kwargs):
+        """
+        This function initializes a strict nested dictionary as it overwrites the default_factory attributes at None.
+        """
+
+        setup = kwargs.pop("default_setup", None)
+        if setup:
+            setup["indent"] = setup.pop("indent", 0)
+            setup["default_factory"] = None
         else:
-            strict = False
-            default_class = NestedDictionary
+            setup = {"indent": 0, "default_factory": None}
 
-        options = {"indent": indent, "strict": strict}
-        super().__init__(indent=indent, default=default_class)
+        super().__init__(*args, **kwargs, default_setup=setup)
 
-        if len(args):
-            for item in args:
-                if isinstance(item, NestedDictionary):
-                    nested = item.deepcopy()
-                elif isinstance(item, dict):
-                    nested = from_dict(item, NestedDictionary, init=options)
-                else:
-                    nested = from_dict(dict(item), NestedDictionary, init=options)
-                self.update(nested)
 
-        if kwargs:
-            nested = from_dict(kwargs, NestedDictionary, init=options)
-            self.update(nested)
+class SmoothNestedDictionary(NestedDictionary):
+    """
+    Smooth nested dictionary class.
+
+    This class is designed to implement a default answer as an empty SmoothNestedDictionary to an unknown key.
+    """
+
+    def __init__(self, *args, **kwargs):
+        """
+        This function initializes a smooth nested dictionary as it overwrites the default_factory attributes at
+        SmoothNestedDictionary.
+        """
+
+        setup = kwargs.pop("default_setup", None)
+        if setup:
+            setup["indent"] = setup.pop("indent", 0)
+            setup["default_factory"] = SmoothNestedDictionary
+
+        else:
+            setup = {"indent": 0, "default_factory": SmoothNestedDictionary}
+
+        super().__init__(*args, **kwargs, default_setup=setup)
