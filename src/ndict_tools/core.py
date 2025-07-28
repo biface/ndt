@@ -76,7 +76,6 @@ class StrictNestedDictionary(NestedDictionary):
         if setup:
             setup["indent"] = setup.pop("indent", 0)
             setup["default_factory"] = None
-
         else:
             setup = {"indent": 0, "default_factory": None}
 

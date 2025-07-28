@@ -55,6 +55,7 @@ def test_deprecated_parameters(parameters, expected, error, expected_error):
 # End of deprecated parameters tests
 
 
+
 def test_unused_error():
     e = StackedDictionaryError("This is an unused class", 1000)
     assert str(e) == "This is an unused class"
