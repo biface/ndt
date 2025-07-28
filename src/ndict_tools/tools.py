@@ -58,10 +58,7 @@ def from_dict(dictionary: dict, class_name: object, **class_options) -> _Stacked
     :type dictionary: dict
     :param class_name: name of the class to return
     :type class_name: object
-    :param class_options: options to pass to the class or attributes of the class to be set
-
-        * init : parameters to initialize instances of the class, this should be from ``__init__`` function of the class
-        * attributes : attributes to set the class attributes
+    :param class_options: default settings to pass to class instance to be set up.
     :type class_options: dict
     :return: stacked dictionary or of subclasses of _StackedDict
     :rtype: _StackedDict
@@ -101,8 +98,8 @@ class _StackedDict(defaultdict):
         At instantiation, it has two mandatory parameters for its creation:
 
             * **indent**, which is used to format the object's display.
-            * **default**, which initializes the default_factory attribute of its parent class defaultdict.
-
+            * **default_factory**, which initializes the ``default_factory`` attribute of its parent class ``defaultdict``.
+            * these mandatory parameters are stored in ``default_setup`` attribute to be propagated.
 
         These parameters are passed using the kwargs dictionary.
 

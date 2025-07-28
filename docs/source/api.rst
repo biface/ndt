@@ -29,6 +29,7 @@ Tools
 
     .. autoattribute:: indent
     .. autoattribute:: default_factory
+    .. autoattribute:: default_setup
     .. automethod:: __str__()
     .. automethod:: __copy__()
     .. automethod:: __deepcopy__()
@@ -77,3 +78,7 @@ Core
 .. autoclass:: NestedDictionary
 
     .. automethod:: __str__()
+
+.. autoclass:: StrictNestedDictionary
+
+.. autoclass:: SmoothNestedDictionary

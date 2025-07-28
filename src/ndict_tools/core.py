@@ -61,8 +61,16 @@ class NestedDictionary(_StackedDict):
 
 
 class StrictNestedDictionary(NestedDictionary):
+    """
+    Strict nested dictionary class.
+
+    This class is designed to implement a non-default answer to an unknown key.
+    """
 
     def __init__(self, *args, **kwargs):
+        """
+        This function initializes a strict nested dictionary as it overwrites the default_factory attributes at None.
+        """
 
         setup = kwargs.pop("default_setup", None)
         if setup:
@@ -76,8 +84,17 @@ class StrictNestedDictionary(NestedDictionary):
 
 
 class SmoothNestedDictionary(NestedDictionary):
+    """
+    Smooth nested dictionary class.
+
+    This class is designed to implement a default answer as an empty SmoothNestedDictionary to an unknown key.
+    """
 
     def __init__(self, *args, **kwargs):
+        """
+        This function initializes a smooth nested dictionary as it overwrites the default_factory attributes at
+        SmoothNestedDictionary.
+        """
 
         setup = kwargs.pop("default_setup", None)
         if setup:
