@@ -520,7 +520,6 @@ class _StackedDict(defaultdict):
             elif isinstance(value, dict):
                 nested_dict = from_dict(
                     value, self.__class__, default_setup=dict(self.default_setup)
-
                 )
                 self[key] = nested_dict
             else:
