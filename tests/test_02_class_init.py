@@ -46,12 +46,14 @@ def test_verify_smooth_ref(ref_smooth_nd):
     assert ref_smooth_nd.indent == 3
 
 
-@pytest.mark.parametrize("source",
-                         [
-                             zip(["1", "2", "3", "4"], [1, {"1": "2:1", "2": "2:2", "3": "3:2"}, 3, 4]),
-                             [("1", 1), ("2", {"1": "2:1", "2": "2:2", "3": "3:2"}), ("3", 3), ("4", 4)],
-                             [("3", 3), ("1", 1), ("2", {"1": "2:1", "2": "2:2", "3": "3:2"}), ("4", 4)]
-                         ])
+@pytest.mark.parametrize(
+    "source",
+    [
+        zip(["1", "2", "3", "4"], [1, {"1": "2:1", "2": "2:2", "3": "3:2"}, 3, 4]),
+        [("1", 1), ("2", {"1": "2:1", "2": "2:2", "3": "3:2"}), ("3", 3), ("4", 4)],
+        [("3", 3), ("1", 1), ("2", {"1": "2:1", "2": "2:2", "3": "3:2"}), ("4", 4)],
+    ],
+)
 def test_smooth_sources(ref_smooth_nd, source):
     source_nd = NestedDictionary(source)
     assert source_nd == ref_smooth_nd
@@ -61,15 +63,21 @@ def test_verify_strict_ref(ref_strict_nd):
     assert ref_strict_nd.default_factory is None
     assert ref_strict_nd.indent == 10
 
-@pytest.mark.parametrize("source",
-                         [
-                             zip(["1", "2", "3", "4"], [1, {"1": "2:1", "2": "2:2", "3": "3:2"}, 3, 4]),
-                             [("1", 1), ("2", {"1": "2:1", "2": "2:2", "3": "3:2"}), ("3", 3), ("4", 4)],
-                             [("3", 3), ("1", 1), ("2", {"1": "2:1", "2": "2:2", "3": "3:2"}), ("4", 4)]
-                         ])
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        zip(["1", "2", "3", "4"], [1, {"1": "2:1", "2": "2:2", "3": "3:2"}, 3, 4]),
+        [("1", 1), ("2", {"1": "2:1", "2": "2:2", "3": "3:2"}), ("3", 3), ("4", 4)],
+        [("3", 3), ("1", 1), ("2", {"1": "2:1", "2": "2:2", "3": "3:2"}), ("4", 4)],
+    ],
+)
 def test_strict_sources(ref_strict_nd, source):
-    source_nd = NestedDictionary(source, default_setup={"indent": 10, "default_factory": None})
+    source_nd = NestedDictionary(
+        source, default_setup={"indent": 10, "default_factory": None}
+    )
     assert source_nd == ref_strict_nd
+
 
 def test_mixed_sources(ref_mixed_nd):
     mixed_nd = NestedDictionary(

@@ -17,21 +17,35 @@ def stacked_dict():
 
 # These tests must be suppressed in vers 1.2 of the package - managing deprecated parameters
 
-@pytest.mark.parametrize("parameters, expected, error, expected_error",
-                         [
-                             ({"indent": 10, "default": None}, [("indent", 10), ("default_factory", None)], False,
-                              None),
-                             ({"indent": 10}, [("indent", 10), ("default_factory", None)], False, None),
-                             ({"indent": 10, "default": _StackedDict},
-                              [("indent", 10), ("default_factory", _StackedDict)], False, None),
-                             ({"default": None}, [("indent", 10), ("default_factory", None)], True,
-                              StackedKeyError),
 
-                         ])
+@pytest.mark.parametrize(
+    "parameters, expected, error, expected_error",
+    [
+        (
+            {"indent": 10, "default": None},
+            [("indent", 10), ("default_factory", None)],
+            False,
+            None,
+        ),
+        ({"indent": 10}, [("indent", 10), ("default_factory", None)], False, None),
+        (
+            {"indent": 10, "default": _StackedDict},
+            [("indent", 10), ("default_factory", _StackedDict)],
+            False,
+            None,
+        ),
+        (
+            {"default": None},
+            [("indent", 10), ("default_factory", None)],
+            True,
+            StackedKeyError,
+        ),
+    ],
+)
 def test_deprecated_parameters(parameters, expected, error, expected_error):
     if not error:
         dp = _StackedDict(**parameters)
-        for (attribute, value) in expected:
+        for attribute, value in expected:
             assert dp.__getattribute__(attribute) == value
     else:
         with pytest.raises(expected_error):
@@ -40,14 +54,14 @@ def test_deprecated_parameters(parameters, expected, error, expected_error):
 
 # End of deprecated parameters tests
 
+
 def test_unused_error():
     e = StackedDictionaryError("This is an unused class", 1000)
     assert str(e) == "This is an unused class"
     assert e.error_code == 1000
 
-@pytest.mark.parametrize("parameters", [
-    {}, {"indent":0}, {"default_factory": None}
-])
+
+@pytest.mark.parametrize("parameters", [{}, {"indent": 0}, {"default_factory": None}])
 def test_stacked_dict_init_error(parameters):
     with pytest.raises(StackedKeyError):
         _StackedDict(default_setup=parameters)
