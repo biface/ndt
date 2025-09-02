@@ -802,6 +802,28 @@ class DictPaths:
         # The path is valid as long as we have reached a valid key, regardless of its type
         return True
 
+    def __eq__(self, other) -> bool:
+        """
+        Compares two DictPaths objects (or iterables of paths) for set-wise equality, ignoring order.
+
+        Two DictPaths are considered equal if they contain exactly the same paths, regardless of ordering.
+        A path is normalized to a tuple of elements to allow comparison and hashing.
+        """
+        # Allow comparing with another DictPaths or any iterable of paths
+        try:
+            self_set = {tuple(p) for p in self}
+            other_iter = other if not isinstance(other, DictPaths) else iter(other)
+            other_set = {tuple(p) for p in other_iter}
+            return self_set == other_set
+        except TypeError:
+            return NotImplemented
+
+    def __ne__(self, other) -> bool:
+        result = self.__eq__(other)
+        if result is NotImplemented:
+            return NotImplemented
+        return not result
+
     def __repr__(self):
         """
         Returns a string representation of the DictPaths object.
