@@ -59,24 +59,28 @@ Tools
                 $ sd
                 _StackedDict(None, {'x': 'value3', 'a': {'b': {}}})
                 
-    .. automethod:: to_dict()
-    .. automethod:: update()
-    .. automethod:: occurrences()
     .. automethod:: is_key()
+    .. automethod:: occurrences()
     .. automethod:: key_list()
     .. automethod:: items_list()
+    .. automethod:: update()
     .. automethod:: to_dict()
+    .. automethod:: dict_paths()
+    .. automethod:: dfs()
+    .. automethod:: bfs()
+    .. automethod:: is_balanced()
     .. automethod:: height()
     .. automethod:: size()
-    .. automethod:: leaves()
-    .. automethod:: is_balanced()
     .. automethod:: ancestors()
+    .. automethod:: leaves()
 
 .. autoclass:: DictPaths
 
     .. automethod:: _iterate_paths()
     .. automethod:: __iter__()
     .. automethod:: __len__()
+    .. automethod:: __eq__()
+    .. automethod:: __ne__()
     .. automethod:: __contains__()
     .. automethod:: __repr__()
 

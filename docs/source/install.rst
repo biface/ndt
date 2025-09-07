@@ -28,6 +28,14 @@ Versions
 .. deprecated:: 1.0.0
     Use of the ``NestedDictionary`` class's specific parameterization at instance initialization (``indent`` and ``strict`` keys of the ``__init__`` method)
 
+.. versionchanged:: 1.0.0
+    The ``_StackedDict`` class will be renamed as ``StackedDict`` and exposed to be used as a central key class for developpers.
+
+.. versionadded:: 0.9.0
+
+    - Introduction of ``DictSearch`` class in order to give easy access to ``DictPath`` set of hierachical keys.
+    - Introduction of encoding for exports to or imports from JSON files
+
 .. versionadded:: 0.8.0
     Introduction of generalized handling of specific attributes of ``_StackedDict`` child classes. This addition will be explained later in a section for developers.
 
@@ -40,3 +48,6 @@ Versions
 .. versionadded:: 0.6.0
     Introduced nested keys with Python lists: ``sd[[1, 2, 3]] == sd[1][2][3]``.
     Note the use of double brackets ``[[...]]`` to manage the key list.
+
+.. important::
+   All versions prior to version 0.6.0 are no longer supported.

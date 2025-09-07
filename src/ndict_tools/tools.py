@@ -1,12 +1,15 @@
 """
-This module provides an intermediate technical class and tools for manipulating nested dictionaries.
+This module provides the **core technical infrastructure** for manipulating nested dictionaries. While hidden from the
+package's public API, it serves as the foundation for all nested dictionary operations.
 
-Although this module is hidden from the package's external view, its contents are important. The ``_StackedDict`` object
-class orchestrates the basic attributes, functions and methods required to initialize and manage nested dictionaries.
+The ``_StackedDict`` class is the **central engine** of the ``ndict_tools`` package. It implements all the fundamental
+attributes, methods, and logic required to initialize, manage, and manipulate nested dictionaries. This class is
+designed to:
 
-This class could have been eliminated in favor of building all methods and tools into the main module containing the
-``NestedDictionary`` object class. However, this choice will enable us to build stacks of different dictionaries in the
-future, without necessarily using the properties specific to these dictionaries.
+- Orchestrate the **basic building blocks** of nested dictionary functionality
+- Provide the **complete toolset** for dictionary nesting, key management, and hierarchical data operations
+- Serve as a **versatile base** for current and future dictionary implementations
+
 """
 
 from __future__ import annotations
