@@ -114,13 +114,13 @@ class _StackedDict(defaultdict):
 
         ind: int = 0
         default = None
-        setup = []
+        setup = set()
 
         # Initialize instance attributes
 
         self.indent: int = 0
         "indent is used to print the dictionary with json indentation"
-        self.default_setup: list = []
+        self._default_setup: set = set()
         "default_setup is ued to disseminate default parameters to stacked objects"
 
         # Manage init parameters
@@ -136,7 +136,7 @@ class _StackedDict(defaultdict):
                 default = None
             else:
                 default = kwargs.pop("default")
-            setup = [("indent", ind), ("default_factory", default)]
+            setup = {("indent", ind), ("default_factory", default)}
         else:
             if not "indent" in settings.keys():
                 print("verifed")
@@ -150,13 +150,13 @@ class _StackedDict(defaultdict):
                 )
 
             for key, value in settings.items():
-                setup.append((key, value))
+                setup.add((key, value))
 
         # Initializing instance
 
         super().__init__()
-        self.default_setup = setup
-        for key, value in self.default_setup:
+        self._default_setup = setup
+        for key, value in self._default_setup:
             if hasattr(self, key):
                 self.__setattr__(key, value)
             else:
@@ -191,6 +191,34 @@ class _StackedDict(defaultdict):
                 default_setup=dict(self.default_setup),
             )
             self.update(nested)
+
+    @property
+    def default_setup(self) -> list:
+        """Return a deterministic, list-based view of the internal setup set.
+        Order: 'indent', 'default_factory', then other keys sorted alphabetically.
+        """
+        priority = ["indent", "default_factory"]
+        # Convert internal set of tuples to dict to deduplicate and access by key
+        d = {k: v for (k, v) in self._default_setup}
+        ordered: list = []
+        for p in priority:
+            if p in d:
+                ordered.append((p, d[p]))
+        remaining = sorted(
+            [(k, v) for (k, v) in self._default_setup if k not in priority],
+            key=lambda kv: kv[0],
+        )
+        ordered.extend(remaining)
+        return ordered
+
+    @default_setup.setter
+    def default_setup(self, value) -> None:
+        """Accept dict, list[tuple], or set[tuple] and store internally as a set."""
+        if isinstance(value, dict):
+            items = value.items()
+        else:
+            items = value
+        self._default_setup = set(items)
 
     def __str__(self, padding=0) -> str:
         """
