@@ -5,6 +5,7 @@ import pytest
 from ndict_tools.exception import StackedKeyError
 from ndict_tools.tools import _StackedDict
 
+
 @pytest.mark.parametrize(
     "parameters, expected",
     [

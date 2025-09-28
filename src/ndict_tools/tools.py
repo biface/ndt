@@ -1058,9 +1058,11 @@ class DictSearch:
 
             for other_path in sorted_paths:
                 other_tuple = tuple(other_path)
-                if (other_tuple != path_tuple and
-                        len(other_path) > len(path) and
-                        other_path[:len(path)] == path):
+                if (
+                    other_tuple != path_tuple
+                    and len(other_path) > len(path)
+                    and other_path[: len(path)] == path
+                ):
 
                     # La prochaine clé après le préfixe actuel
                     next_key = other_path[len(path)]

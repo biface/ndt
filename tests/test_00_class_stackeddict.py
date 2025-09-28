@@ -14,6 +14,7 @@ from ndict_tools.tools import _StackedDict, from_dict
 def stacked_dict():
     return _StackedDict(default_setup={"indent": 0, "default_factory": None})
 
+
 def test_shallow_copy_dict(stacked_dict):
     stacked_dict[1] = "Integer"
     stacked_dict[(1, 2)] = "Tuple"
