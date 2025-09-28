@@ -8,6 +8,7 @@ from .exception import (
     StackedTypeError,
     StackedValueError,
 )
+from .tools import DictPaths, DictSearch
 
 __version__ = "0.8.0"
 __author__ = "biface"
@@ -23,4 +24,6 @@ __all__ = [
     "StackedTypeError",
     "StackedValueError",
     "StackedIndexError",
+    "DictPaths",
+    "DictSearch",
 ]

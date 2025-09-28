@@ -26,6 +26,29 @@ from .exception import (
     StackedValueError,
 )
 
+
+def compare_dict(d1, d2) -> bool:
+    """
+    Compare two (possibly nested) structures: dicts, lists, tuples, sets, or scalars.
+    Returns True if they are the same type and have equal content recursively.
+    """
+    if type(d1) != type(d2):
+        return False
+    if isinstance(d1, dict):
+        if set(d1.keys()) != set(d2.keys()):
+            return False
+        for k in d1:
+            if not compare_dict(d1[k], d2[k]):
+                return False
+        return True
+    elif isinstance(d1, (list, tuple, set)):
+        if len(d1) != len(d2):
+            return False
+        return all(compare_dict(x, y) for x, y in zip(d1, d2))
+    else:
+        return d1 == d2
+
+
 """Internal functions"""
 
 
@@ -337,10 +360,10 @@ class _StackedDict(defaultdict):
                 current = current[sub_key]
             return current
 
-        if isinstance(key, str) and key in self.__dict__.keys():
-            return self.__getattribute__(key)
-        else:
-            return super().__getitem__(key)
+        # if isinstance(key, str) and key in self.__dict__.keys():
+        #    return self.__getattribute__(key)
+        # else:
+        return super().__getitem__(key)
 
     def __delitem__(self, key):
         """
@@ -368,6 +391,42 @@ class _StackedDict(defaultdict):
                     del parent[sub_key]
         else:  # Autres types traités comme des clés simples
             super().__delitem__(key)
+
+    def __eq__(self, other):
+        """
+        Override __eq__ to compare only structural content, not configuration.
+        Two instances are equal if they are the same class and their expanded dict
+        representations are equal, regardless of indent/default_factory settings.
+        """
+        if not isinstance(other, type(self)):
+            return False
+        if self._default_setup != other._default_setup:
+            return False
+        return compare_dict(self.to_dict(), other.to_dict())
+
+    def __ne__(self, other):
+        """
+        Override __ne__ to handle hierarchical keys.
+        """
+        return not self.__eq__(other)
+
+    def similar(self, other):
+        """
+        Override __eq__ to handle hierarchical keys.
+        """
+        if not isinstance(other, _StackedDict):
+            return False
+        if self._default_setup != other._default_setup:
+            return False
+        return compare_dict(self.to_dict(), other.to_dict())
+
+    def isomorph(self, other):
+        """
+        Override __eq__ to handle hierarchical keys.
+        """
+        if not isinstance(other, (dict, _StackedDict)):
+            return False
+        return compare_dict(self.to_dict(), dict(other))
 
     def unpacked_items(self) -> Generator:
         """
@@ -637,11 +696,17 @@ class _StackedDict(defaultdict):
 
         return __items_list
 
-    def dict_paths(self):
+    def dict_paths(self) -> DictPaths:
         """
         Returns a view object for all hierarchical paths in the _StackedDict.
         """
         return DictPaths(self)
+
+    def dict_search(self) -> DictSearch:
+        """
+        Returns a DictSearch object factorizing the hierarchical paths of the _StackedDict.
+        """
+        return DictSearch.from_dict_paths(self.dict_paths())
 
     def dfs(self, node=None, path=None) -> Generator[Tuple[List, Any], None, None]:
         """
@@ -860,3 +925,274 @@ class DictPaths:
         Returns a string representation of the DictPaths object.
         """
         return f"{self.__class__.__name__}({list(self)})"
+
+    def dict_search(self) -> DictSearch:
+        """
+        Returns a list of tuples representing the hierarchical paths in the _StackedDict.
+        """
+        return DictSearch.from_dict_paths(self)
+
+
+class DictSearch:
+    """
+    A factorized representation of paths from a DictPaths object.
+
+    DictSearch groups paths that share common prefixes into nested list structures,
+    providing a compact representation of hierarchical dictionary traversal patterns.
+    The relationship between DictPaths and DictSearch is bijective when constructed
+    from a complete DictPaths, but DictSearch can also represent partial coverage
+    for selective tree traversal operations.
+
+    :param structure: List of factorized paths, or None for empty structure
+    :type structure: list or None
+
+    Examples:
+        >>> # Complete coverage from DictPaths
+        >>> paths = [['a'], ['b'], ['b', 'c'], ['b', 'd']]
+        >>> search = DictSearch.from_dict_paths(MockDictPaths(paths))
+        >>> # Results in: [['a'], ['b', ['c', 'd']]]
+
+        >>> # Manual partial coverage
+        >>> partial = DictSearch([['b', ['c']]])  # Only covers ['b'] and ['b', 'c']
+    """
+
+    def __init__(self, structure=None):
+        """
+        Initialize a DictSearch instance.
+
+        :param structure: List of factorized paths, where each path can be either
+                         a simple list of keys or a list ending with a sublist of children
+        :type structure: list or None
+        """
+        self.structure = structure if structure is not None else []
+
+    def __repr__(self):
+        """
+        Return string representation of the mock DictPaths.
+
+        :return: String representation showing contained paths
+        :rtype: str
+        """
+        """
+        Return string representation of the DictSearch object.
+
+        :return: String representation showing the factorized structure
+        :rtype: str
+        """
+        return f"DictSearch({self.structure})"
+
+    def __iter__(self):
+        """
+        Iterate over the stored paths.
+
+        :return: Iterator over the paths
+        :rtype: iterator
+        """
+        """
+        Return iterator over the factorized structure elements.
+
+        :return: Iterator over structure elements
+        :rtype: iterator
+        """
+        return iter(self.structure)
+
+    def __len__(self):
+        """
+        Return the number of top-level elements in the factorized structure.
+
+        :return: Number of top-level structure elements
+        :rtype: int
+        """
+        return len(self.structure)
+
+    def __getitem__(self, index):
+        """
+        Get structure element at specified index.
+
+        :param index: Index of the structure element to retrieve
+        :type index: int
+        :return: Structure element at the given index
+        :rtype: list
+        """
+        return self.structure[index]
+
+    @classmethod
+    def from_dict_paths(cls, dict_paths):
+        """
+        Construct a DictSearch from a DictPaths object by factorizing common prefixes.
+
+        This method analyzes all paths in the DictPaths and groups those sharing
+        common prefixes into a nested structure. Paths with the same prefix are
+        factorized with their child keys collected into sublists.
+
+        :param dict_paths: DictPaths instance to factorize
+        :type dict_paths: DictPaths
+        :return: New DictSearch instance with factorized structure
+        :rtype: DictSearch
+
+        Examples:
+            >>> paths = MockDictPaths([['a'], ['b'], ['b', 'c'], ['b', 'd']])
+            >>> search = DictSearch.from_dict_paths(paths)
+            >>> search.structure  # [['a'], ['b', ['c', 'd']]]
+        """
+        # Convertir l'itérateur en liste pour pouvoir manipuler les chemins
+        paths_list = list(dict_paths)
+
+        if not paths_list:
+            return cls([])
+
+        # Trier les chemins par longueur pour faciliter le regroupement
+        sorted_paths = sorted(paths_list, key=len)
+
+        # Structure pour construire l'arbre factorisé
+        structure = []
+        processed = set()
+
+        for path in sorted_paths:
+            path_tuple = tuple(path)
+            if path_tuple in processed:
+                continue
+
+            # Chercher tous les chemins qui ont ce chemin comme préfixe
+            children_keys = []
+
+            for other_path in sorted_paths:
+                other_tuple = tuple(other_path)
+                if (other_tuple != path_tuple and
+                        len(other_path) > len(path) and
+                        other_path[:len(path)] == path):
+
+                    # La prochaine clé après le préfixe actuel
+                    next_key = other_path[len(path)]
+                    if next_key not in children_keys:
+                        children_keys.append(next_key)
+                    processed.add(other_tuple)
+
+            if children_keys:
+                # Créer une structure avec la liste des enfants à la fin
+                structure.append(path + [children_keys])
+            else:
+                # Chemin terminal sans enfants
+                structure.append(path)
+
+            processed.add(path_tuple)
+
+        return cls(structure)
+
+    def to_dict_paths_list(self):
+        """
+        Convert the factorized DictSearch back to a flat list of paths.
+
+        This method expands the factorized structure back into individual paths,
+        enabling bijective conversion between DictSearch and DictPaths representations.
+        Each nested structure is recursively expanded to generate all possible paths.
+
+        :return: List of expanded paths compatible with DictPaths
+        :rtype: list[list]
+
+        Examples:
+            >>> search = DictSearch([['a'], ['b', ['c', 'd']]])
+            >>> search.to_dict_paths_list()
+            [['a'], ['b'], ['b', 'c'], ['b', 'd']]
+        """
+        paths = []
+
+        def expand_structure(item, current_path=[]):
+            if isinstance(item, list) and len(item) > 0:
+                # Vérifier si le dernier élément est une liste (enfants)
+                if isinstance(item[-1], list):
+                    # C'est un nœud avec enfants
+                    prefix = current_path + item[:-1]
+                    paths.append(prefix[:])  # Ajouter le chemin du nœud parent
+
+                    # Développer récursivement chaque enfant
+                    for child_key in item[-1]:
+                        child_path = prefix + [child_key]
+                        expand_structure(child_key, child_path)
+                else:
+                    # C'est un chemin simple
+                    paths.append(current_path + item)
+            else:
+                # Élément simple (cas des enfants individuels)
+                if current_path:  # Ne pas ajouter si current_path est vide
+                    paths.append(current_path)
+
+        for item in self.structure:
+            expand_structure(item)
+
+        return paths
+
+    def is_complete_coverage(self, dict_paths):
+        """
+        Check if this DictSearch provides complete coverage of the given DictPaths.
+
+        Complete coverage means that expanding this DictSearch yields exactly the same
+        set of paths as the original DictPaths, confirming bijective relationship.
+
+        :param dict_paths: DictPaths instance to compare against
+        :type dict_paths: DictPaths
+        :return: True if coverage is complete (bijective), False otherwise
+        :rtype: bool
+
+        Examples:
+            >>> paths = MockDictPaths([['a'], ['b']])
+            >>> complete = DictSearch.from_dict_paths(paths)
+            >>> complete.is_complete_coverage(paths)  # True
+            >>> partial = DictSearch([['a']])
+            >>> partial.is_complete_coverage(paths)   # False
+        """
+        expanded_paths = self.to_dict_paths_list()
+        expanded_set = {tuple(path) for path in expanded_paths}
+        original_set = {tuple(path) for path in dict_paths}
+
+        return expanded_set == original_set
+
+    def is_partial_coverage(self, dict_paths):
+        """
+        Check if this DictSearch represents partial coverage of the given DictPaths.
+
+        Partial coverage means that this DictSearch covers a proper subset of the
+        paths in the original DictPaths. This enables selective tree traversal
+        operations on specific branches of the hierarchical structure.
+
+        :param dict_paths: DictPaths instance to compare against
+        :type dict_paths: DictPaths
+        :return: True if coverage is partial (proper subset), False otherwise
+        :rtype: bool
+
+        Examples:
+            >>> paths = MockDictPaths([['a'], ['b'], ['c']])
+            >>> partial = DictSearch([['a'], ['b']])
+            >>> partial.is_partial_coverage(paths)  # True
+            >>> complete = DictSearch.from_dict_paths(paths)
+            >>> complete.is_partial_coverage(paths)  # False
+        """
+        expanded_paths = self.to_dict_paths_list()
+        expanded_set = {tuple(path) for path in expanded_paths}
+        original_set = {tuple(path) for path in dict_paths}
+
+        return expanded_set.issubset(original_set) and expanded_set != original_set
+
+    def covers_path(self, path):
+        """
+        Check if a specific path is covered by this DictSearch.
+
+        This method determines whether the given path would be included when
+        expanding this DictSearch structure. Useful for testing membership
+        without full expansion.
+
+        :param path: List representing a hierarchical path to test
+        :type path: list
+        :return: True if the path is covered by this DictSearch, False otherwise
+        :rtype: bool
+
+        Examples:
+            >>> search = DictSearch([['a'], ['b', ['c']]])
+            >>> search.covers_path(['a'])      # True
+            >>> search.covers_path(['b'])      # True
+            >>> search.covers_path(['b', 'c']) # True
+            >>> search.covers_path(['d'])      # False
+        """
+        path_tuple = tuple(path)
+        expanded_paths = self.to_dict_paths_list()
+        return path_tuple in {tuple(p) for p in expanded_paths}
