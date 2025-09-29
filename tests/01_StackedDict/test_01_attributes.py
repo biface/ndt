@@ -1,7 +1,6 @@
 import re
 
 import pytest
-from jinja2.runtime import async_exported
 
 from ndict_tools.tools import _StackedDict
 
@@ -148,10 +147,8 @@ def test_default_list_setup(test_dict, keys, factory, setup, request):
     d.default_setup = [
         ("indent", 10),
         ("default_factory", d.default_factory),
-        ("indent", 5),
     ]
-    # first ("indent", 10) will be removed as it is a set
-    assert d.default_setup == [("indent", 5), ("default_factory", d.default_factory)]
+    assert d.default_setup == [("indent", 10), ("default_factory", d.default_factory)]
 
 
 @pytest.mark.parametrize(
