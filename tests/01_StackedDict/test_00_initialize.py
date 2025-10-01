@@ -7,23 +7,13 @@ from ndict_tools.tools import _StackedDict
 
 
 @pytest.fixture
-def standard_smooth_setup():
-    return {"indent": 2, "default_factory": _StackedDict}
-
-
-@pytest.fixture
-def standard_strict_setup():
-    return {"indent": 2, "default_factory": None}
-
-
-@pytest.fixture
-def stacked_result(standard_strict_setup):
+def stacked_c_result(standard_strict_c_setup):
     return _StackedDict(
         zip(
             ["first", "second", "third", "fourth"],
             [1, {"1": "2:1", "2": "2:2", "3": "3:2"}, 3, 4],
         ),
-        default_setup=standard_strict_setup,
+        default_setup=standard_strict_c_setup,
     )
 
 
@@ -61,7 +51,7 @@ class TestStackedDictInit:
 
     # From documentation https://ndict-tools.readthedocs.io/en/latest/usage.html
 
-    def test_init_dict(self, standard_strict_setup, stacked_result):
+    def test_init_dict(self, standard_strict_c_setup, stacked_c_result):
         sd = _StackedDict(
             {
                 "first": 1,
@@ -69,25 +59,25 @@ class TestStackedDictInit:
                 "third": 3,
                 "fourth": 4,
             },
-            default_setup=standard_strict_setup,
+            default_setup=standard_strict_c_setup,
         )
         assert sd.indent == 2
         assert sd.default_factory is None
-        assert sd == stacked_result
+        assert sd == stacked_c_result
 
-    def test_init_zip(self, standard_strict_setup, stacked_result):
+    def test_init_zip(self, standard_strict_c_setup, stacked_c_result):
         sd = _StackedDict(
             zip(
                 ["first", "second", "third", "fourth"],
                 [1, {"1": "2:1", "2": "2:2", "3": "3:2"}, 3, 4],
             ),
-            default_setup=standard_strict_setup,
+            default_setup=standard_strict_c_setup,
         )
         assert sd.indent == 2
         assert sd.default_factory is None
-        assert sd == stacked_result
+        assert sd == stacked_c_result
 
-    def test_init_list(self, standard_strict_setup, stacked_result):
+    def test_init_list(self, standard_strict_c_setup, stacked_c_result):
         sd = _StackedDict(
             [
                 ("first", 1),
@@ -95,13 +85,13 @@ class TestStackedDictInit:
                 ("third", 3),
                 ("fourth", 4),
             ],
-            default_setup=standard_strict_setup,
+            default_setup=standard_strict_c_setup,
         )
         assert sd.indent == 2
         assert sd.default_factory is None
-        assert sd == stacked_result
+        assert sd == stacked_c_result
 
-    def test_init_unordered_list(self, standard_strict_setup, stacked_result):
+    def test_init_unordered_list(self, standard_strict_c_setup, stacked_c_result):
         sd = _StackedDict(
             [
                 ("third", 3),
@@ -109,22 +99,22 @@ class TestStackedDictInit:
                 ("second", {"1": "2:1", "2": "2:2", "3": "3:2"}),
                 ("fourth", 4),
             ],
-            default_setup=standard_strict_setup,
+            default_setup=standard_strict_c_setup,
         )
         assert sd.indent == 2
         assert sd.default_factory is None
-        assert sd == stacked_result
+        assert sd == stacked_c_result
 
-    def test_init_hybrid(self, standard_strict_setup, stacked_result):
+    def test_init_hybrid(self, standard_strict_c_setup, stacked_c_result):
         sd = _StackedDict(
             [("first", 1), ("fourth", 4)],
             third=3,
             second={"1": "2:1", "2": "2:2", "3": "3:2"},
-            default_setup=standard_strict_setup,
+            default_setup=standard_strict_c_setup,
         )
         assert sd.indent == 2
         assert sd.default_factory is None
-        assert sd == stacked_result
+        assert sd == stacked_c_result
 
 
 class TestStackedDictErrors:

@@ -52,7 +52,7 @@ class TestStrictStackedDictKeys:
             ),
         ],
     )
-    def test_change_keys(self, strict_c_sd, keys, end_key, old_value, new_value):
+    def test_change_value(self, strict_c_sd, keys, end_key, old_value, new_value):
         d = strict_c_sd
         for key in keys:
             d = d[key]
@@ -128,6 +128,20 @@ class TestStrictStackedDictKeys:
     def test_key_type_failed(self, strict_c_sd, false_keys_type, error, error_msg):
         with pytest.raises(error, match=re.escape(error_msg)):
             strict_c_sd[false_keys_type] = None
+
+    @pytest.mark.parametrize(
+        "key_a, key_b, type",
+        [
+            (("security", "encryption"), ["security", "encryption"], _StackedDict),
+            (["security", "encryption"], ("security", "encryption"), str),
+        ],
+    )
+    def test_hybrid_keys(self, strict_c_sd, key_a, key_b, type):
+        assert (
+            strict_c_sd["global_settings"][key_a]
+            != strict_c_sd["global_settings"][key_b]
+        )
+        assert isinstance(strict_c_sd["global_settings"][key_a], type)
 
 
 class TestStrictStackedDictUnpack:
@@ -448,6 +462,20 @@ class TestSmoothStackedDict:
         with pytest.raises(error, match=re.escape(error_msg)):
             smooth_c_sd[false_keys_type] = None
 
+    @pytest.mark.parametrize(
+        "key_a, key_b, type",
+        [
+            (("security", "encryption"), ["security", "encryption"], _StackedDict),
+            (["security", "encryption"], ("security", "encryption"), str),
+        ],
+    )
+    def test_hybrid_keys(self, strict_c_sd, key_a, key_b, type):
+        assert (
+            strict_c_sd["global_settings"][key_a]
+            != strict_c_sd["global_settings"][key_b]
+        )
+        assert isinstance(strict_c_sd["global_settings"][key_a], type)
+
 
 class TestSmoothStackedDictUnpack:
 
@@ -691,6 +719,8 @@ class TestSmoothStackedDictUnpack:
             [5, 10, 15],
             True,
             "http://dev-monitoring.internal.com",
+            "standby",
+            "eu-west",
         ],
     )
     def test_unpack(self, strict_c_sd, unpacked_values):

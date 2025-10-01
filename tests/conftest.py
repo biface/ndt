@@ -120,6 +120,7 @@ _SYSTEM_CONFIG = {
             "algorithm": "AES-256-GCM",
             "key_rotation": {("env", "production"): 90, ("env", "dev"): 365},  # jours
         },
+        "security": {"encryption": "mandatory", "level": 100},
         "networking": {
             "load_balancer": {
                 ("env", "production"): {
