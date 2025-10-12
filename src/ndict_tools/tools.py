@@ -24,7 +24,18 @@ from __future__ import annotations
 
 from collections import defaultdict, deque
 from textwrap import indent
-from typing import Any, Generator, List, Dict, Optional, Iterator, Tuple, Set, Callable, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    Iterator,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
 from .exception import (
     StackedAttributeError,
@@ -173,16 +184,18 @@ class _HKey:
     DictSearch : Uses _HKey internally for tree representation
     """
 
-    __slots__ = ('key', 'children', 'parent', 'is_root')
+    __slots__ = ("key", "children", "parent", "is_root")
 
-    def __init__(self, key: Any, parent: Optional['_HKey'] = None, is_root: bool = False) -> None:
+    def __init__(
+        self, key: Any, parent: Optional["_HKey"] = None, is_root: bool = False
+    ) -> None:
         self.key: Any = key
         self.children: Tuple[_HKey, ...] = ()
         self.parent: Optional[_HKey] = parent
         self.is_root: bool = is_root
 
     @classmethod
-    def build_forest(cls, stacked_dict: Dict) -> '_HKey':
+    def build_forest(cls, stacked_dict: Dict) -> "_HKey":
         """
         Build a forest of _HKey trees from a nested dictionary.
 
@@ -232,7 +245,7 @@ class _HKey:
 
         self.children = tuple(children_list)
 
-    def add_child(self, key: Any) -> '_HKey':
+    def add_child(self, key: Any) -> "_HKey":
         """
         Add a child node with the given key.
 
@@ -269,7 +282,7 @@ class _HKey:
         self.children = self.children + (new_child,)
         return new_child
 
-    def add_children(self, keys: List[Any]) -> Tuple['_HKey', ...]:
+    def add_children(self, keys: List[Any]) -> Tuple["_HKey", ...]:
         """
         Add multiple children at once (more efficient than repeated add_child).
 
@@ -301,7 +314,7 @@ class _HKey:
         self.children = self.children + tuple(new_children)
         return tuple(new_children)
 
-    def get_child(self, key: Any) -> Optional['_HKey']:
+    def get_child(self, key: Any) -> Optional["_HKey"]:
         """
         Get a child node by key.
 
@@ -399,7 +412,7 @@ class _HKey:
 
         return list(reversed(path))
 
-    def find_by_path(self, path: List[Any]) -> Optional['_HKey']:
+    def find_by_path(self, path: List[Any]) -> Optional["_HKey"]:
         """
         Find a node by following a path from this node.
 
@@ -470,7 +483,7 @@ class _HKey:
         collect_paths(self, base_path)
         return paths
 
-    def get_descendants(self) -> List['_HKey']:
+    def get_descendants(self) -> List["_HKey"]:
         """
         Get all descendant nodes (children, grandchildren, etc.).
 
@@ -521,7 +534,7 @@ class _HKey:
 
         return 1 + max(child.get_max_depth() for child in self.children)
 
-    def iter_children(self) -> Iterator['_HKey']:
+    def iter_children(self) -> Iterator["_HKey"]:
         """
         Iterate over direct child nodes.
 
@@ -532,7 +545,7 @@ class _HKey:
         """
         return iter(self.children)
 
-    def iter_leaves(self) -> Iterator['_HKey']:
+    def iter_leaves(self) -> Iterator["_HKey"]:
         """
         Iterate over all leaf nodes in the subtree.
 
@@ -570,7 +583,9 @@ class _HKey:
     # Tree Traversal Algorithms
     # ========================================================================
 
-    def dfs_preorder(self, visit: Optional[Callable[['_HKey'], None]] = None) -> Iterator['_HKey']:
+    def dfs_preorder(
+        self, visit: Optional[Callable[["_HKey"], None]] = None
+    ) -> Iterator["_HKey"]:
         """
         Depth-First Search traversal in pre-order (node, then children).
 
@@ -606,7 +621,9 @@ class _HKey:
         for child in self.children:
             yield from child.dfs_preorder(visit)
 
-    def dfs_postorder(self, visit: Optional[Callable[['_HKey'], None]] = None) -> Iterator['_HKey']:
+    def dfs_postorder(
+        self, visit: Optional[Callable[["_HKey"], None]] = None
+    ) -> Iterator["_HKey"]:
         """
         Depth-First Search traversal in post-order (children, then node).
 
@@ -642,7 +659,9 @@ class _HKey:
             visit(self)
         yield self
 
-    def bfs(self, visit: Optional[Callable[['_HKey'], None]] = None) -> Iterator['_HKey']:
+    def bfs(
+        self, visit: Optional[Callable[["_HKey"], None]] = None
+    ) -> Iterator["_HKey"]:
         """
         Breadth-First Search (level-order) traversal.
 
@@ -691,7 +710,7 @@ class _HKey:
 
             queue.extend(node.children)
 
-    def dfs_find(self, predicate: Callable[['_HKey'], bool]) -> Optional['_HKey']:
+    def dfs_find(self, predicate: Callable[["_HKey"], bool]) -> Optional["_HKey"]:
         """
         Find first node matching predicate using DFS.
 
@@ -732,7 +751,7 @@ class _HKey:
 
         return None
 
-    def bfs_find(self, predicate: Callable[['_HKey'], bool]) -> Optional['_HKey']:
+    def bfs_find(self, predicate: Callable[["_HKey"], bool]) -> Optional["_HKey"]:
         """
         Find first node matching predicate using BFS.
 
@@ -766,7 +785,7 @@ class _HKey:
                 return node
         return None
 
-    def find_all(self, predicate: Callable[['_HKey'], bool]) -> List['_HKey']:
+    def find_all(self, predicate: Callable[["_HKey"], bool]) -> List["_HKey"]:
         """
         Find all nodes matching predicate.
 
@@ -797,7 +816,9 @@ class _HKey:
 
         return results
 
-    def find_by_key(self, key: Any, find_all: bool = False) -> Optional['_HKey'] | List['_HKey']:
+    def find_by_key(
+        self, key: Any, find_all: bool = False
+    ) -> Optional["_HKey"] | List["_HKey"]:
         """
         Find node(s) with specific key value.
 
@@ -830,7 +851,7 @@ class _HKey:
         else:
             return self.dfs_find(lambda n: n.key == key)
 
-    def iter_by_level(self) -> Iterator[Tuple[int, List['_HKey']]]:
+    def iter_by_level(self) -> Iterator[Tuple[int, List["_HKey"]]]:
         """
         Iterate over nodes grouped by depth level.
 
@@ -866,7 +887,7 @@ class _HKey:
         for depth in sorted(levels.keys()):
             yield depth, levels[depth]
 
-    def get_nodes_at_depth(self, target_depth: int) -> List['_HKey']:
+    def get_nodes_at_depth(self, target_depth: int) -> List["_HKey"]:
         """
         Get all nodes at a specific depth.
 
@@ -891,8 +912,11 @@ class _HKey:
         --------
         iter_by_level : Iterate all levels
         """
-        return [node for node in self.bfs()
-                if not node.is_root and node.get_depth() == target_depth]
+        return [
+            node
+            for node in self.bfs()
+            if not node.is_root and node.get_depth() == target_depth
+        ]
 
     def filter_paths(self, predicate: Callable[[List[Any]], bool]) -> List[List[Any]]:
         """
@@ -924,7 +948,7 @@ class _HKey:
         all_paths = self.get_all_paths()
         return [path for path in all_paths if predicate(path)]
 
-    def map_nodes(self, func: Callable[['_HKey'], Any]) -> List[Any]:
+    def map_nodes(self, func: Callable[["_HKey"], Any]) -> List[Any]:
         """
         Apply a function to all nodes and collect results.
 
@@ -948,7 +972,7 @@ class _HKey:
         """
         return [func(node) for node in self.dfs_preorder()]
 
-    def prune(self, predicate: Callable[['_HKey'], bool]) -> '_HKey':
+    def prune(self, predicate: Callable[["_HKey"], bool]) -> "_HKey":
         """
         Create a new tree with nodes filtered by predicate.
 
@@ -1025,23 +1049,28 @@ class _HKey:
 
         # Calculate branching factors
         non_leaf_nodes = [n for n in all_nodes if n.has_children()]
-        avg_branching = (sum(len(n.children) for n in non_leaf_nodes) / len(non_leaf_nodes)
-                         if non_leaf_nodes else 0)
+        avg_branching = (
+            sum(len(n.children) for n in non_leaf_nodes) / len(non_leaf_nodes)
+            if non_leaf_nodes
+            else 0
+        )
 
         return {
-            'total_nodes': len(all_nodes),
-            'leaf_count': len(leaves),
-            'max_depth': self.get_max_depth(),
-            'avg_branching_factor': round(avg_branching, 2),
-            'total_paths': len(self.get_all_paths()),
-            'levels': self.get_max_depth() + 1 if not self.is_root else self.get_max_depth()
+            "total_nodes": len(all_nodes),
+            "leaf_count": len(leaves),
+            "max_depth": self.get_max_depth(),
+            "avg_branching_factor": round(avg_branching, 2),
+            "total_paths": len(self.get_all_paths()),
+            "levels": (
+                self.get_max_depth() + 1 if not self.is_root else self.get_max_depth()
+            ),
         }
 
     # ========================================================================
     # Graph Theory & Structure Validation
     # ========================================================================
 
-    def has_cycles(self) -> Tuple[bool, Optional[List['_HKey']]]:
+    def has_cycles(self) -> Tuple[bool, Optional[List["_HKey"]]]:
         """
         Check if the tree contains cycles (should not in a proper tree).
 
@@ -1093,7 +1122,9 @@ class _HKey:
                         return True
                 elif child_id in rec_stack:
                     # Cycle detected
-                    cycle_start = next(i for i, n in enumerate(path) if id(n) == child_id)
+                    cycle_start = next(
+                        i for i, n in enumerate(path) if id(n) == child_id
+                    )
                     cycle_path.extend(path[cycle_start:] + [child])
                     return True
 
@@ -1165,7 +1196,9 @@ class _HKey:
         # Check for cycles
         has_cycle, cycle = self.has_cycles()
         if has_cycle:
-            issues.append(f"Cycle detected: {[n.key for n in cycle] if cycle else 'unknown'}")
+            issues.append(
+                f"Cycle detected: {[n.key for n in cycle] if cycle else 'unknown'}"
+            )
 
         # Check parent consistency
         parent_issues = self.check_parent_consistency()
@@ -1179,7 +1212,9 @@ class _HKey:
         # Check all nodes have valid parent references
         for node in self.dfs_preorder():
             if not node.is_root and node.parent is None:
-                issues.append(f"Node {node.key} has no parent but is not marked as root")
+                issues.append(
+                    f"Node {node.key} has no parent but is not marked as root"
+                )
 
             # Verify parent's children contain this node
             if node.parent and not node.is_root:
@@ -1329,7 +1364,9 @@ class _HKey:
             return False
 
         # All internal nodes should have the same number of children
-        internal_nodes = [n for n in self.dfs_preorder() if n.has_children() and not n.is_root]
+        internal_nodes = [
+            n for n in self.dfs_preorder() if n.has_children() and not n.is_root
+        ]
         if not internal_nodes:
             return True
 
@@ -1519,8 +1556,11 @@ class _HKey:
         is_binary_tree : Check if binary
         is_perfect_tree : Check if perfect
         """
-        internal_nodes = [node for node in self.dfs_preorder()
-                          if node.has_children() and not node.is_root]
+        internal_nodes = [
+            node
+            for node in self.dfs_preorder()
+            if node.has_children() and not node.is_root
+        ]
 
         if not internal_nodes:
             return True
@@ -1538,14 +1578,14 @@ class _HKey:
         """Check if a child with given key exists."""
         return any(child.key == key for child in self.children)
 
-    def __getitem__(self, key: Any) -> '_HKey':
+    def __getitem__(self, key: Any) -> "_HKey":
         """Get child by key (dict-like access)."""
         for child in self.children:
             if child.key == key:
                 return child
         raise KeyError(key)
 
-    def __iter__(self) -> Iterator['_HKey']:
+    def __iter__(self) -> Iterator["_HKey"]:
         """Iterate over children."""
         return iter(self.children)
 
@@ -2296,6 +2336,7 @@ class _StackedDict(defaultdict):
 
 """Public class section"""
 
+
 class _Paths:
     """
     A lazy view providing access to all hierarchical paths in a nested dictionary.
@@ -2482,7 +2523,6 @@ class _Paths:
         """
         return f"{self.__class__.__name__}({list(self)})"
 
-
     def get_children(self, path: List[Any]) -> List[Any]:
         """
         Get child keys at the next level after the given path.
@@ -2643,7 +2683,7 @@ class _Paths:
         hkey = self._ensure_hkey()
         return [node.get_path() for node in hkey.iter_leaves()]
 
-    def to_search(self) -> 'DictSearch':
+    def to_search(self) -> "DictSearch":
         """
         Convert this DictPaths to a DictSearch.
 
@@ -2744,7 +2784,7 @@ class DictSearch:
     _StackedDict : Base dictionary class with search() method
     """
 
-    __slots__ = ('structure', '_hkey', '_structure_dirty')
+    __slots__ = ("structure", "_hkey", "_structure_dirty")
 
     def __init__(self, structure: Optional[List[Any]] = None) -> None:
         """
@@ -2763,10 +2803,12 @@ class DictSearch:
         """
         self.structure: List[Any] = structure if structure is not None else []
         self._hkey: Optional[_HKey] = None  # Lazy-built from structure
-        self._structure_dirty: bool = False  # Track if structure changed after _hkey built
+        self._structure_dirty: bool = (
+            False  # Track if structure changed after _hkey built
+        )
 
     @classmethod
-    def from_stacked_dict(cls, stacked_dict: Dict) -> 'DictSearch':
+    def from_stacked_dict(cls, stacked_dict: Dict) -> "DictSearch":
         """
         Create a DictSearch from a nested dictionary with automatic optimization.
 
@@ -2868,7 +2910,7 @@ class DictSearch:
         return cls(structure)
 
     @classmethod
-    def from_dict_paths(cls, dict_paths: '_Paths') -> 'DictSearch':
+    def from_dict_paths(cls, dict_paths: "_Paths") -> "DictSearch":
         """
         Create a DictSearch from a _Paths object with automatic optimization.
 
@@ -2906,7 +2948,9 @@ class DictSearch:
         return cls.from_stacked_dict(stacked)
 
     @classmethod
-    def from_paths_list(cls, paths: List[List[Any]], compress: bool = True) -> 'DictSearch':
+    def from_paths_list(
+        cls, paths: List[List[Any]], compress: bool = True
+    ) -> "DictSearch":
         """
         Create a DictSearch from a plain list of paths.
 
@@ -2962,7 +3006,7 @@ class DictSearch:
             return cls._factorize_simple(paths)
 
     @classmethod
-    def _factorize_simple(cls, paths: List[List[Any]]) -> 'DictSearch':
+    def _factorize_simple(cls, paths: List[List[Any]]) -> "DictSearch":
         """
         Simple factorization without chain compression.
 
@@ -2991,9 +3035,11 @@ class DictSearch:
             children = []
             for other_path in sorted_paths:
                 other_tuple = tuple(other_path)
-                if (other_tuple != path_tuple and
-                        len(other_path) == len(path) + 1 and
-                        other_path[:len(path)] == path):
+                if (
+                    other_tuple != path_tuple
+                    and len(other_path) == len(path) + 1
+                    and other_path[: len(path)] == path
+                ):
 
                     child_key = other_path[len(path)]
                     if child_key not in children:
@@ -3092,7 +3138,7 @@ class DictSearch:
                 # Expand tuple: (a, b, c) → [a], [a, b], [a, b, c]
                 intermediate = []
                 for i in range(len(token)):
-                    path = current_path + list(token[:i + 1])
+                    path = current_path + list(token[: i + 1])
                     intermediate.append(path)
                 return intermediate
             else:
@@ -3208,7 +3254,7 @@ class DictSearch:
         """
         return self.contains_path(path)
 
-    def is_complete_coverage(self, dict_paths: '_Paths') -> bool:
+    def is_complete_coverage(self, dict_paths: "_Paths") -> bool:
         """
         Check if this DictSearch provides complete coverage of the given _Paths.
 
@@ -3240,7 +3286,7 @@ class DictSearch:
         their_paths = set(tuple(p) for p in dict_paths)
         return our_paths == their_paths
 
-    def is_partial_coverage(self, dict_paths: '_Paths') -> bool:
+    def is_partial_coverage(self, dict_paths: "_Paths") -> bool:
         """
         Check if this DictSearch represents partial coverage of the given _Paths.
 

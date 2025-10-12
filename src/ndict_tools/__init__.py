@@ -8,7 +8,7 @@ from .exception import (
     StackedTypeError,
     StackedValueError,
 )
-from .tools import _Paths, DictSearch
+from .tools import DictSearch, _Paths
 
 __version__ = "0.9.0"
 __author__ = "biface"

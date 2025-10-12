@@ -176,6 +176,7 @@ class TestPathStrictSD:
 def test_path_smooth_sd(smooth_f_sd, path, leaf):
     assert smooth_f_sd[path] == leaf
 
+
 class TestPathSmoothSD:
 
     @pytest.mark.parametrize(
@@ -274,87 +275,156 @@ class TestPathSmoothSD:
 
 class TestDictPathsStrictSD:
 
-    @pytest.mark.parametrize("path", [
-        [('env', 'production')],
-        [('env', 'production'), 'database'],
-        [('env', 'production'), 'database', 'host'],
-        [('env', 'production'), 'database', 'port'],
-        [('env', 'production'), 'database', 'pools'],
-        [('env', 'production'), 'database', 'replicas'],
-        [('env', 'production'), 'database', 'replicas', 1],
-        [('env', 'production'), 'database', 'replicas', 1, 'region'],
-        [('env', 'production'), 'database', 'replicas', 1, 'status'],
-        [('env', 'production'), 'database', 'replicas', 1, 'id'],
-        [('env', 'production'), 'database', 'replicas', 2],
-        [('env', 'production'), 'database', 'replicas', 2, 'region'],
-        [('env', 'production'), 'database', 'replicas', 2, 'status'],
-        [('env', 'production'), 'database', 'replicas', 2, 'id'],
-        [('env', 'production'), 'database', 'instances'],
-        [('env', 'production'), 'database', 'instances', 42],
-        [('env', 'production'), 'database', 'instances', 42, 'name'],
-        [('env', 'production'), 'database', 'instances', 42, 'max_connections'],
-        [('env', 'production'), 'database', 'instances', 42, 'type'],
-        [('env', 'production'), 'database', 'instances', 42, 'maintenance_window'],
-        [('env', 'production'), 'database', 'instances', 54],
-        [('env', 'production'), 'database', 'instances', 54, 'name'],
-        [('env', 'production'), 'database', 'instances', 54, 'max_connections'],
-        [('env', 'production'), 'database', 'instances', 54, 'type'],
-        [('env', 'production'), 'database', 'instances', 54, 'sync_lag'],
-        [('env', 'production'), 'api'],
-        [('env', 'production'), 'api', 'rate_limit'],
-        [('env', 'production'), 'api', 'timeout'],
-        [frozenset({'redis', 'cache'}), 'environments', ('env', 'production')],
-        [frozenset({'redis', 'cache'}), 'environments', ('env', 'production'), 'cluster_size'],
-        [frozenset({'redis', 'cache'}), 'environments', ('env', 'production'), 'persistence'],
-        [frozenset({'redis', 'cache'}), 'environments', ('env', 'production'), 'max_memory_policy'],
-        ['monitoring', 'dashboards', ('env', 'production')],
-        ['monitoring', 'dashboards', ('env', 'production'), 'grafana_url'],
-        ['monitoring', 'dashboards', ('env', 'production'), 'alerts'],
-        ['monitoring', 'dashboards', ('env', 'production'), 'retention'],
-        ['global_settings', ('security', 'encryption'), 'key_rotation', ('env', 'production')],
-        ['global_settings', 'networking', 'load_balancer', ('env', 'production')],
-        ['global_settings', 'networking', 'load_balancer', ('env', 'production'), 'type'],
-        ['global_settings', 'networking', 'load_balancer', ('env', 'production'), 'instances'],
-        ['global_settings', 'networking', 'load_balancer', ('env', 'production'), 'health_check_interval']
-    ])
+    @pytest.mark.parametrize(
+        "path",
+        [
+            [("env", "production")],
+            [("env", "production"), "database"],
+            [("env", "production"), "database", "host"],
+            [("env", "production"), "database", "port"],
+            [("env", "production"), "database", "pools"],
+            [("env", "production"), "database", "replicas"],
+            [("env", "production"), "database", "replicas", 1],
+            [("env", "production"), "database", "replicas", 1, "region"],
+            [("env", "production"), "database", "replicas", 1, "status"],
+            [("env", "production"), "database", "replicas", 1, "id"],
+            [("env", "production"), "database", "replicas", 2],
+            [("env", "production"), "database", "replicas", 2, "region"],
+            [("env", "production"), "database", "replicas", 2, "status"],
+            [("env", "production"), "database", "replicas", 2, "id"],
+            [("env", "production"), "database", "instances"],
+            [("env", "production"), "database", "instances", 42],
+            [("env", "production"), "database", "instances", 42, "name"],
+            [("env", "production"), "database", "instances", 42, "max_connections"],
+            [("env", "production"), "database", "instances", 42, "type"],
+            [("env", "production"), "database", "instances", 42, "maintenance_window"],
+            [("env", "production"), "database", "instances", 54],
+            [("env", "production"), "database", "instances", 54, "name"],
+            [("env", "production"), "database", "instances", 54, "max_connections"],
+            [("env", "production"), "database", "instances", 54, "type"],
+            [("env", "production"), "database", "instances", 54, "sync_lag"],
+            [("env", "production"), "api"],
+            [("env", "production"), "api", "rate_limit"],
+            [("env", "production"), "api", "timeout"],
+            [frozenset({"redis", "cache"}), "environments", ("env", "production")],
+            [
+                frozenset({"redis", "cache"}),
+                "environments",
+                ("env", "production"),
+                "cluster_size",
+            ],
+            [
+                frozenset({"redis", "cache"}),
+                "environments",
+                ("env", "production"),
+                "persistence",
+            ],
+            [
+                frozenset({"redis", "cache"}),
+                "environments",
+                ("env", "production"),
+                "max_memory_policy",
+            ],
+            ["monitoring", "dashboards", ("env", "production")],
+            ["monitoring", "dashboards", ("env", "production"), "grafana_url"],
+            ["monitoring", "dashboards", ("env", "production"), "alerts"],
+            ["monitoring", "dashboards", ("env", "production"), "retention"],
+            [
+                "global_settings",
+                ("security", "encryption"),
+                "key_rotation",
+                ("env", "production"),
+            ],
+            ["global_settings", "networking", "load_balancer", ("env", "production")],
+            [
+                "global_settings",
+                "networking",
+                "load_balancer",
+                ("env", "production"),
+                "type",
+            ],
+            [
+                "global_settings",
+                "networking",
+                "load_balancer",
+                ("env", "production"),
+                "instances",
+            ],
+            [
+                "global_settings",
+                "networking",
+                "load_balancer",
+                ("env", "production"),
+                "health_check_interval",
+            ],
+        ],
+    )
     def test_path(self, strict_c_sd, path):
         assert path in strict_c_sd.dict_paths()
-
 
     def test_eq_path(self, strict_c_sd, smooth_c_sd):
         assert strict_c_sd.dict_paths() == smooth_c_sd.dict_paths()
 
     def test_neq_path(self, strict_c_sd, standard_strict_c_setup):
-        assert strict_c_sd.dict_paths() != _StackedDict({}, default_setup=standard_strict_c_setup)
+        assert strict_c_sd.dict_paths() != _StackedDict(
+            {}, default_setup=standard_strict_c_setup
+        )
+
 
 @pytest.mark.skip(reason="To be refactored and moved as DictPaths in core module")
 class TestDictSearch:
 
-    @pytest.mark.parametrize("search", [
-        [('env', 'production'), ['database', 'api']],
-        [('env', 'dev'), ['database', 'api', 'features']],
-        [frozenset({'redis', 'cache'}), ['nodes', 'config', 'environments']],
-        ['monitoring', [('metrics', 'cpu'), ('logs', 'level'), 'dashboards']],
-        ['global_settings', [('security', 'encryption'), 'security', ('networking', 'load_balancer')]],
-        ['global_settings', ('security', 'encryption'), ['algorithm', 'key_rotation']]
-    ])
+    @pytest.mark.parametrize(
+        "search",
+        [
+            [("env", "production"), ["database", "api"]],
+            [("env", "dev"), ["database", "api", "features"]],
+            [frozenset({"redis", "cache"}), ["nodes", "config", "environments"]],
+            ["monitoring", [("metrics", "cpu"), ("logs", "level"), "dashboards"]],
+            [
+                "global_settings",
+                [
+                    ("security", "encryption"),
+                    "security",
+                    ("networking", "load_balancer"),
+                ],
+            ],
+            [
+                "global_settings",
+                ("security", "encryption"),
+                ["algorithm", "key_rotation"],
+            ],
+        ],
+    )
     def test_search_path(self, strict_c_sd, search):
         assert search in strict_c_sd.dict_search()
 
     @pytest.mark.skip(reason="Refactoring Paths and Searches")
-    @pytest.mark.parametrize("search", [
-        [('env', 'production'), ['database', 'api']],
-        [('env', 'dev'), ['database', 'api', 'features']],
-        [frozenset({'redis', 'cache'}), ['nodes', 'config', 'environments']],
-        ['monitoring', [('metrics', 'cpu'), ('logs', 'level'), 'dashboards']],
-        ['global_settings', [('security', 'encryption'), 'security', ('networking', 'load_balancer')]],
-        ['global_settings', ('security', 'encryption'), ['algorithm', 'key_rotation']]
-    ])
+    @pytest.mark.parametrize(
+        "search",
+        [
+            [("env", "production"), ["database", "api"]],
+            [("env", "dev"), ["database", "api", "features"]],
+            [frozenset({"redis", "cache"}), ["nodes", "config", "environments"]],
+            ["monitoring", [("metrics", "cpu"), ("logs", "level"), "dashboards"]],
+            [
+                "global_settings",
+                [
+                    ("security", "encryption"),
+                    "security",
+                    ("networking", "load_balancer"),
+                ],
+            ],
+            [
+                "global_settings",
+                ("security", "encryption"),
+                ["algorithm", "key_rotation"],
+            ],
+        ],
+    )
     def test_search_path_from_paths(self, strict_c_sd, search):
         assert search in strict_c_sd.dict_paths().to_search()
 
     @pytest.mark.skip(reason="Refactoring Paths and Searches")
     def test_complete_covering_paths(self, strict_c_sd):
-        assert strict_c_sd.dict_search().is_complete_coverage(
-            strict_c_sd.dict_paths()
-        )
+        assert strict_c_sd.dict_search().is_complete_coverage(strict_c_sd.dict_paths())

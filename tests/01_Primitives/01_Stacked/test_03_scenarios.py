@@ -282,7 +282,9 @@ class TestScenario01SmoothSD:
             ),
             (
                 ["global_settings", "networking", "load_balancer", ("env", "dev")],
-                _StackedDict(default_setup={"indent": 2, "default_factory": _StackedDict}),
+                _StackedDict(
+                    default_setup={"indent": 2, "default_factory": _StackedDict}
+                ),
             ),
             (
                 [
@@ -321,15 +323,21 @@ class TestScenario01SmoothSD:
                     "load_balancer",
                     ("env", "production"),
                 ],
-                _StackedDict(default_setup={"indent": 2, "default_factory": _StackedDict}),
+                _StackedDict(
+                    default_setup={"indent": 2, "default_factory": _StackedDict}
+                ),
             ),
             (
                 ["global_settings", "networking", "load_balancer"],
-                _StackedDict(default_setup={"indent": 2, "default_factory": _StackedDict}),
+                _StackedDict(
+                    default_setup={"indent": 2, "default_factory": _StackedDict}
+                ),
             ),
             (
                 ["global_settings", "networking"],
-                _StackedDict(default_setup={"indent": 2, "default_factory": _StackedDict}),
+                _StackedDict(
+                    default_setup={"indent": 2, "default_factory": _StackedDict}
+                ),
             ),
         ],
     )
