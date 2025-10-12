@@ -663,7 +663,7 @@ class TestUnpackStrictSD:
             (
                 None,
                 TypeError,
-                "_StackedDict.items_list() missing 1 required positional argument: 'key'",
+                "items_list() missing 1 required positional argument: 'key'",
             ),
         ],
     )
@@ -1492,7 +1492,7 @@ class TestUnpackSmoothSD:
             (
                 None,
                 TypeError,
-                "_StackedDict.items_list() missing 1 required positional argument: 'key'",
+                "items_list() missing 1 required positional argument: 'key'",
             ),
         ],
     )

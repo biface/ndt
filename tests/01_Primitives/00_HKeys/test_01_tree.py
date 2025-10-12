@@ -137,7 +137,7 @@ class TestHKeyTree:
         with pytest.raises(
             TypeError,
             match=re.escape(
-                "_HKey.find_by_key() missing 1 required positional argument: 'key'"
+                "find_by_key() missing 1 required positional argument: 'key'"
             ),
         ):
             key_tree.find_by_key()
