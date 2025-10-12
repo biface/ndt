@@ -26,7 +26,7 @@ def test_equality(source_name, setup_name, function_system_config, request):
         ("smooth_f_sd", "standard_strict_f_setup"),
     ],
 )
-def test_equality(source_name, setup_name, function_system_config, request):
+def test_not_equality(source_name, setup_name, function_system_config, request):
     dict_source = request.getfixturevalue(source_name)
     default_setup = request.getfixturevalue(setup_name)
     dictionary = _StackedDict(function_system_config, default_setup=default_setup)

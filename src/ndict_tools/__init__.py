@@ -8,9 +8,9 @@ from .exception import (
     StackedTypeError,
     StackedValueError,
 )
-from .tools import DictPaths, DictSearch
+from .tools import _Paths, DictSearch
 
-__version__ = "0.8.0"
+__version__ = "0.9.0"
 __author__ = "biface"
 
 __all__ = [
@@ -24,6 +24,6 @@ __all__ = [
     "StackedTypeError",
     "StackedValueError",
     "StackedIndexError",
-    "DictPaths",
+    "_Paths",
     "DictSearch",
 ]

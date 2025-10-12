@@ -17,7 +17,7 @@ def stacked_c_result(standard_strict_c_setup):
     )
 
 
-class TestStackedDictParameters:
+class TestParametersSD:
 
     def test_param_smooth_index(self, smooth_c_sd):
         assert isinstance(smooth_c_sd, _StackedDict)
@@ -47,7 +47,7 @@ class TestStackedDictParameters:
         assert strict_c_sd.default_setup == [("indent", 2), ("default_factory", None)]
 
 
-class TestStackedDictInit:
+class TestInitSD:
 
     # From documentation https://ndict-tools.readthedocs.io/en/latest/usage.html
 
@@ -117,7 +117,7 @@ class TestStackedDictInit:
         assert sd == stacked_c_result
 
 
-class TestStackedDictErrors:
+class TestErrorsSD:
 
     @pytest.mark.parametrize(
         "parameters, error, error_msg",

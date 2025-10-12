@@ -23,8 +23,52 @@ Tools
 -----
 
 .. automodule:: ndict_tools.tools
+.. autofunction:: compare_dict()
 .. autofunction:: unpack_items()
 .. autofunction:: from_dict()
+.. autoclass:: _HKey
+    :special-members: __contains__, __getitem__, __len__, __iter__, __repr__
+
+    .. automethod:: build_forest()
+    .. automethod:: add_child()
+    .. automethod:: add_children()
+    .. automethod:: get_child()
+    .. automethod:: get_child_keys()
+    .. automethod:: has_children()
+    .. automethod:: is_leaf()
+    .. automethod:: get_path()
+    .. automethod:: find_by_path()
+    .. automethod:: get_all_paths()
+    .. automethod:: get_descendants()
+    .. automethod:: get_depth()
+    .. automethod:: get_max_depth()
+    .. automethod:: iter_children()
+    .. automethod:: iter_leaves()
+    .. automethod:: dfs_preorder()
+    .. automethod:: dfs_postorder()
+    .. automethod:: bfs()
+    .. automethod:: dfs_find()
+    .. automethod:: bfs_find()
+    .. automethod:: find_all()
+    .. automethod:: find_by_key()
+    .. automethod:: iter_by_level()
+    .. automethod:: get_nodes_at_depth()
+    .. automethod:: filter_paths()
+    .. automethod:: map_nodes()
+    .. automethod:: prune()
+    .. automethod:: get_statistics()
+    .. automethod:: has_cycles()
+    .. automethod:: is_dag()
+    .. automethod:: is_valid_tree()
+    .. automethod:: check_parent_consistency()
+    .. automethod:: is_complete_tree()
+    .. automethod:: is_perfect_tree()
+    .. automethod:: is_balanced()
+    .. automethod:: get_balance_factor()
+    .. automethod:: count_nodes_by_degree()
+    .. automethod:: is_binary_tree()
+    .. automethod:: is_full_tree()
+
 .. autoclass:: _StackedDict
 
     .. autoattribute:: indent
@@ -66,6 +110,7 @@ Tools
     .. automethod:: update()
     .. automethod:: to_dict()
     .. automethod:: dict_paths()
+    .. automethod:: paths()
     .. automethod:: dfs()
     .. automethod:: bfs()
     .. automethod:: is_balanced()
@@ -74,23 +119,27 @@ Tools
     .. automethod:: ancestors()
     .. automethod:: leaves()
 
-.. autoclass:: DictPaths
+.. autoclass:: _Paths
 
-    .. automethod:: _iterate_paths()
     .. automethod:: __iter__()
     .. automethod:: __len__()
     .. automethod:: __eq__()
     .. automethod:: __ne__()
     .. automethod:: __contains__()
     .. automethod:: __repr__()
+    .. automethod:: get_children()
+    .. automethod:: has_children()
+    .. automethod:: get_subtree_paths()
+    .. automethod:: filter_paths()
+    .. automethod:: get_depth()
+    .. automethod:: get_leaf_paths()
 
 Core
 ----
 .. automodule:: ndict_tools.core
 .. autoclass:: NestedDictionary
-
-    .. automethod:: __str__()
-
+    :show-inheritance:
 .. autoclass:: StrictNestedDictionary
-
+    :show-inheritance:
 .. autoclass:: SmoothNestedDictionary
+    :show-inheritance:

@@ -20,6 +20,7 @@ present in all the keys, or count its occurrences.
    install
    usage
    api
+   indices
    :numbered:
    :maxdepth: 2
    :caption: Content
@@ -93,10 +94,3 @@ Nested dictionary
    dict_keys(['first', 'third', 'second'])
    $ nd.key_list('second')
    [('second', 'first'), ('second', 'second')]
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
