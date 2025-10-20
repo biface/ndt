@@ -4,7 +4,6 @@ in the following test.
 """
 
 from copy import deepcopy
-from pathlib import Path
 
 import pytest
 
