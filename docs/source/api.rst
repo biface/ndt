@@ -27,7 +27,6 @@ Tools
 .. autofunction:: unpack_items()
 .. autofunction:: from_dict()
 .. autoclass:: _HKey
-    :special-members: __contains__, __getitem__, __len__, __iter__, __repr__
 
     .. automethod:: build_forest()
     .. automethod:: add_child()
@@ -68,18 +67,18 @@ Tools
     .. automethod:: count_nodes_by_degree()
     .. automethod:: is_binary_tree()
     .. automethod:: is_full_tree()
+    .. automethod:: __contains__
+    .. automethod:: __getitem__
+    .. automethod:: __len__
+    .. automethod:: __iter__
+    .. automethod:: __repr__
+
 
 .. autoclass:: _StackedDict
 
     .. autoattribute:: indent
     .. autoattribute:: default_factory
     .. autoattribute:: default_setup
-    .. automethod:: __str__()
-    .. automethod:: __copy__()
-    .. automethod:: __deepcopy__()
-    .. automethod:: __setitem__()
-    .. automethod:: __getitem__()
-    .. automethod:: __delitem__()
     .. automethod:: unpacked_items()
     .. automethod:: unpacked_keys()
     .. automethod:: unpacked_values()
@@ -118,21 +117,49 @@ Tools
     .. automethod:: size()
     .. automethod:: ancestors()
     .. automethod:: leaves()
+    .. automethod:: __str__()
+    .. automethod:: __copy__()
+    .. automethod:: __deepcopy__()
+    .. automethod:: __setitem__()
+    .. automethod:: __getitem__()
+    .. automethod:: __delitem__()
+
 
 .. autoclass:: _Paths
 
-    .. automethod:: __iter__()
-    .. automethod:: __len__()
-    .. automethod:: __eq__()
-    .. automethod:: __ne__()
-    .. automethod:: __contains__()
-    .. automethod:: __repr__()
     .. automethod:: get_children()
     .. automethod:: has_children()
     .. automethod:: get_subtree_paths()
     .. automethod:: filter_paths()
     .. automethod:: get_depth()
     .. automethod:: get_leaf_paths()
+    .. automethod:: to_compact()
+    .. automethod:: __iter__()
+    .. automethod:: __len__()
+    .. automethod:: __eq__()
+    .. automethod:: __ne__()
+    .. automethod:: __contains__()
+    .. automethod:: __repr__()
+    .. automethod:: _ensure_hkey()
+
+.. autoclass:: _CPaths
+    :show-inheritance:
+
+    .. autoproperty:: structure
+    .. important::
+        The ``structure`` property has a setter in order to manually store compacted paths.
+    .. automethod:: expand_structure
+    .. automethod:: expand
+    .. automethod:: is_covering
+    .. automethod:: coverage
+    .. automethod:: missing_paths
+    .. automethod:: uncovered_paths
+    .. automethod:: __repr__
+    .. automethod:: __str__
+    .. automethod:: _ensure_structure
+    .. automethod:: _build_compact_structure
+    .. automethod:: _validate_structure
+    .. automethod:: _compare_path_sets
 
 Core
 ----

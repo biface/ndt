@@ -19,49 +19,59 @@ From GitHub
 
 This package is also available on `GitHub <https://github.com/biface/ndt>`_. You can download the desired version from the `release directory <https://github.com/biface/ndt/releases>`_ and unpack it into your project.
 
-Versions
---------
+Version History
+---------------
 
 .. versionremoved:: 1.2.0
 
-    - Removal of ``NestedDictionary`` class-specific definition attributes for systematic use of class-specific attribute initialization.
+    - The ``NestedDictionary`` class no longer uses class-specific definition attributes for initialization.
+      Instead, it now systematically uses class-specific attribute initialization.
 
 .. deprecated:: 1.0.0
 
-    - Use of the ``NestedDictionary`` class's specific parameterization at instance initialization (``indent`` and ``strict`` keys of the ``__init__`` method)
+    - The use of ``NestedDictionary`` class-specific parameters (``indent`` and ``strict`` keys in the ``__init__`` method)
+      at instance initialization is now deprecated.
 
-.. versionchanged:: 1.0.0
+.. versionadded:: 1.0.0
 
-    - The ``DictSearch`` will become the public view of paths and will be renamed as ``DictPaths`` as the public view of paths in nested dictionaries.
+    - Added a JSON converter for nested dictionaries that preserves non-string key types (e.g., integers, tuples).
+      This ensures compatibility with complex data structures during serialization and deserialization.
 
 .. versionchanged:: 0.9.0
 
-   - Renaming ``DictPaths`` as a private class ``_Paths`` which will be a technical class to manage set of paths.
+    - The ``DictPaths`` class has been renamed to the private class ``_Paths``.
+      This technical class is now used internally to manage sets of paths.
+    - The public ``DictPaths`` class now inherits from ``_CPaths`` and provides a way to manually build search paths.
 
 .. versionadded:: 0.9.0
 
-    - Introduction of ``_HKey`` class as the hierarchical tree of keys used to production paths.
-    - Introduction of ``DictSearch`` class in order to give easy access to ``_Paths`` set of hierarchical keys.
-    - Introduction of encoding for exports to or imports from pickle and JSON file formats.
+    - Introduced the ``_HKey`` class, which represents a hierarchical tree of keys for generating paths.
+    - Introduced the ``_CPaths`` class, a compact and user-friendly way to manually create path research structures.
+      This class will serve as the foundation for a future public class.
+    - Added support for encoding and decoding when exporting to or importing from pickle and JSON file formats.
 
 .. versionadded:: 0.8.0
 
-    - Introduction of generalized handling of specific attributes of ``_StackedDict`` child classes. This addition will be explained later in a section for developers.
+    - Added generalized handling of specific attributes for child classes of ``_StackedDict``.
+      Further details will be provided in a dedicated section for developers.
+    - Introduced ``DictPaths`` as a collection of paths within ``_StackedDict``.
 
 .. versionchanged:: 0.7.0
 
-    - Moved the update method exclusively to the ``_StackedDict`` class to standardize updates for future subclasses.
+    - The ``update`` method is now exclusive to the ``_StackedDict`` class to ensure standardized updates for future subclasses.
 
 .. versionadded:: 0.6.1
 
-    - Added path and tree-like management functions. These functions are still in the early testing stages and are not expected to be fully integrated until the stable version 1.0.0.
+    - Added path and tree-like management functions.
+      These features are currently in early testing and will be fully integrated in the stable 1.0.0 release.
 
 .. versionadded:: 0.6.0
 
-    - Introduced nested keys with Python lists: ``sd[[1, 2, 3]] == sd[1][2][3]``.
-    - Note the use of double brackets ``[[...]]`` to manage the key list.
+    - Introduced support for nested keys using Python lists: ``sd[[1, 2, 3]] == sd[1][2][3]``.
+    - Note: Double brackets ``[[...]]`` are used to denote a list of keys.
 
 .. important::
 
-   - All versions prior to version 0.6.0 are no longer supported.
-   - version 1.0.0 will be the first stable version.
+    - Versions prior to 0.6.0 are no longer supported.
+    - Version 1.0.0 will be the first stable release, and public class names will not change after this version.
+
