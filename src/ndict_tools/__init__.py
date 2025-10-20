@@ -1,4 +1,8 @@
-from .core import NestedDictionary, SmoothNestedDictionary, StrictNestedDictionary
+from .core import (
+    NestedDictionary,
+    SmoothNestedDictionary,
+    StrictNestedDictionary,
+)
 from .exception import (
     NestedDictionaryException,
     StackedAttributeError,
@@ -8,7 +12,6 @@ from .exception import (
     StackedTypeError,
     StackedValueError,
 )
-from .tools import DictSearch, _Paths
 
 __version__ = "0.9.0"
 __author__ = "biface"
@@ -24,6 +27,4 @@ __all__ = [
     "StackedTypeError",
     "StackedValueError",
     "StackedIndexError",
-    "_Paths",
-    "DictSearch",
 ]

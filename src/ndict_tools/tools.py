@@ -2202,11 +2202,11 @@ class _StackedDict(defaultdict):
         """
         return _Paths(self)
 
-    def dict_search(self) -> DictSearch:
+    def compact_paths(self) -> _CPaths:
         """
         Returns a DictSearch object factorizing the hierarchical paths of the _StackedDict.
         """
-        return DictSearch.from_dict_paths(self.dict_paths())
+        return _CPaths(self)
 
     def dfs(self, node=None, path=None) -> Generator[Tuple[List, Any], None, None]:
         """
@@ -2332,9 +2332,6 @@ class _StackedDict(defaultdict):
         raise StackedValueError(
             f"Value {value} not found in the dictionary.", value=value
         )
-
-
-"""Public class section"""
 
 
 class _Paths:
@@ -2683,30 +2680,592 @@ class _Paths:
         hkey = self._ensure_hkey()
         return [node.get_path() for node in hkey.iter_leaves()]
 
-    def to_search(self) -> "DictSearch":
+    def to_compact(self) -> _CPaths:
         """
-        Convert this DictPaths to a DictSearch.
+        Convert this _Paths to a _CPaths.
 
         Returns
         -------
-        DictSearch
-            DictSearch with complete coverage of these paths
+        _CPaths
+            Compact representation with the same paths
+        """
+        return _CPaths(self._stacked_dict)
+
+
+class _CPaths(_Paths):
+    """
+    A lazy view providing compact representation of hierarchical paths.
+
+    Extends _Paths to provide a factorized/compact representation where
+    the hierarchical structure is represented as nested lists:
+    - Leaf nodes: just the key
+    - Internal nodes: [key, child1, child2, ...]
+
+    The compact structure uses a bijective mapping:
+    - Paths → Compact structure (factorization)
+    - Compact structure → Paths (expansion)
+
+    .. warning::
+       This is a private class (underscore prefix) and should not be instantiated
+       directly by external code.
+
+    Parameters
+    ----------
+    stacked_dict : _StackedDict
+        The nested dictionary to create a compact view for
+
+    Attributes
+    ----------
+    _structure : Optional[List[Any]]
+        Compact representation of paths (lazy-built)
+
+    Examples
+    --------
+    >>> data = _StackedDict({'a': 1, 'b': {'c': 2, 'd': 3}})
+    >>> c_paths = _CPaths(data)
+    >>> c_paths.structure
+    [['a'], ['b', 'c', 'd']]
+    >>> list(c_paths)  # Inherited from _Paths
+    [['a'], ['b'], ['b', 'c'], ['b', 'd']]
+
+    See Also
+    --------
+    _Paths : Base class for path views
+    """
+
+    def __init__(self, stacked_dict):
+        super().__init__(stacked_dict)
+        self._structure: Optional[List[Any]] = None
+
+    def _ensure_structure(self) -> List[Any]:
+        """
+        Ensure compact structure is built (lazy initialization).
+
+        Returns
+        -------
+        List[Any]
+            The compact structure
+        """
+        if self._structure is None:
+            self._structure = self._build_compact_structure()
+        return self._structure
+
+    @staticmethod
+    def _validate_structure(structure: List[Any]) -> None:
+        """
+        Validate the compact structure format.
+
+        Parameters
+        ----------
+        structure : List[Any]
+            Structure to validate
+
+        Raises
+        ------
+        ValueError
+            If structure format is invalid
+
+        Notes
+        -----
+        A valid structure is a list where each element is either:
+
+          - A leaf value (any hashable type)
+          - A list [key, child1, child2, ...] where key is the node and
+            children are recursively valid structures
+        """
+        if not isinstance(structure, list):
+            raise ValueError(
+                f"Structure must be a list, got {type(structure).__name__}"
+            )
+
+        def validate_node(node, depth=0):
+            if depth > 1000:  # Prevent infinite recursion
+                raise ValueError("Structure too deeply nested (max depth: 1000)")
+
+            if isinstance(node, list):
+                if len(node) == 0:
+                    raise ValueError("Empty list not allowed in structure")
+                # First element is the key, rest are children
+                # Recursively validate children
+                for child in node[1:]:
+                    validate_node(child, depth + 1)
+            # Leaf nodes can be any value (will be used as keys)
+
+        for branch in structure:
+            validate_node(branch)
+
+    @property
+    def structure(self) -> List[Any]:
+        """
+        Get the compact structure representation.
+
+        Returns
+        -------
+        List[Any]
+            Compact representation as nested lists
 
         Examples
         --------
-        >>> paths = _Paths(_StackedDict({'a': {'b': 1}}))
-        >>> search = paths.to_search()
-        >>> search.to_factorized()
-        [['a', ['b']]]
+        >>> c_paths = _CPaths(_StackedDict({'a': {'b': 1, 'c': 2}}))
+        >>> c_paths.structure
+        [['a', 'b', 'c']]
+        """
+        return self._ensure_structure()
+
+    @structure.setter
+    def structure(self, value: List[Any]) -> None:
+        """
+        Set the compact structure representation.
+
+        This allows manual construction or modification of the compact structure.
+        The structure will be validated and stored.
+
+        Parameters
+        ----------
+        value : List[Any]
+            Compact structure as nested lists
+
+        Raises
+        ------
+        TypeError
+            If value is not a list
+        ValueError
+            If structure format is invalid
+
+        Examples
+        --------
+        >>> c_paths = _CPaths(_StackedDict())
+        >>> # Simple leaves at root
+        >>> c_paths.structure = [['a'], ['d']]
+        >>> c_paths.expand()
+        [['a'], ['d']]
+
+        >>> # Node 'a' with children 'b' and 'c'
+        >>> c_paths.structure = [['a', ['b', 'c']], ['d']]
+        >>> c_paths.expand()
+        [['a'], ['a', 'b'], ['a', 'c'], ['d']]
+
+        >>> # Deep nesting
+        >>> c_paths.structure = [['x', ['y', ['z', 'w']]]]
+        >>> c_paths.expand()
+        [['x'], ['x', 'y'], ['x', 'y', 'z'], ['x', 'y', 'w']]
+
+        Notes
+        -----
+        Setting the structure will invalidate any cached expanded paths.
+        The next call to expand() or iteration will use the new structure.
+
+        Format reminder:
+        - Leaf: just the key value
+        - Node with children: [key, child1, child2, ...]
+        where each child can be a leaf or another [key, ...] list
+        """
+        if not isinstance(value, list):
+            raise TypeError(f"Structure must be a list, got {type(value).__name__}")
+
+        # Optional: Validate structure format
+        self._validate_structure(value)
+
+        # Store the structure
+        self._structure = value
+
+        # Invalidate cached expanded paths if they exist
+        if hasattr(self, "_expanded_paths"):
+            self._expanded_paths = None
+
+    def _build_compact_structure(self) -> List[Any]:
+        """
+        Build the compact structure recursively from _hkey.
+
+        The algorithm traverses the hierarchical key tree (_hkey):
+        - If node is a leaf: return key
+        - If node has children: return [key, compact_child1, compact_child2, ...]
+
+        Returns
+        -------
+        List[Any]
+            Compact representation as nested lists
+
+        Notes
+        -----
+        Uses the _hkey attribute which maintains the hierarchical structure
+        of all keys. This is the core factorization algorithm.
+        """
+
+        def compact_node(node) -> Any:
+            """
+            Recursively compact a node from _hkey tree.
+
+            Parameters
+            ----------
+            node : _HKey node
+                Node from the _hkey hierarchical structure
+
+            Returns
+            -------
+            Any
+                - key alone if leaf (no children)
+                - [key, child1, child2, ...] if internal node (has children)
+            """
+            if node.is_leaf():
+                # Leaf: return just the key
+                return node.key
+
+            # Internal node: [key, compact(child1), compact(child2), ...]
+            children_compact = [compact_node(child) for child in node.iter_children()]
+            return [node.key] + children_compact
+
+        # Access _hkey from the _stacked_dict via inherited _ensure_hkey()
+        hkey = self._ensure_hkey()
+
+        if not hkey.has_children():
+            return []
+
+        # Compact each root-level child in _hkey
+        return [compact_node(child) for child in hkey.iter_children()]
+
+    @staticmethod
+    def expand_structure(structure: List[Any]) -> List[List[Any]]:
+        """
+        Expand compact structure back to full paths.
+
+        This is the inverse operation of compactification, establishing
+        the bijection between compact and expanded representations.
+
+        Parameters
+        ----------
+        structure : List[Any]
+            Compact structure to expand
+
+        Returns
+        -------
+        List[List[Any]]
+            All expanded paths
+
+        Examples
+        --------
+        >>> structure = [['a'], ['b', 'c', 'd']]
+        >>> _CPaths.expand_structure(structure)
+        [['a'], ['b'], ['b', 'c'], ['b', 'd']]
+
+        >>> structure = [['x', ['y', 'z1', 'z2'], 'a']]
+        >>> _CPaths.expand_structure(structure)
+        [['x'], ['x', 'y'], ['x', 'y', 'z1'], ['x', 'y', 'z2'], ['x', 'a']]
+        """
+        all_paths = []
+
+        def expand_node(node: Any, prefix: List[Any] = None) -> None:
+            """
+            Recursively expand a node.
+
+            Parameters
+            ----------
+            node : Any
+                Either a key (leaf) or [key, children...] (internal node)
+            prefix : List[Any], optional
+                Current path prefix
+            """
+            if prefix is None:
+                prefix = []
+
+            if not isinstance(node, list):
+                # Leaf node: just a key
+                current_path = prefix + [node]
+                all_paths.append(current_path)
+            else:
+                # Internal node: [key, child1, child2, ...]
+                key = node[0]
+                current_path = prefix + [key]
+                all_paths.append(current_path)
+
+                # Recursively expand each child
+                for child in node[1:]:
+                    expand_node(child, current_path)
+
+        # Expand each root branch
+        for branch in structure:
+            expand_node(branch)
+
+        return all_paths
+
+    def expand(self) -> List[List[Any]]:
+        """
+        Expand this instance's compact structure to full paths.
+
+        Returns
+        -------
+        List[List[Any]]
+            All expanded paths
+
+        Examples
+        --------
+        >>> c_paths = _CPaths(_StackedDict({'a': {'b': 1}}))
+        >>> c_paths.expand()
+        [['a'], ['a', 'b']]
+
+        Notes
+        -----
+        This is equivalent to calling expand_structure(self.structure),
+        and should give the same result as list(self) from the parent class.
+        """
+        return self.expand_structure(self.structure)
+
+    def __repr__(self) -> str:
+        """
+        Return technical representation with compact structure.
+
+        Returns
+        -------
+        str
+            String showing class name and compact structure
+
+        Examples
+        --------
+        >>> c_paths = _CPaths(_StackedDict({'a': 1}))
+        >>> repr(c_paths)
+        "_CPaths([['a']])"
+        """
+        return f"{self.__class__.__name__}({self.structure})"
+
+    def __str__(self) -> str:
+        """
+        Return readable string representation.
+
+        Returns
+        -------
+        str
+            Human-readable description
+
+        Examples
+        --------
+        >>> c_paths = _CPaths(_StackedDict({'a': {'b': 1}, 'c': 2}))
+        >>> str(c_paths)
+        "CompactPaths(3 paths): [['a', 'b'], ['c']]"
+        """
+        return f"CompactPaths({len(self)} paths): {self.structure}"
+
+    # ========================================================================
+    # COVERAGE ANALYSIS METHODS
+    # ========================================================================
+
+    @staticmethod
+    def _compare_path_sets(paths1: List[List[Any]], paths2: List[List[Any]]) -> tuple:
+        """
+        Compare two sets of paths and return statistics (private helper).
+
+        Parameters
+        ----------
+        paths1 : List[List[Any]]
+            First set of paths
+        paths2 : List[List[Any]]
+            Second set of paths
+
+        Returns
+        -------
+        tuple
+            (set1, set2, intersection, only_in_1, only_in_2)
+        """
+        set1 = {tuple(p) for p in paths1}
+        set2 = {tuple(p) for p in paths2}
+        intersection = set1 & set2
+        only_in_1 = set1 - set2
+        only_in_2 = set2 - set1
+        return set1, set2, intersection, only_in_1, only_in_2
+
+    def is_covering(self, stacked_dict) -> bool:
+        """
+        Check if this _CPaths covers all paths in the given _StackedDict.
+
+        A _CPaths is "covering" if its expanded paths exactly match all paths
+        in the target _StackedDict.
+
+        Parameters
+        ----------
+        stacked_dict : _StackedDict
+            The _StackedDict to compare against
+
+        Returns
+        -------
+        bool
+            True if all paths in stacked_dict are present in this _CPaths
+
+        Examples
+        --------
+        >>> sdict = _StackedDict({'a': {'b': 1}, 'c': 2})
+        >>> cpaths = _CPaths(sdict)
+        >>> cpaths.is_covering(sdict)
+        True
+
+        >>> # Partial coverage
+        >>> cpaths.structure = [['a']]  # Only covers 'a', not 'a.b' or 'c'
+        >>> cpaths.is_covering(sdict)
+        False
+
+        Notes
+        -----
+        For a _CPaths created directly from a _StackedDict:
+        _CPaths(sdict).is_covering(sdict) will ALWAYS return True
+        because the compact structure is built from all paths in sdict.
+        """
+        target_paths = list(_Paths(stacked_dict))
+        expanded_paths = self.expand()
+        set1, set2, _, _, _ = self._compare_path_sets(expanded_paths, target_paths)
+        return set1 == set2
+
+    def coverage(self, stacked_dict) -> float:
+        """
+        Calculate the coverage percentage of this _CPaths over a _StackedDict.
+
+        Coverage is defined as the ratio of paths in this _CPaths that exist
+        in the target _StackedDict, divided by the total number of paths in
+        the _StackedDict.
+
+        Parameters
+        ----------
+        stacked_dict : _StackedDict
+            The _StackedDict to compare against
+
+        Returns
+        -------
+        float
+            Coverage percentage between 0.0 and 1.0 (or > 1.0 if _CPaths
+            contains paths not in stacked_dict)
+
+        Examples
+        --------
+        >>> sdict = _StackedDict({'a': {'b': 1, 'c': 2}, 'd': 3})
+        >>> cpaths = _CPaths(sdict)
+        >>> cpaths.coverage(sdict)
+        1.0
+
+        >>> # Partial coverage: only 'a' and 'a.b' out of 4 paths
+        >>> cpaths.structure = [['a', 'b']]
+        >>> cpaths.coverage(sdict)
+        0.5
+
+        >>> # Over-coverage: includes paths not in sdict
+        >>> cpaths.structure = [['a', 'b', 'c'], ['d'], ['e']]
+        >>> cpaths.coverage(sdict)
+        1.25
+
+        Notes
+        -----
+        For a _CPaths created directly from a _StackedDict:
+        _CPaths(sdict).coverage(sdict) will ALWAYS return 1.0
+        because all paths from sdict are included.
+
+        The coverage can be > 1.0 if the _CPaths contains more paths than
+        the _StackedDict (e.g., manually set structure).
+        """
+        target_paths = list(_Paths(stacked_dict))
+        expanded_paths = self.expand()
+
+        _, set2, intersection, _, _ = self._compare_path_sets(
+            expanded_paths, target_paths
+        )
+
+        if len(set2) == 0:
+            return 0.0 if len(expanded_paths) > 0 else 1.0
+
+        return len(intersection) / len(set2)
+
+    def missing_paths(self, stacked_dict) -> List[List[Any]]:
+        """
+        Get paths from this _CPaths that are NOT in the _StackedDict.
+
+        Returns the list of paths that exist in this _CPaths's expanded form
+        but do not exist in the target _StackedDict. Useful for identifying
+        extra or invalid paths.
+
+        Parameters
+        ----------
+        stacked_dict : _StackedDict
+            The _StackedDict to compare against
+
+        Returns
+        -------
+        List[List[Any]]
+            List of paths in _CPaths but not in stacked_dict
+
+        Examples
+        --------
+        >>> sdict = _StackedDict({'a': {'b': 1}})
+        >>> cpaths = _CPaths(sdict)
+        >>> cpaths.missing_paths(sdict)
+        []
+
+        >>> # Add extra paths
+        >>> cpaths.structure = [['a', 'b', 'c'], ['d']]
+        >>> cpaths.missing_paths(sdict)
+        [['a', 'c'], ['d']]
+
+        Notes
+        -----
+        For a _CPaths created directly from a _StackedDict:
+        _CPaths(sdict).missing_paths(sdict) will ALWAYS return []
+        because all paths are derived from sdict.
 
         See Also
         --------
-        DictSearch.from_dict_paths : Alternative construction method
+        uncovered_paths : Get paths in _StackedDict not covered by _CPaths
         """
-        hkey = self._ensure_hkey()
-        return DictSearch(hkey)
+        target_paths = list(_Paths(stacked_dict))
+        expanded_paths = self.expand()
+
+        _, _, _, only_in_1, _ = self._compare_path_sets(expanded_paths, target_paths)
+
+        return [list(p) for p in sorted(only_in_1)]
+
+    def uncovered_paths(self, stacked_dict) -> List[List[Any]]:
+        """
+        Get paths from _StackedDict that are NOT covered by this _CPaths.
+
+        Returns the list of paths that exist in the target _StackedDict but
+        are not present in this _CPaths's expanded form. Useful for identifying
+        gaps in coverage.
+
+        Parameters
+        ----------
+        stacked_dict : _StackedDict
+            The _StackedDict to compare against
+
+        Returns
+        -------
+        List[List[Any]]
+            List of paths in stacked_dict but not in _CPaths
+
+        Examples
+        --------
+        >>> sdict = _StackedDict({'a': {'b': 1, 'c': 2}, 'd': 3})
+        >>> cpaths = _CPaths(sdict)
+        >>> cpaths.uncovered_paths(sdict)
+        []
+
+        >>> # Partial structure
+        >>> cpaths.structure = [['a', 'b']]
+        >>> cpaths.uncovered_paths(sdict)
+        [['a', 'c'], ['d']]
+
+        Notes
+        -----
+        For a _CPaths created directly from a _StackedDict:
+        _CPaths(sdict).uncovered_paths(sdict) will ALWAYS return []
+        because all paths from sdict are included.
+
+        See Also
+        --------
+        missing_paths : Get paths in _CPaths not in _StackedDict
+        coverage : Get coverage ratio
+        """
+        target_paths = list(_Paths(stacked_dict))
+        expanded_paths = self.expand()
+
+        _, _, _, _, only_in_2 = self._compare_path_sets(expanded_paths, target_paths)
+
+        return [list(p) for p in sorted(only_in_2)]
 
 
+# TODO to remove and create in core.py DictPaths as public view of _CPaths
 class DictSearch:
     """
     Factorized representation of hierarchical dictionary paths.
