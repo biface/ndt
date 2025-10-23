@@ -382,7 +382,7 @@ class _HKey:
         bool
             True if node has no children
         """
-        return not self.has_children()
+        return not (self.is_root or self.has_children())
 
     def get_path(self) -> List[Any]:
         """
