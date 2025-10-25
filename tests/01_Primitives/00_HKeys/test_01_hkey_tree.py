@@ -155,3 +155,38 @@ class TestHKeyTree:
         assert children == [
             len(child.children) for child in key_tree.find_by_key(key, find_all=True)
         ]
+
+    @pytest.mark.parametrize(
+        "depth, expected_spec",
+        [
+            (3, [[1, 3], ["enable_logging", 0], [("env", "production"), 0]]),
+            (
+                0,
+                [
+                    [frozenset({"redis", "cache"}), 3],
+                    ["monitoring", 3],
+                    [("env", "production"), 2],
+                    [("env", "dev"), 3],
+                ],
+            ),
+            (3, [["alerts", 0], [42, 4], [54, 4], [1, 3], [2, 3], [12, 5], [34, 5]]),
+            (
+                2,
+                [
+                    ["host", 0],
+                    ["port", 0],
+                    ["pools", 0],
+                    ["replicas", 2],
+                    ["instances", 2],
+                    ["rate_limit", 0],
+                ],
+            ),
+        ],
+    )
+    def test_get_multiple_children_at_depth(self, key_tree, depth, expected_spec):
+        control = []
+        for hkey in key_tree.get_nodes_at_depth(depth):
+            control.append([hkey.key, len(hkey.children)])
+
+        for ctl in expected_spec:
+            assert ctl in control
