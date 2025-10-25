@@ -1915,7 +1915,10 @@ class _StackedDict(defaultdict):
         """
         if not isinstance(other, (dict, _StackedDict)):
             return False
-        return compare_dict(self.to_dict(), dict(other))
+        elif isinstance(other, _StackedDict):
+            return compare_dict(self.to_dict(), other.to_dict())
+        else:
+            return compare_dict(self.to_dict(), dict(other))
 
     def unpacked_items(self) -> Generator:
         """
@@ -2813,65 +2816,90 @@ class _CPaths(_Paths):
         return self._ensure_structure()
 
     @structure.setter
-    def structure(self, value: List[Any]) -> None:
+    def structure(
+        self, value: Union["_StackedDict", "_HKey", List[Any], Dict[str, Any]]
+    ) -> None:
         """
-        Set the compact structure representation.
+        Set or build the compact structure representation.
 
-        This allows manual construction or modification of the compact structure.
-        The structure will be validated and stored.
+        This setter is flexible and can accept multiple input types to build
+        the internal compact structure:
+
+        - _StackedDict (or dict): the source nested mapping to analyze
+        - _HKey: an already-built hierarchical key tree
+        - List[Any]: a compact structure as nested lists
 
         Parameters
         ----------
-        value : List[Any]
-            Compact structure as nested lists
+        value : Union[_StackedDict, _HKey, List[Any]]
+            Input used to define the structure.
 
         Raises
         ------
         TypeError
-            If value is not a list
+            If value type is unsupported or structure type is invalid
         ValueError
-            If structure format is invalid
+            If provided compact structure format is invalid
 
         Examples
         --------
         >>> c_paths = _CPaths(_StackedDict())
-        >>> # Simple leaves at root
+        >>> # From compact structure (manual)
         >>> c_paths.structure = [['a'], ['d']]
         >>> c_paths.expand()
         [['a'], ['d']]
 
-        >>> # Node 'a' with children 'b' and 'c'
-        >>> c_paths.structure = [['a', ['b', 'c']], ['d']]
+        >>> # From a stacked dict
+        >>> c_paths.structure = _StackedDict({'a': {'b': 1}, 'd': 2})
         >>> c_paths.expand()
-        [['a'], ['a', 'b'], ['a', 'c'], ['d']]
+        [['a'], ['a', 'b'], ['d']]
 
-        >>> # Deep nesting
-        >>> c_paths.structure = [['x', ['y', ['z', 'w']]]]
+        >>> # From an _HKey
+        >>> hk = _HKey.build_forest({'x': {'y': {'z': 1}}})
+        >>> c_paths.structure = hk
         >>> c_paths.expand()
-        [['x'], ['x', 'y'], ['x', 'y', 'z'], ['x', 'y', 'w']]
-
-        Notes
-        -----
-        Setting the structure will invalidate any cached expanded paths.
-        The next call to expand() or iteration will use the new structure.
-
-        Format reminder:
-        - Leaf: just the key value
-        - Node with children: [key, child1, child2, ...]
-        where each child can be a leaf or another [key, ...] list
+        [['x'], ['x', 'y'], ['x', 'y', 'z']]
         """
-        if not isinstance(value, list):
-            raise TypeError(f"Structure must be a list, got {type(value).__name__}")
+        # Record the last input source for introspection
+        self._structure_source: Optional[str] = None
+        self._structure_from_stacked_dict: Optional[_StackedDict] = None
+        self._structure_from_hkey: Optional[_HKey] = None
 
-        # Optional: Validate structure format
-        self._validate_structure(value)
+        # Case 1: _StackedDict or dict
+        if isinstance(value, _StackedDict) or isinstance(value, dict):
+            self._structure_source = "stacked_dict"
+            # Normalize to _StackedDict
+            self._stacked_dict = (
+                value if isinstance(value, _StackedDict) else _StackedDict(value)
+            )
+            self._structure_from_stacked_dict = self._stacked_dict
+            # Invalidate and rebuild from stacked dict
+            self._hkey = None
+            self._structure = self._build_compact_structure()
+            return
 
-        # Store the structure
-        self._structure = value
+        # Case 2: _HKey
+        if isinstance(value, _HKey):
+            self._structure_source = "hkey"
+            self._structure_from_hkey = value
+            # Replace internal tree and build compact structure from it
+            self._hkey = value
+            # Reuse existing builder which will read from self._hkey
+            self._structure = self._build_compact_structure()
+            return
 
-        # Invalidate cached expanded paths if they exist
-        if hasattr(self, "_expanded_paths"):
-            self._expanded_paths = None
+        # Case 3: compact structure provided as list
+        if isinstance(value, list):
+            # Validate structure format
+            self._validate_structure(value)
+            self._structure_source = "compact"
+            self._structure = value
+            # Do not alter existing _hkey/_stacked_dict here; they will be rebuilt lazily if used
+            return
+
+        raise TypeError(
+            f"Unsupported type for structure: {type(value).__name__}. Expected _StackedDict, _HKey or list."
+        )
 
     def _build_compact_structure(self) -> List[Any]:
         """
