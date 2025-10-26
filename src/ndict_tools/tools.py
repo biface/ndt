@@ -2817,14 +2817,12 @@ class _CPaths(_Paths):
 
     @structure.setter
     def structure(
-        self, value: Union["_StackedDict", "_HKey", List[Any], Dict[str, Any]]
+        self, value: Union[_StackedDict, _HKey, List[Any], Dict[str, Any]]
     ) -> None:
         """
         Set or build the compact structure representation.
 
-        This setter is flexible and can accept multiple input types to build
-        the internal compact structure:
-
+        Accepts the following input types:
         - _StackedDict (or dict): the source nested mapping to analyze
         - _HKey: an already-built hierarchical key tree
         - List[Any]: a compact structure as nested lists
@@ -2860,19 +2858,12 @@ class _CPaths(_Paths):
         >>> c_paths.expand()
         [['x'], ['x', 'y'], ['x', 'y', 'z']]
         """
-        # Record the last input source for introspection
-        self._structure_source: Optional[str] = None
-        self._structure_from_stacked_dict: Optional[_StackedDict] = None
-        self._structure_from_hkey: Optional[_HKey] = None
-
         # Case 1: _StackedDict or dict
         if isinstance(value, _StackedDict) or isinstance(value, dict):
-            self._structure_source = "stacked_dict"
             # Normalize to _StackedDict
             self._stacked_dict = (
                 value if isinstance(value, _StackedDict) else _StackedDict(value)
             )
-            self._structure_from_stacked_dict = self._stacked_dict
             # Invalidate and rebuild from stacked dict
             self._hkey = None
             self._structure = self._build_compact_structure()
@@ -2880,8 +2871,6 @@ class _CPaths(_Paths):
 
         # Case 2: _HKey
         if isinstance(value, _HKey):
-            self._structure_source = "hkey"
-            self._structure_from_hkey = value
             # Replace internal tree and build compact structure from it
             self._hkey = value
             # Reuse existing builder which will read from self._hkey
@@ -2892,7 +2881,6 @@ class _CPaths(_Paths):
         if isinstance(value, list):
             # Validate structure format
             self._validate_structure(value)
-            self._structure_source = "compact"
             self._structure = value
             # Do not alter existing _hkey/_stacked_dict here; they will be rebuilt lazily if used
             return
