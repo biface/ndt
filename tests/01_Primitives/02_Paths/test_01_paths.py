@@ -377,65 +377,6 @@ class TestDictPathsStrictSD:
         )
 
 
-@pytest.mark.skip(reason="To be refactored and moved as DictPaths in core module")
-class TestDictSearch:
-
-    @pytest.mark.parametrize(
-        "search",
-        [
-            [("env", "production"), ["database", "api"]],
-            [("env", "dev"), ["database", "api", "features"]],
-            [frozenset({"redis", "cache"}), ["nodes", "config", "environments"]],
-            ["monitoring", [("metrics", "cpu"), ("logs", "level"), "dashboards"]],
-            [
-                "global_settings",
-                [
-                    ("security", "encryption"),
-                    "security",
-                    ("networking", "load_balancer"),
-                ],
-            ],
-            [
-                "global_settings",
-                ("security", "encryption"),
-                ["algorithm", "key_rotation"],
-            ],
-        ],
-    )
-    def test_search_path(self, strict_c_sd, search):
-        assert search in strict_c_sd.dict_search()
-
-    @pytest.mark.skip(reason="Refactoring Paths and Searches")
-    @pytest.mark.parametrize(
-        "search",
-        [
-            [("env", "production"), ["database", "api"]],
-            [("env", "dev"), ["database", "api", "features"]],
-            [frozenset({"redis", "cache"}), ["nodes", "config", "environments"]],
-            ["monitoring", [("metrics", "cpu"), ("logs", "level"), "dashboards"]],
-            [
-                "global_settings",
-                [
-                    ("security", "encryption"),
-                    "security",
-                    ("networking", "load_balancer"),
-                ],
-            ],
-            [
-                "global_settings",
-                ("security", "encryption"),
-                ["algorithm", "key_rotation"],
-            ],
-        ],
-    )
-    def test_search_path_from_paths(self, strict_c_sd, search):
-        assert search in strict_c_sd.dict_paths().to_search()
-
-    @pytest.mark.skip(reason="Refactoring Paths and Searches")
-    def test_complete_covering_paths(self, strict_c_sd):
-        assert strict_c_sd.paths().is_complete_coverage(strict_c_sd.dict_paths())
-
-
 class TestChildrenPaths:
     @pytest.mark.parametrize(
         "path, children",
