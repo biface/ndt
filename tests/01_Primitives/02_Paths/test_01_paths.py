@@ -3,7 +3,7 @@ import re
 import pytest
 
 from ndict_tools.exception import StackedKeyError, StackedTypeError
-from ndict_tools.tools import _StackedDict
+from ndict_tools.tools import _Paths, _StackedDict
 
 
 @pytest.mark.parametrize(
@@ -26,6 +26,13 @@ from ndict_tools.tools import _StackedDict
 )
 def test_path_strict_sd(strict_f_sd, path, leaf):
     assert strict_f_sd[path] == leaf
+
+
+def test_path_init_empty():
+    d_paths = _Paths()
+    assert d_paths._stacked_dict is None
+    assert d_paths._hkey is None
+    assert d_paths._ensure_hkey() is None
 
 
 class TestPathStrictSD:
