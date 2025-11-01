@@ -5,7 +5,7 @@ dictionaries.
 
 from __future__ import annotations
 
-from .tools import _StackedDict
+from .tools import _CPaths, _Paths, _StackedDict
 
 """Classes section"""
 
@@ -59,6 +59,9 @@ class NestedDictionary(_StackedDict):
             default_setup=default_setup,
         )
 
+    def compact_paths(self) -> DictPaths:
+        return DictPaths(self)
+
 
 class StrictNestedDictionary(NestedDictionary):
     """
@@ -104,3 +107,25 @@ class SmoothNestedDictionary(NestedDictionary):
             setup = {"indent": 0, "default_factory": SmoothNestedDictionary}
 
         super().__init__(*args, **kwargs, default_setup=setup)
+
+
+class PathsView(_Paths):
+    pass
+
+
+class CompactPathsView(_CPaths):
+    """
+    Class of compact nested paths
+    """
+
+    def __init__(self, value):
+        super().__init__(value)
+
+
+class DictPaths(_CPaths):
+    """
+    Class of compact nested paths
+    """
+
+    def __init__(self, value):
+        super().__init__(value)

@@ -1,4 +1,5 @@
 from .core import (
+    DictPaths,
     NestedDictionary,
     SmoothNestedDictionary,
     StrictNestedDictionary,
@@ -21,6 +22,7 @@ __all__ = [
     "SmoothNestedDictionary",
     "StrictNestedDictionary",
     "NestedDictionaryException",
+    "DictPaths",
     "StackedDictionaryError",
     "StackedKeyError",
     "StackedAttributeError",
