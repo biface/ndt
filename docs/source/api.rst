@@ -76,9 +76,6 @@ Tools
 
 .. autoclass:: _StackedDict
 
-    .. autoattribute:: indent
-    .. autoattribute:: default_factory
-    .. autoattribute:: default_setup
     .. automethod:: unpacked_items()
     .. automethod:: unpacked_keys()
     .. automethod:: unpacked_values()

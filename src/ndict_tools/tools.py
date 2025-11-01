@@ -4,8 +4,8 @@ package's public API, it serves as the foundation for all nested dictionary oper
 
 * **_StackedDict**: Base class for nested dictionary structures
 * **_HKey**: Tree node representing hierarchical keys (private, optimized with tuples)
-* **DictPaths**: View of all paths in a nested dictionary
-* **DictSearch**: Factorized search structure for nested dictionaries
+* **_Paths**: View of all paths in a nested dictionary
+* **_CPaths**: Compact/factorized representation of paths in nested dictionaries
 
 The module enables efficient navigation, querying, and factorization of deeply
 nested dictionary structures with support for various key types.
@@ -52,8 +52,40 @@ MAX_DEPTH = 100
 
 def compare_dict(d1, d2) -> bool:
     """
-    Compare two (possibly nested) structures: dicts, lists, tuples, sets, or scalars.
-    Returns True if they are the same type and have equal content recursively.
+    Recursively compare two potentially nested structures for equality.
+
+    Performs deep comparison of dictionaries, lists, tuples, sets, and scalar values.
+    Two structures are considered equal if they have the same type and equal content
+    at all nesting levels.
+
+    Parameters
+    ----------
+    d1 : Any
+        First structure to compare
+    d2 : Any
+        Second structure to compare
+
+    Returns
+    -------
+    bool
+        True if structures are identical in type and content
+
+    Examples
+    --------
+    >>> compare_dict({'a': 1}, {'a': 1})
+    True
+    >>> compare_dict({'a': {'b': 1}}, {'a': {'b': 1}})
+    True
+    >>> compare_dict({'a': 1}, {'a': 2})
+    False
+    >>> compare_dict([1, 2], (1, 2))
+    False
+
+    Notes
+    -----
+    - Type checking is strict: [1, 2] != (1, 2) even with same values
+    - Dictionary key sets must match exactly
+    - Recursively handles nested structures of arbitrary depth
     """
     if type(d1) != type(d2):
         return False
@@ -74,12 +106,41 @@ def compare_dict(d1, d2) -> bool:
 
 def unpack_items(dictionary: dict) -> Generator:
     """
-    This function de-stacks items from a nested dictionary.
+    Recursively flatten a nested dictionary into (path, value) pairs.
 
-    :param dictionary: Dictionary to unpack.
-    :type dictionary: dict
-    :return: Generator that yields items from a nested dictionary.
-    :rtype: Generator
+    Traverses a nested dictionary structure and yields each terminal value
+    along with its hierarchical path represented as a tuple of keys.
+    Empty dictionaries are preserved and yielded with their path.
+
+    Parameters
+    ----------
+    dictionary : dict
+        Dictionary to unpack (may be nested)
+
+    Yields
+    ------
+    tuple
+        (path_tuple, value) where path_tuple is a tuple of keys leading to value
+
+    Examples
+    --------
+    >>> list(unpack_items({'a': 1, 'b': {'c': 2}}))
+    [(('a',), 1), (('b', 'c'), 2)]
+    >>> list(unpack_items({'a': {}}))
+    [(('a',), {})]
+    >>> list(unpack_items({'a': {'b': {'c': 1}}}))
+    [(('a', 'b', 'c'), 1)]
+
+    Notes
+    -----
+    - Uses depth-first traversal
+    - Empty dictionaries are treated as terminal values
+    - Paths are represented as immutable tuples for hashability
+
+    See Also
+    --------
+    _StackedDict.unpacked_items : Method wrapper for this function
+    _StackedDict.dfs : Depth-first traversal alternative
     """
     for key, value in dictionary.items():
         if isinstance(value, dict):  # Check if the value is a dictionary
@@ -94,21 +155,53 @@ def unpack_items(dictionary: dict) -> Generator:
 
 def from_dict(dictionary: dict, class_name: object, **class_options) -> _StackedDict:
     """
-    This recursive function is used to transform a dictionary into a stacked dictionary.
+    Recursively convert a standard dictionary to a _StackedDict or subclass.
 
-    This function enhances and replaces the previous from_dict() function in the core module of this package.
-    It allows you to create an object subclass of a _StackedDict with initialization options if requested and
-    attributes to be set.
+    This function transforms a regular nested dictionary into a _StackedDict-based
+    structure, preserving the hierarchical organization while adding the enhanced
+    functionality of _StackedDict. It can instantiate any _StackedDict subclass
+    with custom initialization options.
 
-    :param dictionary: The dictionary to transform
-    :type dictionary: dict
-    :param class_name: name of the class to return
-    :type class_name: object
-    :param class_options: default settings to pass to class instance to be set up.
-    :type class_options: dict
-    :return: stacked dictionary or of subclasses of _StackedDict
-    :rtype: _StackedDict
-    :raise StackedKeyError: if attribute called is not an attribute of the class hierarchy.
+    Parameters
+    ----------
+    dictionary : dict
+        The dictionary to transform (may be nested)
+    class_name : type
+        The _StackedDict class (or subclass) to instantiate
+    **class_options : dict
+        Initialization options for the class instances.
+        Must contain 'default_setup' key with configuration dict.
+
+    Returns
+    -------
+    _StackedDict
+        New instance of class_name containing the dictionary structure
+
+    Raises
+    ------
+    StackedKeyError
+        If 'default_setup' key is missing from class_options
+
+    Examples
+    --------
+    >>> setup = {'default_setup': {'indent': 2, 'default_factory': None}}
+    >>> sdict = from_dict({'a': {'b': 1}}, _StackedDict, **setup)
+    >>> type(sdict)
+    <class '_StackedDict'>
+    >>> sdict['a']['b']
+    1
+
+    Notes
+    -----
+    - Already-instantiated _StackedDict values are preserved as-is
+    - Regular dict values are recursively converted
+    - Non-dict values are assigned directly
+    - All created instances share the same class_options
+
+    See Also
+    --------
+    _StackedDict.__init__ : Constructor that uses this function
+    _StackedDict.to_dict : Inverse operation (convert back to dict)
     """
 
     if "default_setup" in class_options:
@@ -142,7 +235,7 @@ class _HKey:
 
     * Each node holds a key value from the dictionary
     * Children nodes (stored as immutable tuples) represent keys in nested dictionaries
-    * Parent references enable path reconstruction from any node
+    * Parent's references enable path reconstruction from any node
 
     The use of immutable tuples for children optimizes memory usage and iteration
     performance for tree traversal algorithms (DFS, BFS).
@@ -562,24 +655,24 @@ class _HKey:
             for child in self.children:
                 yield from child.iter_leaves()
 
-    def to_dict(self) -> Dict[Any, Any]:
-        """
-        Convert the tree structure back to a nested dict.
+    # def to_dict(self) -> Dict[Any, Any]:
+    #    """
+    #    Convert the tree structure back to a nested dict.
 
-        Returns
-        -------
-        Dict[Any, Any]
-            Nested dictionary representation of the tree
-        """
-        result: Dict[Any, Any] = {}
+    #    Returns
+    #    -------
+    #    Dict[Any, Any]
+    #        Nested dictionary representation of the tree
+    #   """
+    #    result: Dict[Any, Any] = {}
 
-        for child in self.children:
-            if child.has_children():
-                result[child.key] = child.to_dict()
-            else:
-                result[child.key] = {}
+    #    for child in self.children:
+    #        if child.has_children():
+    #            result[child.key] = child.to_dict()
+    #        else:
+    #            result[child.key] = {}
 
-        return result
+    #    return result
 
     # ========================================================================
     # Tree Traversal Algorithms
@@ -1599,31 +1692,113 @@ class _HKey:
 
 class _StackedDict(defaultdict):
     """
-    This class is an internal technical class for stacking nested dictionaries. This class is technical and is used to
-    manage the processing of nested dictionaries. It inherits from defaultdict.
+    Internal base class for hierarchical nested dictionary structures.
 
-     .. warning::
+    ``_StackedDict`` is the **central engine** providing the foundation for all
+    nested dictionary operations in the ndict_tools package. It extends Python's
+    ``defaultdict`` with hierarchical key support, path-based access, and specialized
+    traversal methods.
+
+    Key features:
+
+    * **Hierarchical keys**: Use lists as keys to access nested values: ``d[['a', 'b', 'c']]``
+    * **Automatic nesting**: Missing intermediate levels are created automatically
+    * **Path views**: Access all paths via ``paths()`` and ``compact_paths()``
+    * **Tree traversal**: DFS and BFS algorithms for navigation
+    * **Deep operations**: Specialized copy, equality, and conversion methods
+
+    .. warning::
        This is a private class (underscore prefix) and should not be instantiated
-       directly by external code. Access it through ``NestedDictionary``.
+       directly by external code. Access it through ``NestedDictionary`` or subclasses.
 
-       However, it could be used by developers as described in
-       :doc:`usage`
+       However, it can be used directly by developers for custom implementations
+       as described in the usage documentation.
+
+    Parameters
+    ----------
+    *args : iterable, optional
+        Dictionaries or iterables to initialize from
+    **kwargs : dict, optional
+        Either initialization data OR configuration via 'default_setup'
+
+    Attributes
+    ----------
+    indent : int
+        Indentation level for string representation (default: 2)
+    default_factory : callable or None
+        Factory function for missing keys (inherited from defaultdict)
+    _default_setup : set
+        Internal storage for configuration as set of (key, value) tuples
+
+    Examples
+    --------
+    >>> setup = {'indent': 2, 'default_factory': None}
+    >>> sd = _StackedDict(default_setup=setup)
+    >>> sd['a']['b']['c'] = 1  # Automatic nesting
+    >>> sd[['a', 'b', 'c']]
+    1
+    >>> # Initialize with data
+    >>> sd = _StackedDict({'a': {'b': 1}}, default_setup=setup)
+    >>> list(sd.paths())
+    [['a'], ['a', 'b']]
+    >>> # Hierarchical key access
+    >>> sd[['a', 'b']] = 2
+    >>> sd['a']['b']
+    2
+
+    Notes
+    -----
+    The class maintains two key invariants:
+
+    1. All nested dictionaries are _StackedDict instances (or subclass)
+    2. All instances share the same default_setup configuration
+
+    See Also
+    --------
+    _Paths : View object for accessing all paths
+    _CPaths : Compact representation of paths
+    _HKey : Internal tree structure for path operations
     """
 
     def __init__(self, *args, **kwargs):
         """
-        At instantiation, it has two mandatory parameters for its creation:
+        Initialize a new _StackedDict with configuration and optional data.
 
-            * **indent**, which is used to format the object's display.
-            * **default_factory**, which initializes the ``default_factory`` attribute of its parent class ``defaultdict``.
-            * these mandatory parameters are stored in ``default_setup`` attribute to be propagated.
+        The constructor requires configuration via the 'default_setup' parameter,
+        which must contain at least 'indent' and 'default_factory' keys. Additional
+        initialization data can be provided through args or kwargs.
 
-        These parameters are passed using the kwargs dictionary.
+        Parameters
+        ----------
+        *args : iterable
+            Dictionaries, _StackedDict instances, or iterables of (key, value) pairs
+        **kwargs : dict
+            Either:
+            - 'default_setup': dict with 'indent' and 'default_factory' keys
+            - Direct key-value pairs to initialize (requires default_setup in kwargs)
 
-        :param args:
-        :type args: iterator
-        :param kwargs:
-        :type kwargs: dict
+        Raises
+        ------
+        StackedKeyError
+            If 'indent' or 'default_factory' is missing from configuration
+        StackedAttributeError
+            If default_setup contains keys that aren't valid attributes
+
+        Examples
+        --------
+        >>> setup = {'indent': 2, 'default_factory': None}
+        >>> sd = _StackedDict(default_setup=setup)
+        >>> # Initialize with data
+        >>> sd = _StackedDict({'a': 1}, default_setup=setup)
+        >>> # Copy another _StackedDict
+        >>> sd2 = _StackedDict(sd, default_setup=setup)
+
+        Notes
+        -----
+        - Args are processed sequentially, later values override earlier ones
+        - _StackedDict args are deep-copied
+        - Regular dicts are converted to _StackedDict recursively
+        - All configuration is propagated to nested instances
         """
 
         ind: int = 0
@@ -1708,8 +1883,26 @@ class _StackedDict(defaultdict):
 
     @property
     def default_setup(self) -> list:
-        """Return a deterministic, list-based view of the internal setup set.
-        Order: 'indent', 'default_factory', then other keys sorted alphabetically.
+        """
+        Get configuration as an ordered list of (key, value) tuples.
+
+        Returns a deterministic view of the internal configuration with
+        priority ordering: 'indent', 'default_factory', then alphabetically.
+
+        Returns
+        -------
+        list of tuple
+            Configuration as [(key, value), ...] in priority order
+
+        Examples
+        --------
+        >>> sd = _StackedDict(default_setup={'indent': 2, 'default_factory': None})
+        >>> sd.default_setup
+        [('indent', 2), ('default_factory', None)]
+
+        See Also
+        --------
+        default_setup.setter : Set new configuration
         """
         priority = ["indent", "default_factory"]
         # Convert internal set of tuples to dict to deduplicate and access by key
@@ -1727,7 +1920,21 @@ class _StackedDict(defaultdict):
 
     @default_setup.setter
     def default_setup(self, value) -> None:
-        """Accept dict, list[tuple], or set[tuple] and store internally as a set."""
+        """
+        Update configuration from dict, list, or set of tuples.
+
+        Parameters
+        ----------
+        value : dict, list of tuple, or set of tuple
+            New configuration to apply
+
+        Examples
+        --------
+        >>> sd = _StackedDict(default_setup={'indent': 2, 'default_factory': None})
+        >>> sd.default_setup = {'indent': 4, 'default_factory': int}
+        >>> sd.indent
+        4
+        """
         if isinstance(value, dict):
             items = value.items()
         else:
@@ -1735,13 +1942,37 @@ class _StackedDict(defaultdict):
         self._default_setup = set(items)
 
     def __str__(self, padding=0) -> str:
-        """
-        Override __str__ to converts a nested dictionary to a string in json like format
+        """ "
+        Convert to JSON-like formatted string representation.
 
-        :param padding: whitespace indentation of dictionary content
-        :type padding: int
-        :return: a string in json like format
-        :rtype: str
+        Creates a human-readable string with proper indentation showing
+        the nested structure. Uses the configured indent level.
+
+        Parameters
+        ----------
+        padding : int, optional
+            Current indentation level (used internally for recursion)
+
+        Returns
+        -------
+        str
+            JSON-like formatted string
+
+        Examples
+        --------
+        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> print(sd)
+        {
+          a : {
+            b : 1,
+          },
+        }
+
+        Notes
+        -----
+        - Uses recursive formatting for nested dictionaries
+        - Trailing commas are included for consistency
+        - Empty dictionaries shown as {}
         """
 
         d_str = "{\n"
@@ -1762,10 +1993,30 @@ class _StackedDict(defaultdict):
 
     def __copy__(self) -> _StackedDict:
         """
-        Override __copy__ to create a shallow copy of a stacked dictionary.
+        Create a shallow copy of the _StackedDict.
 
-        :return: a shallow copy of a stacked dictionary
-        :rtype: _StackedDict or a subclass of _StackedDict
+        Creates a new _StackedDict with the same keys and values, but values
+        are not recursively copied. Nested _StackedDict instances are referenced,
+        not duplicated.
+
+        Returns
+        -------
+        _StackedDict
+            Shallow copy with same configuration
+
+        Examples
+        --------
+        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> sd2 = sd.__copy__()
+        >>> sd2 is sd
+        False
+        >>> sd2['a'] is sd['a']  # Nested dicts are referenced
+        True
+
+        See Also
+        --------
+        __deepcopy__ : Create complete independent copy
+        copy : Public method wrapper
         """
 
         new = self.__class__(default_setup=dict(self.default_setup))
@@ -1775,10 +2026,35 @@ class _StackedDict(defaultdict):
 
     def __deepcopy__(self) -> _StackedDict:
         """
-        Override __deepcopy__ to create a complete copy of a stacked dictionary.
+        Create a deep copy of the _StackedDict.
 
-        :return: a complete copy of a stacked dictionary
-        :rtype: _StackedDict or a subclass of _StackedDict
+        Creates a completely independent copy where all nested structures
+        are recursively duplicated. Changes to the copy will not affect
+        the original.
+
+        Returns
+        -------
+        _StackedDict
+            Complete independent copy
+
+        Examples
+        --------
+        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> sd2 = sd.__deepcopy__()
+        >>> sd2['a']['b'] = 2
+        >>> sd['a']['b']
+        1
+
+        Notes
+        -----
+        - Uses to_dict() → from_dict() pipeline for copying
+        - Preserves class type (works with subclasses)
+        - All configuration is transferred to the copy
+
+        See Also
+        --------
+        __copy__ : Shallow copy alternative
+        deepcopy : Public method wrapper
         """
 
         return from_dict(
@@ -1787,16 +2063,47 @@ class _StackedDict(defaultdict):
 
     def __setitem__(self, key, value) -> None:
         """
-        Override __setitem__ to handle hierarchical keys.
+        Set item with support for hierarchical keys.
 
-        :param key: key to set
-        :type key: object
-        :param value: value to set
-        :type value: object
-        :return: None
-        :rtype: None
-        :raises StackedTypeError: if a nested list is found within the key
+        Supports both flat keys and hierarchical paths (as lists).
+        For hierarchical keys, automatically creates intermediate
+        _StackedDict levels as needed.
+
+        Parameters
+        ----------
+        key : Any or List[Any]
+            Single key or list representing hierarchical path
+        value : Any
+            Value to assign
+
+        Raises
+        ------
+        StackedTypeError
+            If key list contains nested lists
+
+        Examples
+        --------
+        >>> sd = _StackedDict(default_setup={'indent': 2, 'default_factory': None})
+        >>> sd['a'] = 1  # Flat key
+        >>> sd[['b', 'c', 'd']] = 2  # Hierarchical key
+        >>> sd['b']['c']['d']
+        2
+
+        >>> # Nested lists not allowed
+        >>> sd[['a', ['b']]] = 1  # Raises StackedTypeError
+
+        Notes
+        -----
+        - Creates intermediate levels automatically
+        - Overwrites existing values at the target path
+        - All created levels use the same default_setup
+
+        See Also
+        --------
+        __getitem__ : Get items with hierarchical keys
+        __delitem__ : Delete items with hierarchical keys
         """
+
         if isinstance(key, list):
             # Check for nested lists and raise an error
             for sub_key in key:
@@ -1825,13 +2132,46 @@ class _StackedDict(defaultdict):
 
     def __getitem__(self, key):
         """
-        Override __getitem__ to handle hierarchical keys.
+        Get item with support for hierarchical keys.
 
-        :param key: key to set
-        :type key: object
-        :return: value
-        :rtype: object
-        :raises StackedTypeError: if a nested list is found within the key
+        Supports both flat keys and hierarchical paths (as lists).
+        For hierarchical keys, traverses the nested structure to
+        retrieve the value at the specified path.
+
+        Parameters
+        ----------
+        key : Any or List[Any]
+            Single key or list representing hierarchical path
+
+        Returns
+        -------
+        Any
+            Value at the specified key/path
+
+        Raises
+        ------
+        StackedTypeError
+            If key list contains nested lists
+        KeyError
+            If key or path doesn't exist
+
+        Examples
+        --------
+        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> sd['a']
+        <_StackedDict: {'b': 1}>
+        >>> sd[['a', 'b']]
+        1
+
+        Notes
+        -----
+        - Flat keys behave like standard dict access
+        - List keys traverse the hierarchy
+        - Raises KeyError if path doesn't exist
+
+        See Also
+        --------
+        __setitem__ : Set items with hierarchical keys
         """
 
         if isinstance(key, list):
@@ -1858,13 +2198,36 @@ class _StackedDict(defaultdict):
 
     def __delitem__(self, key):
         """
-        Override __delitem__ to handle hierarchical keys.
+        Delete item with support for hierarchical keys and cleanup.
 
-        :param key: key to set
-        :type key: object
-        :return: None
-        :rtype: None
+        Deletes the item at the specified key or hierarchical path.
+        For hierarchical keys, automatically removes empty parent
+        dictionaries after deletion.
+
+        Parameters
+        ----------
+        key : Any or List[Any]
+            Single key or list representing hierarchical path
+
+        Examples
+        --------
+        >>> sd = _StackedDict({'a': {'b': {'c': 1}}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> del sd[['a', 'b', 'c']]
+        >>> 'b' in sd['a']  # Empty 'b' was removed
+        False
+
+        Notes
+        -----
+        - Automatically cleans up empty parent dictionaries
+        - Preserves non-empty parent levels
+        - Works with both flat and hierarchical keys
+
+        See Also
+        --------
+        pop : Delete and return value
+        popitem : Remove and return last item
         """
+
         if isinstance(
             key, list
         ):  # Une liste est interprétée comme une hiérarchie de clés
@@ -1885,10 +2248,43 @@ class _StackedDict(defaultdict):
 
     def __eq__(self, other):
         """
-        Override __eq__ to compare only structural content, not configuration.
-        Two instances are equal if they are the same class and their expanded dict
-        representations are equal, regardless of indent/default_factory settings.
+        Check equality: same class, configuration, and content.
+
+        Two _StackedDict instances are equal if they have:
+        1. Identical class type (exact match, not subclasses)
+        2. Identical default_setup configuration
+        3. Identical dictionary structure and values
+
+        Parameters
+        ----------
+        other : Any
+            Object to compare with
+
+        Returns
+        -------
+        bool
+            True if all conditions met
+
+        Examples
+        --------
+        >>> setup = {'indent': 2, 'default_factory': None}
+        >>> sd1 = _StackedDict({'a': 1}, default_setup=setup)
+        >>> sd2 = _StackedDict({'a': 1}, default_setup=setup)
+        >>> sd1 == sd2
+        True
+
+        >>> # Different setup
+        >>> sd3 = _StackedDict({'a': 1}, default_setup={'indent': 4, 'default_factory': None})
+        >>> sd1 == sd3
+        False
+
+        See Also
+        --------
+        __ne__ : Inequality check
+        similar : Compare content only (ignore class/setup)
+        isomorph : Compare as plain dicts
         """
+
         if not isinstance(other, type(self)):
             return False
         if self._default_setup != other._default_setup:
@@ -1897,24 +2293,100 @@ class _StackedDict(defaultdict):
 
     def __ne__(self, other):
         """
-        Override __ne__ to handle hierarchical keys.
+        Check inequality (negation of __eq__).
+
+        Returns
+        -------
+        bool
+            True if not equal
+
+        See Also
+        --------
+        __eq__ : Equality check
         """
+
         return not self.__eq__(other)
 
     def similar(self, other):
         """
-        Override __eq__ to handle hierarchical keys.
+        Check if two structures share the same content (ignoring setup).
+
+        Two structures are similar if they:
+        1. Are both _StackedDict instances (any subclass)
+        2. Have identical dictionary content (keys and values)
+
+        Configuration differences are ignored.
+
+        Parameters
+        ----------
+        other : Any
+            Object to compare with
+
+        Returns
+        -------
+        bool
+            True if both are _StackedDict with same content
+
+        Examples
+        --------
+        >>> setup1 = {'indent': 2, 'default_factory': None}
+        >>> setup2 = {'indent': 4, 'default_factory': _StackedDict}
+        >>> sd1 = _StackedDict({'a': 1}, default_setup=setup1)
+        >>> sd2 = _StackedDict({'a': 1}, default_setup=setup2)
+        >>> sd1 == sd2
+        False
+        >>> sd1.similar(sd2)
+        True
+
+        See Also
+        --------
+        __eq__ : Strict equality (includes setup)
+        isomorph : Compare as plain dicts
         """
         if not isinstance(other, _StackedDict):
             return False
-        if self._default_setup != other._default_setup:
-            return False
+
         return compare_dict(self.to_dict(), other.to_dict())
 
     def isomorph(self, other):
         """
-        Override __eq__ to handle hierarchical keys.
+        Check if structures are isomorphic (same keys/values, any dict type).
+
+        Two structures are isomorphic if they represent the same nested
+        dictionary structure, regardless of whether they're _StackedDict,
+        plain dict, or any other dict-like type.
+
+        Parameters
+        ----------
+        other : dict or _StackedDict
+            Dictionary to compare with
+
+        Returns
+        -------
+        bool
+            True if structure-preserving mapping exists
+
+        Examples
+        --------
+        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> regular_dict = {'a': {'b': 1}}
+        >>> sd.isomorph(regular_dict)
+        True
+
+        >>> sd.isomorph({'a': {'b': 2}})
+        False
+
+        Notes
+        -----
+        Checks if sd[k1]...[kn] == other[k1]...[kn] for all paths.
+        This is the most permissive comparison method.
+
+        See Also
+        --------
+        __eq__ : Strict equality
+        similar : Compare _StackedDict instances
         """
+
         if not isinstance(other, (dict, _StackedDict)):
             return False
         elif isinstance(other, _StackedDict):
@@ -1924,43 +2396,139 @@ class _StackedDict(defaultdict):
 
     def unpacked_items(self) -> Generator:
         """
-        This method de-stacks items from a nested dictionary. It calls internal unpack_items() function.
+        Generate all (path, value) pairs from nested structure.
 
-        :return: generator that yields items from a nested dictionary
-        :rtype: Generator
+        Yields terminal values along with their hierarchical paths as tuples.
+        This provides a flattened view of the entire nested dictionary.
+
+        Yields
+        ------
+        tuple
+            (path_tuple, value) for each terminal value
+
+        Examples
+        --------
+        >>> sd = _StackedDict({'a': {'b': 1}, 'c': 2}, default_setup={'indent': 2, 'default_factory': None})
+        >>> list(sd.unpacked_items())
+        [(('a', 'b'), 1), (('c',), 2)]
+
+        >>> # Empty dict as value
+        >>> sd = _StackedDict({'a': {}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> list(sd.unpacked_items())
+        [(('a',), {})]
+
+        Notes
+        -----
+        - Uses depth-first traversal
+        - Empty dictionaries are treated as terminal values
+        - Paths are immutable tuples for hashability
+
+        See Also
+        --------
+        unpacked_keys : Get only the paths
+        unpacked_values : Get only the values
+        dfs : Depth-first traversal alternative returning lists
         """
+
         for key, value in unpack_items(self):
             yield key, value
 
     def unpacked_keys(self) -> Generator:
         """
-        This method de-stacks keys from a nested dictionary and return them as keys. It calls internal unpack_items()
-        function.
+        Generate all hierarchical paths (keys) from nested structure.
 
-        :return: generator that yields keys from a nested dictionary
-        :rtype: Generator
+        Yields the path to each terminal value as a tuple of keys,
+        providing access to all navigable paths in the dictionary.
+
+        Yields
+        ------
+        tuple
+            Path as tuple of keys
+
+        Examples
+        --------
+        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> list(sd.unpacked_keys())
+        [('a', 'b')]
+
+        >>> sd = _StackedDict({'a': {'b': 1, 'c': 2}, 'd': 3}, default_setup={'indent': 2, 'default_factory': None})
+        >>> sorted(sd.unpacked_keys())
+        [('a', 'b'), ('a', 'c'), ('d',)]
+
+        See Also
+        --------
+        unpacked_items : Get (path, value) pairs
+        paths : Get paths as _Paths view object
         """
+
         for key, value in unpack_items(self):
             yield key
 
     def unpacked_values(self) -> Generator:
         """
-        This method de-stacks values from a nested dictionary and return them as values. It calls internal
-        unpack_items() function.
+        Generate all terminal values from nested structure.
 
-        :return: generator that yields values from a nested dictionary
-        :rtype: Generator
+        Yields only the leaf values, discarding path information.
+        Useful for collecting all data values regardless of structure.
+
+        Yields
+        ------
+        Any
+            Each leaf value in the nested dictionary
+
+        Examples
+        --------
+        >>> sd = _StackedDict({'a': {'b': 1}, 'c': 2}, default_setup={'indent': 2, 'default_factory': None})
+        >>> list(sd.unpacked_values())
+        [1, 2]
+
+        >>> # Empty dict is a value
+        >>> sd = _StackedDict({'a': {}, 'b': 1}, default_setup={'indent': 2, 'default_factory': None})
+        >>> list(sd.unpacked_values())
+        [{}, 1]
+
+        See Also
+        --------
+        unpacked_items : Get (path, value) pairs
+        leaves : Alternative method returning list
         """
         for key, value in unpack_items(self):
             yield value
 
     def to_dict(self) -> dict:
         """
-        This method converts a nested dictionary to a classical dictionary
+        Convert to a standard nested dictionary.
 
-        :return: a dictionary
-        :rtype: dict
+        Recursively converts the _StackedDict and all nested _StackedDict
+        instances to regular Python dictionaries, removing all special
+        functionality but preserving the structure.
+
+        Returns
+        -------
+        dict
+            Regular nested dictionary with same structure
+
+        Examples
+        --------
+        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> regular = sd.to_dict()
+        >>> type(regular)
+        <class 'dict'>
+        >>> regular
+        {'a': {'b': 1}}
+
+        Notes
+        -----
+        - All _StackedDict instances are converted recursively
+        - Other value types are preserved as-is
+        - Inverse operation of from_dict()
+
+        See Also
+        --------
+        from_dict : Convert dict to _StackedDict
+        __deepcopy__ : Create _StackedDict copy
         """
+
         unpacked_dict = {}
         for key in self.keys():
             if isinstance(self[key], _StackedDict):
@@ -1971,35 +2539,105 @@ class _StackedDict(defaultdict):
 
     def copy(self) -> _StackedDict:
         """
-        This method copies stacked dictionaries to a copy of the dictionary.
-        :return: a shallow copy of the dictionary
-        :rtype: _StackedDict: a _StackedDict of subclasses of _StackedDict
+        Create a shallow copy of the _StackedDict.
+
+        Returns
+        -------
+        _StackedDict
+            Shallow copy with same configuration
+
+        Examples
+        --------
+        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> sd2 = sd.copy()
+        >>> sd2['a'] is sd['a']
+        True
+
+        See Also
+        --------
+        __copy__ : Internal implementation
+        deepcopy : Create independent copy
         """
+
         return self.__copy__()
 
     def deepcopy(self) -> _StackedDict:
         """
-        This method copies a stacked dictionaries to a deep copy of the dictionary.
+        Create a deep copy of the _StackedDict.
 
-        :return: a deep copy of the dictionary
-        :rtype: _StackedDict: a _StackedDict of subclasses of _StackedDict
+        Creates a completely independent copy where all nested structures
+        are recursively duplicated.
+
+        Returns
+        -------
+        _StackedDict
+            Complete independent copy
+
+        Examples
+        --------
+        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> sd2 = sd.deepcopy()
+        >>> sd2['a']['b'] = 999
+        >>> sd['a']['b']
+        1
+
+        See Also
+        --------
+        __deepcopy__ : Internal implementation
+        copy : Shallow copy alternative
         """
 
         return self.__deepcopy__()
 
     def pop(self, key: Union[Any, List[Any]], default=None) -> Any:
         """
-        Removes the specified key (or hierarchical key) and returns its value.
-        If the key does not exist, returns the default value if provided, or raises a KeyError.
+        Remove and return value at key or hierarchical path.
 
-        :param key: The key or hierarchical key to remove.
-        :type key: Union[Any, List[Any]]
-        :param default: The value to return if the key does not exist.
-        :type default: Any
-        :return: The value associated with the removed key.
-        :rtype: Any
-        :raises StackedKeyError: If the key does not exist and no default is provided.
+        Removes the specified key (flat or hierarchical) and returns its value.
+        Automatically cleans up empty parent dictionaries after removal.
+        If the key doesn't exist, returns the default value or raises an error.
+
+        Parameters
+        ----------
+        key : Any or List[Any]
+            Single key or hierarchical path to remove
+        default : Any, optional
+            Value to return if key doesn't exist
+
+        Returns
+        -------
+        Any
+            The value that was removed
+
+        Raises
+        ------
+        StackedKeyError
+            If key doesn't exist and no default provided
+
+        Examples
+        --------
+        >>> sd = _StackedDict({'a': {'b': 1}, 'c': 2}, default_setup={'indent': 2, 'default_factory': None})
+        >>> sd.pop('c')
+        2
+        >>> 'c' in sd
+        False
+
+        >>> # Hierarchical key
+        >>> sd.pop(['a', 'b'])
+        1
+        >>> 'a' in sd  # Empty 'a' was removed
+        False
+
+        >>> # With default
+        >>> sd.pop('nonexistent', 'default_value')
+        'default_value'
+
+        See Also
+        --------
+        popitem : Remove and return last item
+        __delitem__ : Delete without returning value
         """
+
         if isinstance(key, list):
             # Handle hierarchical keys
             current = self
@@ -2034,17 +2672,47 @@ class _StackedDict(defaultdict):
 
     def popitem(self):
         """
-        Removes and returns the last item in the most deeply nested dictionary as a (path, value) pair.
-        The path is represented as a list of keys leading to the value.
-        If the dictionary is empty, raises a KeyError.
+        Remove and return the last item as (path, value) pair.
 
-        The method follows a depth-first search (DFS) traversal to locate the last item,
-        removing it from the nested structure before returning.
+        Removes the last item in the most deeply nested dictionary,
+        returning its full hierarchical path and value. Uses depth-first
+        traversal to locate the deepest rightmost item.
 
-        :return: A tuple containing the hierarchical path (list of keys) and the value.
-        :rtype: tuple
-        :raises StackedIndexError: If the dictionary is empty.
+        Returns
+        -------
+        tuple
+            (path_list, value) where path_list is the hierarchical path
+
+        Raises
+        ------
+        StackedIndexError
+            If the dictionary is empty
+
+        Examples
+        --------
+        >>> sd = _StackedDict({'a': {'b': 1, 'c': 2}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> path, value = sd.popitem()
+        >>> path
+        ['a', 'c']
+        >>> value
+        2
+
+        >>> # Empty dictionary
+        >>> sd = _StackedDict(default_setup={'indent': 2, 'default_factory': None})
+        >>> sd.popitem()  # Raises StackedIndexError
+
+        Notes
+        -----
+        - Follows DFS to find the last (rightmost, deepest) item
+        - Cleans up empty parent dictionaries automatically
+        - Path is returned as a list of keys
+
+        See Also
+        --------
+        pop : Remove item by key
+        unpacked_items : View all (path, value) pairs
         """
+
         if not self:  # Handle empty dictionary
             raise StackedIndexError("popitem(): _StackedDict is empty")
 
@@ -2074,14 +2742,44 @@ class _StackedDict(defaultdict):
 
     def update(self, dictionary: dict = None, **kwargs) -> None:
         """
-        Updates a stacked dictionary with key/value pairs from a dictionary or keyword arguments.
+        Update _StackedDict with key/value pairs from dict or kwargs.
 
-        :param dictionary: A dictionary with key/value pairs to update.
-        :type dictionary: dict
-        :param kwargs: Additional key/value pairs to update.
-        :type kwargs: dict
-        :return: None
+        Merges the provided dictionary or keyword arguments into this
+        _StackedDict, converting regular dicts to _StackedDict instances
+        recursively while preserving existing _StackedDict values.
+
+        Parameters
+        ----------
+        dictionary : dict, optional
+            Dictionary with key/value pairs to merge
+        **kwargs : dict
+            Additional key/value pairs to merge
+
+        Examples
+        --------
+        >>> sd = _StackedDict({'a': 1}, default_setup={'indent': 2, 'default_factory': None})
+        >>> sd.update({'b': 2, 'c': {'d': 3}})
+        >>> sd['c']['d']
+        3
+
+        >>> # Using kwargs
+        >>> sd.update(e=4, f={'g': 5})
+        >>> sd['f']['g']
+        5
+
+        Notes
+        -----
+        - Regular dicts are converted to _StackedDict recursively
+        - _StackedDict values are accepted directly
+        - Configuration is synchronized across all nested instances
+        - Later values override earlier ones for duplicate keys
+
+        See Also
+        --------
+        __init__ : Initialization with data
+        __setitem__ : Set individual items
         """
+
         if dictionary:
             for key, value in dictionary.items():
                 if isinstance(value, _StackedDict):
@@ -2111,12 +2809,50 @@ class _StackedDict(defaultdict):
 
     def is_key(self, key: Any) -> bool:
         """
-        Checks if a key exists at any level in the _StackedDict hierarchy using unpack_items().
-        This works for both flat keys (e.g., 1) and hierarchical keys (e.g., [1, 2, 3]).
+        Check if an atomic key exists at any level in the hierarchy.
 
-        :param key: A key to check. Can be a single key or a part of a hierarchical path.
-        :return: True if the key exists at any level, False otherwise.
+        Searches through all hierarchical paths to determine if the given
+        atomic key appears anywhere in the nested structure. Does not accept
+        hierarchical paths (lists).
+
+        Parameters
+        ----------
+        key : Any
+            Atomic key to search for (not a list)
+
+        Returns
+        -------
+        bool
+            True if key exists at any level
+
+        Raises
+        ------
+        StackedKeyError
+            If key is a list (hierarchical keys not allowed)
+
+        Examples
+        --------
+        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> sd.is_key('b')
+        True
+        >>> sd.is_key('c')
+        False
+
+        >>> # Lists not allowed
+        >>> sd.is_key(['a', 'b'])  # Raises StackedKeyError
+
+        Notes
+        -----
+        - Only searches for atomic keys
+        - Checks all nesting levels
+        - O(n) complexity where n is total number of keys
+
+        See Also
+        --------
+        occurrences : Count how many times key appears
+        key_list : Get all paths containing the key
         """
+
         # Normalize the key (convert lists to tuples for uniform comparison)
         if isinstance(key, list):
             raise StackedKeyError("This function manages only atomic keys", key=key)
@@ -2126,14 +2862,42 @@ class _StackedDict(defaultdict):
 
     def occurrences(self, key: Any) -> int:
         """
-        Returns the Number of occurrences of a key in a stacked dictionary including 0 if the key is not a keys in a
-        stacked dictionary.
+        Count occurrences of an atomic key throughout the hierarchy.
 
-        :param key: A possible key in a stacked dictionary.
-        :type key: Any
-        :return: Number of occurrences or 0
-        :rtype: int
+        Returns the total number of times a key appears in the nested
+        structure, counting each occurrence in every hierarchical path.
+
+        Parameters
+        ----------
+        key : Any
+            Atomic key to count
+
+        Returns
+        -------
+        int
+            Number of occurrences (0 if key doesn't exist)
+
+        Examples
+        --------
+        >>> sd = _StackedDict({'a': {'b': 1}, 'c': {'b': 2}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> sd.occurrences('b')
+        2
+        >>> sd.occurrences('a')
+        1
+        >>> sd.occurrences('z')
+        0
+
+        >>> # Key appearing multiple times in same path
+        >>> sd = _StackedDict({'a': {'a': 1}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> sd.occurrences('a')
+        2
+
+        See Also
+        --------
+        is_key : Check if key exists
+        key_list : Get all paths containing the key
         """
+
         __occurrences = 0
         for stacked_keys in self.unpacked_keys():
             if key in stacked_keys:
@@ -2144,15 +2908,44 @@ class _StackedDict(defaultdict):
 
     def key_list(self, key: Any) -> list:
         """
-        returns the list of unpacked keys containing the key from the stacked dictionary. If the key is not in the
-        dictionary, it raises StackedKeyError (not a key).
+        Get all hierarchical paths containing a specific key.
 
-        :param key: a possible key in a stacked dictionary.
-        :type key: Any
-        :return: A list of unpacked keys containing the key from the stacked dictionary.
-        :rtype: list
-        :raise StackedKeyError: if a key is not in a stacked dictionary.
+        Returns a list of all complete paths (as tuples) that contain
+        the specified atomic key at any position in the path.
+
+        Parameters
+        ----------
+        key : Any
+            Atomic key to search for
+
+        Returns
+        -------
+        list
+            List of paths (as tuples) containing the key
+
+        Raises
+        ------
+        StackedKeyError
+            If key doesn't exist in the dictionary
+
+        Examples
+        --------
+        >>> sd = _StackedDict({'a': {'b': 1}, 'c': {'b': 2}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> sd.key_list('b')
+        [('a', 'b'), ('c', 'b')]
+
+        >>> sd.key_list('a')
+        [('a', 'b')]
+
+        >>> sd.key_list('nonexistent')  # Raises StackedKeyError
+
+        See Also
+        --------
+        is_key : Check if key exists
+        items_list : Get values at paths containing key
+        occurrences : Count occurrences
         """
+
         __key_list = []
 
         if self.is_key(key):
@@ -2168,15 +2961,49 @@ class _StackedDict(defaultdict):
 
     def items_list(self, key: Any) -> list:
         """
-        returns the list of unpacked items associated to the key from the stacked dictionary. If the key is not in the
-        dictionary, it raises StackedKeyError (not a key).
+        Get all values associated with paths containing a specific key.
 
-        :param key: a possible key in a stacked dictionary.
-        :type key: Any
-        :return: A list of unpacked items associated the key from the stacked dictionary.
-        :rtype: list
-        :raise StackedKeyError: if a key is not in a stacked dictionary.
+        Returns a list of all terminal values whose hierarchical paths
+        contain the specified atomic key at any position.
+
+        Parameters
+        ----------
+        key : Any
+            Atomic key to search for
+
+        Returns
+        -------
+        list
+            List of values from paths containing the key
+
+        Raises
+        ------
+        StackedKeyError
+            If key doesn't exist in the dictionary
+
+        Examples
+        --------
+        >>> sd = _StackedDict({'a': {'b': 1}, 'c': {'b': 2}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> sd.items_list('b')
+        [1, 2]
+
+        >>> sd.items_list('a')
+        [1]
+
+        >>> sd.items_list('nonexistent')  # Raises StackedKeyError
+
+        Notes
+        -----
+        - Returns values in the order they're encountered during traversal
+        - Multiple values returned if key appears in multiple paths
+        - Only returns terminal (leaf) values
+
+        See Also
+        --------
+        key_list : Get paths containing the key
+        unpacked_items : Get all (path, value) pairs
         """
+
         __items_list = []
 
         if self.is_key(key):
@@ -2192,41 +3019,144 @@ class _StackedDict(defaultdict):
 
     def dict_paths(self) -> _Paths:
         """
-        Returns a view object for all hierarchical paths in the _StackedDict.
+        Get a view object for all hierarchical paths.
 
         .. deprecated:: 0.9
-
-            This function will be removed in a future release.
+            This method is deprecated and will be removed in a future release.
             Use :meth:`paths` instead.
+
+        Returns
+        -------
+        _Paths
+            View object providing access to all paths
+
+        See Also
+        --------
+        paths : Recommended replacement method
         """
+
         return _Paths(self)
 
     def paths(self) -> _Paths:
         """
-        Returns a view object for all hierarchical paths in the _StackedDict.
+        Get a view object for all hierarchical paths in the dictionary.
+
+        Returns a lazy view similar to dict.keys() that provides access to
+        all hierarchical paths without materializing them in memory. The view
+        supports iteration, length queries, and membership testing.
+
+        Returns
+        -------
+        _Paths
+            Lazy view object for all hierarchical paths
+
+        Examples
+        --------
+        >>> sd = _StackedDict({'a': {'b': 1}, 'c': 2}, default_setup={'indent': 2, 'default_factory': None})
+        >>> paths = sd.paths()
+        >>> len(paths)
+        3
+        >>> ['a', 'b'] in paths
+        True
+        >>> list(paths)
+        [['a'], ['a', 'b'], ['c']]
+
+        Notes
+        -----
+        - Paths are generated lazily during iteration
+        - Internal _HKey tree is built on first access
+        - View updates automatically if dictionary changes
+        - More efficient than unpacked_keys() for large structures
+
+        See Also
+        --------
+        compact_paths : Get factorized/compact representation
+        unpacked_keys : Generate paths as tuples
+        _Paths : View class documentation
         """
+
         return _Paths(self)
 
     def compact_paths(self) -> _CPaths:
         """
-        Returns a DictSearch object factorizing the hierarchical paths of the _StackedDict.
+        Get a compact/factorized representation of all paths.
+
+        Returns a view that represents the hierarchical structure in a
+        factorized form where common prefixes are shared. This provides
+        a more concise representation useful for visualization and analysis.
+
+        Returns
+        -------
+        _CPaths
+            Compact view with factorized path structure
+
+        Examples
+        --------
+        >>> sd = _StackedDict({'a': {'b': 1, 'c': 2}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> cpaths = sd.compact_paths()
+        >>> cpaths.structure
+        [['a', 'b', 'c']]
+
+        >>> # Expand back to full paths
+        >>> cpaths.expand()
+        [['a'], ['a', 'b'], ['a', 'c']]
+
+        Notes
+        -----
+        - Provides bijective mapping between expanded and compact forms
+        - Useful for path coverage analysis
+        - More compact representation for deeply nested structures
+
+        See Also
+        --------
+        paths : Get full paths view
+        _CPaths : Compact view class documentation
         """
+
         return _CPaths(self)
 
     def dfs(self, node=None, path=None) -> Generator[Tuple[List, Any], None, None]:
         """
-        Depth-First Search (DFS) traversal of the stacked dictionary.
+        Depth-First Search traversal of the nested dictionary.
 
-        This method recursively traverses the dictionary in a depth-first manner.
-        It yields each hierarchical path as a list and its corresponding value.
+        Recursively traverses the dictionary in depth-first order, yielding
+        each hierarchical path (as list) and its corresponding value. This
+        includes both intermediate nodes and leaf values.
 
-        :param node: The current dictionary node being traversed. Defaults to the root if None.
-        :type node: Optional[dict]
-        :param path: The current hierarchical path being constructed. Defaults to an empty list if None.
-        :type path: Optional[List]
-        :return: A generator that yields tuples of hierarchical paths and their corresponding values.
-        :rtype: Generator[Tuple[List, Any], None, None]
+        Parameters
+        ----------
+        node : dict, optional
+            Current node being traversed (defaults to root/self)
+        path : list, optional
+            Current path being constructed (defaults to empty list)
+
+        Yields
+        ------
+        tuple
+            (path_list, value) for each node in DFS order
+
+        Examples
+        --------
+        >>> sd = _StackedDict({'a': {'b': 1}, 'c': 2}, default_setup={'indent': 2, 'default_factory': None})
+        >>> for path, value in sd.dfs():
+        ...     print(f"{path} -> {value}")
+        ['a'] -> <_StackedDict>
+        ['a', 'b'] -> 1
+        ['c'] -> 2
+
+        Notes
+        -----
+        - Visits nodes before their children (pre-order)
+        - Returns paths as mutable lists (unlike unpacked_keys)
+        - Includes intermediate dictionary nodes
+        - Useful for tree-based operations
+
+        See Also
+        --------
+        bfs : Breadth-first traversal
+        unpacked_items : Similar but only terminal values
         """
+
         if node is None:
             node = self
         if path is None:
@@ -2242,14 +3172,45 @@ class _StackedDict(defaultdict):
 
     def bfs(self) -> Generator[Tuple[Tuple, Any], None, None]:
         """
-        Breadth-First Search (BFS) traversal of the stacked dictionary.
+        Breadth-First Search traversal of the nested dictionary.
 
-        This method iteratively traverses the dictionary in a breadth-first manner.
-        It uses a queue to ensure that all nodes at a given depth are visited before moving deeper.
+        Iteratively traverses the dictionary level by level, visiting all
+        nodes at depth N before moving to depth N+1. Uses a queue (deque)
+        for efficient FIFO operations.
 
-        :return: A generator that yields tuples of hierarchical paths (as tuples) and their corresponding values.
-        :rtype: Generator[Tuple[Tuple, Any], None, None]
+        Yields
+        ------
+        tuple
+            (path_tuple, value) for each node in BFS order
+
+        Examples
+        --------
+        >>> sd = _StackedDict({'a': {'b': {'c': 1}}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> for path, value in sd.bfs():
+        ...     print(f"{path} -> {value}")
+        ('a',) -> <_StackedDict>
+        ('a', 'b') -> <_StackedDict>
+        ('a', 'b', 'c') -> 1
+
+        >>> # Only leaf values
+        >>> sd = _StackedDict({'a': {'b': 1, 'c': 2}, 'd': 3}, default_setup={'indent': 2, 'default_factory': None})
+        >>> leaves = [(p, v) for p, v in sd.bfs() if not isinstance(v, _StackedDict)]
+        >>> leaves
+        [(('a', 'b'), 1), ('a', 'c'), 2), (('d',), 3)]
+
+        Notes
+        -----
+        - Visits all nodes at same depth before going deeper
+        - Returns paths as immutable tuples
+        - Includes all nodes (intermediate and terminal)
+        - More memory efficient than collecting all paths first
+
+        See Also
+        --------
+        dfs : Depth-first traversal
+        _HKey.bfs : Tree-based BFS traversal
         """
+
         queue = deque(
             [((), self)]
         )  # Start with an empty path and the top-level dictionary
@@ -2268,38 +3229,157 @@ class _StackedDict(defaultdict):
 
     def height(self) -> int:
         """
-        Computes the height of the _StackedDict, defined as the length of the longest path.
+        Compute the height (maximum depth) of the nested structure.
 
-        :return: The height of the dictionary.
-        :rtype: int
+        The height is defined as the length of the longest path from root
+        to any leaf node. An empty dictionary has height 0.
+
+        Returns
+        -------
+        int
+            Maximum path length in the dictionary
+
+        Examples
+        --------
+        >>> sd = _StackedDict({'a': 1}, default_setup={'indent': 2, 'default_factory': None})
+        >>> sd.height()
+        1
+
+        >>> sd = _StackedDict({'a': {'b': {'c': 1}}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> sd.height()
+        3
+
+        >>> sd = _StackedDict(default_setup={'indent': 2, 'default_factory': None})
+        >>> sd.height()
+        0
+
+        Notes
+        -----
+        - Empty dictionary has height 0
+        - Single-level dictionary has height 1
+        - O(n) complexity where n is number of paths
+
+        See Also
+        --------
+        size : Count total number of keys
+        leaves : Get all leaf values
         """
+
         return max((len(path) for path in self.dict_paths()), default=0)
 
     def size(self) -> int:
         """
-        Computes the size of the _StackedDict, defined as the total number of keys (nodes) in the structure.
+        Compute the total number of keys (nodes) in the structure.
 
-        :return: The total number of nodes in the dictionary.
-        :rtype: int
+        Counts all keys at all nesting levels, including both intermediate
+        dictionary keys and terminal value keys.
+
+        Returns
+        -------
+        int
+            Total number of keys across all levels
+
+        Examples
+        --------
+        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> sd.size()
+        2
+
+        >>> sd = _StackedDict({'a': {'b': 1, 'c': 2}, 'd': 3}, default_setup={'indent': 2, 'default_factory': None})
+        >>> sd.size()
+        4
+
+        Notes
+        -----
+        - Counts all keys at all levels
+        - Equivalent to number of nodes in tree representation
+        - Different from len() which only counts top-level keys
+
+        See Also
+        --------
+        height : Get maximum depth
+        __len__ : Get top-level key count
         """
+
         return sum(1 for _ in self.unpacked_items())
 
     def leaves(self) -> list:
         """
-        Extracts the leaf nodes of the _StackedDict.
+        Extract all leaf (terminal) values from the nested structure.
 
-        :return: A list of leaf values.
-        :rtype: list
+        Returns a list of all values that are not themselves nested
+        dictionaries, i.e., all terminal nodes in the tree structure.
+
+        Returns
+        -------
+        list
+            List of all leaf values
+
+        Examples
+        --------
+        >>> sd = _StackedDict({'a': {'b': 1}, 'c': 2}, default_setup={'indent': 2, 'default_factory': None})
+        >>> sd.leaves()
+        [1, 2]
+
+        >>> sd = _StackedDict({'a': {'b': {'c': 1}}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> sd.leaves()
+        [1]
+
+        >>> # Empty dict as leaf value
+        >>> sd = _StackedDict({'a': {}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> sd.leaves()
+        [{}]
+
+        Notes
+        -----
+        - Returns values in DFS order
+        - Empty dictionaries are considered leaf values
+        - Plain dicts (not _StackedDict) are also leaves
+
+        See Also
+        --------
+        unpacked_values : Generator alternative
+        dfs : Traversal including intermediate nodes
         """
+
         return [value for _, value in self.dfs() if not isinstance(value, _StackedDict)]
 
     def is_balanced(self) -> bool:
         """
-        Checks if the _StackedDict is balanced.
-        A balanced dictionary is one where the height difference between any two subtrees is at most 1.
+        Check if the nested structure is height-balanced.
 
-        :return: True if balanced, False otherwise.
-        :rtype: bool
+        A balanced dictionary is one where the height difference between
+        any two subtrees at the same level differs by at most 1. This
+        indicates a relatively uniform distribution of nesting depth.
+
+        Returns
+        -------
+        bool
+            True if structure is balanced, False otherwise
+
+        Examples
+        --------
+        >>> # Balanced
+        >>> sd = _StackedDict({'a': {'b': 1}, 'c': {'d': 2}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> sd.is_balanced()
+        True
+
+        >>> # Unbalanced
+        >>> sd = _StackedDict({'a': {'b': {'c': 1}}, 'd': 2}, default_setup={'indent': 2, 'default_factory': None})
+        >>> sd.is_balanced()
+        False
+
+        Notes
+        -----
+        - Uses recursive height calculation
+        - Checks balance at every node
+        - Empty dictionary is considered balanced
+        - Useful for identifying skewed structures
+
+        See Also
+        --------
+        height : Get maximum depth
+        _HKey.is_balanced : Tree-based balance check
         """
 
         def check_balance(node):
@@ -2320,14 +3400,52 @@ class _StackedDict(defaultdict):
 
     def ancestors(self, value):
         """
-        Finds the ancestors (keys) of a given value in the nested dictionary.
+        Find the hierarchical path (ancestors) leading to a specific value.
 
-        :param value: The value to search for in the nested dictionary.
-        :type value: Any
-        :return: A list of keys representing the path to the value.
-        :rtype: List[Any]
-        :raises ValueError: If the value is not found in the dictionary.
+        Searches the nested structure for the given value and returns
+        the complete path of keys leading to it, excluding the final key.
+        This returns the "ancestry" of the value in the tree.
+
+        Parameters
+        ----------
+        value : Any
+            Value to search for in the nested dictionary
+
+        Returns
+        -------
+        list
+            List of keys forming the path to the value (excluding final key)
+
+        Raises
+        ------
+        StackedValueError
+            If value is not found in the dictionary
+
+        Examples
+        --------
+        >>> sd = _StackedDict({'a': {'b': {'c': 1}}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> sd.ancestors(1)
+        ['a', 'b']
+
+        >>> sd = _StackedDict({'a': {'b': 1}, 'c': {'d': 2}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> sd.ancestors(2)
+        ['c']
+
+        >>> sd.ancestors(999)  # Raises StackedValueError
+
+        Notes
+        -----
+        - Returns path excluding the final key (direct parent of value)
+        - Uses DFS to find the first occurrence
+        - If value appears multiple times, returns first found path
+        - Empty list returned for top-level values
+
+        See Also
+        --------
+        dfs : Depth-first traversal
+        unpacked_items : Get all (path, value) pairs
         """
+
         for path, val in self.dfs():
             if val == value:
                 return path[
