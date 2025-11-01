@@ -55,3 +55,13 @@ def smooth_c_sd(class_system_config, standard_smooth_c_setup):
         deepcopy(class_system_config),
         default_setup=standard_smooth_c_setup,
     )
+
+
+@pytest.fixture(scope="class")
+def empty_c_strict_sd(standard_strict_c_setup):
+    return _StackedDict({}, default_setup=standard_strict_c_setup)
+
+
+@pytest.fixture(scope="class")
+def empty_c_smooth_sd(standard_smooth_c_setup):
+    return _StackedDict({}, default_setup=standard_smooth_c_setup)

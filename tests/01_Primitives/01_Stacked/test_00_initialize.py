@@ -17,6 +17,18 @@ def stacked_c_result(standard_strict_c_setup):
     )
 
 
+class TestPrioritySetUp:
+
+    def test_priority(self):
+        instance = _StackedDict(
+            {}, default_setup={"default_factory": None, "indent": 10}
+        )
+        print(instance._default_setup)
+        assert instance.indent == 10
+        assert instance.default_factory is None
+        assert instance._default_setup == {("default_factory", None), ("indent", 10)}
+
+
 class TestParametersSD:
 
     def test_param_smooth_index(self, smooth_c_sd):

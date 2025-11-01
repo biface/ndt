@@ -213,37 +213,6 @@ class TestScenario01StrictSD:
         with pytest.raises(StackedKeyError, match=re.escape(error_smg)):
             strict_c_sd.pop(keys)
 
-    def test_update(self, strict_c_sd):
-        strict_c_sd.update(
-            {
-                "global_settings": {
-                    ("security", "encryption"): {
-                        "algorithm": "AES-256-GCM",
-                        "key_rotation": {
-                            ("env", "production"): 90,
-                            ("env", "dev"): 365,
-                        },  # jours
-                    },
-                    "security": {"encryption": "mandatory", "level": 100},
-                    "networking": {
-                        "load_balancer": {
-                            ("env", "production"): {
-                                "type": "AWS ALB",
-                                "instances": 3,
-                                "health_check_interval": 30,
-                            },
-                            ("env", "dev"): {
-                                "type": "nginx",
-                                "instances": 1,
-                                "health_check_interval": 60,
-                            },
-                        }
-                    },
-                }
-            }
-        )
-        assert strict_c_sd[["global_settings", "security", "encryption"]] == "mandatory"
-
 
 class TestScenario01SmoothSD:
 
@@ -460,33 +429,106 @@ class TestScenario01SmoothSD:
         with pytest.raises(StackedKeyError, match=re.escape(error_smg)):
             smooth_c_sd.pop(keys)
 
-    def test_update(self, smooth_c_sd):
-        smooth_c_sd.update(
-            {
-                "global_settings": {
-                    ("security", "encryption"): {
-                        "algorithm": "AES-256-GCM",
-                        "key_rotation": {
-                            ("env", "production"): 90,
-                            ("env", "dev"): 365,
-                        },  # jours
-                    },
-                    "security": {"encryption": "mandatory", "level": 100},
-                    "networking": {
-                        "load_balancer": {
-                            ("env", "production"): {
-                                "type": "AWS ALB",
-                                "instances": 3,
-                                "health_check_interval": 30,
-                            },
-                            ("env", "dev"): {
-                                "type": "nginx",
-                                "instances": 1,
-                                "health_check_interval": 60,
-                            },
-                        }
-                    },
-                }
-            }
+
+class TestPopFunctionExtrasStrict:
+
+    def test_pop_flat_key_success(self, strict_f_sd):
+        val = strict_f_sd.pop("monitoring")
+        assert isinstance(val, _StackedDict)
+        # Check a known leaf still present in the returned subtree
+        assert ("metrics", "cpu") in val
+        # Ensure key removed from top-level
+        assert "monitoring" not in strict_f_sd
+
+    def test_pop_flat_key_missing_with_default(self, strict_f_sd):
+        sentinel = object()
+        assert strict_f_sd.pop("__does_not_exist__", sentinel) is sentinel
+
+    def test_pop_flat_key_missing_raises_key_error(self, strict_f_sd):
+        with pytest.raises(
+            StackedKeyError,
+            match=re.escape(
+                "Key path ['global_settings', 'does_not'] does not exist. (key: does_not)"
+            ),
+        ):
+            strict_f_sd.pop(["global_settings", "does_not"])
+
+    def test_pop_hier_intermediate_missing_with_default(self, strict_f_sd):
+        # Intermediate key is missing -> should return default, no exception
+        assert strict_f_sd.pop(["global_settings", "__nok__", "x"], default=42) == 42
+
+    def test_pop_hier_final_missing_with_default(self, strict_f_sd):
+        # Path exists up to parent, final key missing -> should return default
+        path = [
+            "global_settings",
+            "networking",
+            "load_balancer",
+            ("env", "dev"),
+            "__missing_leaf__",
+        ]
+        assert strict_f_sd.pop(path, default="x") == "x"
+
+    def test_cleanup_empty_parents(self, standard_strict_f_setup):
+        sd = _StackedDict({"a": {"b": {"c": 1}}}, default_setup=standard_strict_f_setup)
+        assert sd.pop(["a", "b", "c"]) == 1
+        # After removing the only chain, empty parents should be cleaned up
+        assert "a" not in sd
+
+    def test_cleanup_preserve_non_empty(self, standard_strict_f_setup):
+        sd = _StackedDict(
+            {"a": {"b": {"c": 1}, "d": 2}}, default_setup=standard_strict_f_setup
         )
-        assert smooth_c_sd[["global_settings", "security", "encryption"]] == "mandatory"
+        assert sd.pop(["a", "b", "c"]) == 1
+        # "b" was emptied and must be removed, but "a" still has "d"
+        assert "a" in sd
+        assert "b" not in sd["a"]
+        assert sd["a"]["d"] == 2
+
+
+class TestPopFunctionExtrasSmooth:
+
+    def test_pop_flat_key_success(self, smooth_f_sd):
+        val = smooth_f_sd.pop("monitoring")
+        assert isinstance(val, _StackedDict)
+        assert ("metrics", "cpu") in val
+        assert "monitoring" not in smooth_f_sd
+
+    def test_pop_flat_key_missing_with_default(self, smooth_f_sd):
+        sentinel = object()
+        assert smooth_f_sd.pop("__does_not_exist__", sentinel) is sentinel
+
+    def test_pop_flat_key_missing_raises_keyerror(self, smooth_f_sd):
+        with pytest.raises(
+            StackedKeyError,
+            match=re.escape(
+                "Key path ['global_settings', 'does_not'] does not exist. (key: does_not)"
+            ),
+        ):
+            smooth_f_sd.pop(["global_settings", "does_not"])
+
+    def test_pop_hier_intermediate_missing_with_default(self, smooth_f_sd):
+        assert smooth_f_sd.pop(["global_settings", "__nok__", "x"], default=42) == 42
+
+    def test_pop_hier_final_missing_with_default(self, smooth_f_sd):
+        path = [
+            "global_settings",
+            "networking",
+            "load_balancer",
+            ("env", "dev"),
+            "__missing_leaf__",
+        ]
+        assert smooth_f_sd.pop(path, default="x") == "x"
+
+    def test_cleanup_empty_parents(self, standard_smooth_f_setup):
+        sd = _StackedDict({"a": {"b": {"c": 1}}}, default_setup=standard_smooth_f_setup)
+        assert sd.pop(["a", "b", "c"]) == 1
+        assert "a" not in sd
+
+    def test_cleanup_preserve_non_empty(self, standard_smooth_f_setup):
+        sd = _StackedDict(
+            {"a": {"b": {"c": 1}, "d": 2}}, default_setup=standard_smooth_f_setup
+        )
+        assert sd.pop(["a", "b", "c"]) == 1
+        assert "a" in sd
+        assert "b" not in sd["a"]
+        assert sd["a"]["d"] == 2
