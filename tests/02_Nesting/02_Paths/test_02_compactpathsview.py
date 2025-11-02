@@ -9,12 +9,13 @@ import re
 import pytest
 
 import ndict_tools
+from ndict_tools import CompactPathsView, NestedDictionary, PathsView
 from ndict_tools.tools import _CPaths, _HKey, _StackedDict
 
 
 def test_init_empty():
-    c_paths = _CPaths()
-    assert isinstance(c_paths, _CPaths)
+    c_paths = CompactPathsView()
+    assert isinstance(c_paths, CompactPathsView)
     assert c_paths._stacked_dict is None
     assert c_paths._hkey is None
     assert c_paths._structure is None
@@ -23,14 +24,14 @@ def test_init_empty():
     assert c_paths.structure is None
 
 
-class TestCPathsInit:
+class TestCompactPathsViewInit:
 
-    @pytest.mark.parametrize("dictionary_name", ["smooth_c_sd", "strict_c_sd"])
+    @pytest.mark.parametrize("dictionary_name", ["smooth_c_nd", "strict_c_nd"])
     def test_simple_init(self, dictionary_name, request):
-        c_paths = _CPaths(request.getfixturevalue(dictionary_name))
-        assert isinstance(c_paths, _CPaths)
+        c_paths = CompactPathsView(request.getfixturevalue(dictionary_name))
+        assert isinstance(c_paths, CompactPathsView)
         assert c_paths._stacked_dict is not None and isinstance(
-            c_paths._stacked_dict, ndict_tools.tools._StackedDict
+            c_paths._stacked_dict, ndict_tools.core.NestedDictionary
         )
         assert c_paths._structure is None
 
@@ -38,7 +39,7 @@ class TestCPathsInit:
         "dictionary_name, compact_path",
         [
             (
-                "smooth_c_sd",
+                "smooth_c_nd",
                 [
                     [
                         ("env", "production"),
@@ -171,7 +172,7 @@ class TestCPathsInit:
                 ],
             ),
             (
-                "strict_c_sd",
+                "strict_c_nd",
                 [
                     [
                         ("env", "production"),
@@ -306,7 +307,7 @@ class TestCPathsInit:
         ],
     )
     def test_structure_property(self, dictionary_name, compact_path, request):
-        c_paths = _CPaths(request.getfixturevalue(dictionary_name))
+        c_paths = CompactPathsView(request.getfixturevalue(dictionary_name))
         assert c_paths.structure == compact_path
         assert c_paths._structure is not None
         assert c_paths._structure == compact_path
@@ -315,7 +316,7 @@ class TestCPathsInit:
         "dictionary_name, compact_path",
         [
             (
-                "smooth_c_sd",
+                "smooth_c_nd",
                 [
                     [
                         ("env", "production"),
@@ -448,7 +449,7 @@ class TestCPathsInit:
                 ],
             ),
             (
-                "strict_c_sd",
+                "strict_c_nd",
                 [
                     [
                         ("env", "production"),
@@ -585,12 +586,12 @@ class TestCPathsInit:
     def test_structure_setter_with_dictionary_name(
         self, dictionary_name, compact_path, request
     ):
-        c_paths = _CPaths()
+        c_paths = CompactPathsView()
         dictionary = request.getfixturevalue(dictionary_name)
         c_paths.structure = dictionary
         assert c_paths.structure == compact_path
         assert c_paths._stacked_dict is not None
-        assert isinstance(c_paths._stacked_dict, _StackedDict)
+        assert isinstance(c_paths._stacked_dict, NestedDictionary)
         assert c_paths._stacked_dict == dictionary
         assert c_paths._structure is not None
         assert c_paths._structure == compact_path
@@ -599,7 +600,7 @@ class TestCPathsInit:
         "dictionary_name, compact_path",
         [
             (
-                "smooth_c_sd",
+                "smooth_c_nd",
                 [
                     [
                         ("env", "production"),
@@ -732,7 +733,7 @@ class TestCPathsInit:
                 ],
             ),
             (
-                "strict_c_sd",
+                "strict_c_nd",
                 [
                     [
                         ("env", "production"),
@@ -867,7 +868,7 @@ class TestCPathsInit:
         ],
     )
     def test_structure_setter_with_hkey(self, dictionary_name, compact_path, request):
-        c_paths = _CPaths()
+        c_paths = CompactPathsView()
         hkey = ndict_tools.tools._HKey.build_forest(
             request.getfixturevalue(dictionary_name)
         )
@@ -1014,7 +1015,7 @@ class TestCPathsInit:
         ],
     )
     def test_structure_setter_with_list(self, compact_paths):
-        c_paths = _CPaths()
+        c_paths = CompactPathsView()
         c_paths.structure = compact_paths
         assert c_paths.structure == compact_paths
         assert c_paths._stacked_dict is None
@@ -1043,7 +1044,7 @@ class TestCPathsInit:
     def test_structure_setter_with_failed_lists(
         self, compact_paths, validate_msg_error, error, setter_msg_error
     ):
-        c_paths = _CPaths()
+        c_paths = CompactPathsView()
         with pytest.raises(ValueError, match=re.escape(validate_msg_error)):
             ndict_tools.tools._CPaths._validate_structure(compact_paths)
 
@@ -1056,40 +1057,45 @@ class TestCPathsInit:
         with pytest.raises(
             ValueError, match=re.escape("Structure too deeply nested (max depth: 5)")
         ):
-            c_paths = _CPaths()
+            c_paths = CompactPathsView()
             c_paths.structure = [[1, [2, [3, [4, [5, [6, 7, 8]]]]]]]
 
 
 class TestCPathsContent:
 
-    def test_c_paths_compact(self, strict_c_sd):
-        c_paths = _CPaths()
-        c_paths.structure = strict_c_sd
-        assert strict_c_sd.compact_paths() == c_paths
+    def test_c_paths_compact(self, strict_c_nd):
+        c_paths = CompactPathsView()
+        c_paths.structure = strict_c_nd
+        assert strict_c_nd.compact_paths() == c_paths
 
-    def test_paths_to_cpaths(self, strict_c_sd):
-        paths = strict_c_sd.paths()
+    def test_paths_view_to_compact_paths_view(self, strict_c_nd):
+        paths = strict_c_nd.paths()
         c_paths = paths.to_compact()
-        assert c_paths == strict_c_sd.paths()
+        assert c_paths == strict_c_nd.compact_paths()
 
-    def test_c_paths_expand(self, strict_c_sd):
-        c_paths = _CPaths()
-        c_paths.structure = strict_c_sd
+    def test_compact_paths_view_to_paths_view(self, strict_c_nd):
+        c_paths = strict_c_nd.compact_paths()
+        paths = c_paths.to_paths()
+        assert paths == strict_c_nd.paths()
+
+    def test_c_paths_expand(self, strict_c_nd):
+        c_paths = CompactPathsView()
+        c_paths.structure = strict_c_nd
         d_paths = c_paths.expand()
-        assert d_paths == strict_c_sd.paths()
+        assert d_paths == strict_c_nd.paths()
 
 
 class TestCPathsCovering:
 
-    def test_full_coverage_verified(self, strict_c_sd):
-        c_paths = _CPaths()
-        c_paths.structure = strict_c_sd
-        assert c_paths.is_covering(strict_c_sd) is True
+    def test_full_coverage_verified(self, strict_c_nd):
+        c_paths = CompactPathsView()
+        c_paths.structure = strict_c_nd
+        assert c_paths.is_covering(strict_c_nd) is True
 
-    def test_full_coverage_value(self, strict_c_sd):
-        c_paths = _CPaths()
-        c_paths.structure = strict_c_sd
-        assert c_paths.coverage(strict_c_sd) == 1.0
+    def test_full_coverage_value(self, strict_c_nd):
+        c_paths = CompactPathsView()
+        c_paths.structure = strict_c_nd
+        assert c_paths.coverage(strict_c_nd) == 1.0
 
     @pytest.mark.parametrize(
         "test_structure, covering, coverage, uncovered, missing",
@@ -1550,11 +1556,11 @@ class TestCPathsCovering:
         ],
     )
     def test_partial_structure(
-        self, strict_c_sd, test_structure, covering, coverage, uncovered, missing
+        self, strict_c_nd, test_structure, covering, coverage, uncovered, missing
     ):
-        c_paths = _CPaths()
+        c_paths = CompactPathsView()
         c_paths.structure = test_structure
-        assert c_paths.is_covering(strict_c_sd) is covering
-        assert c_paths.coverage(strict_c_sd) == coverage
-        assert c_paths.uncovered_paths(strict_c_sd) == uncovered
-        assert c_paths.missing_paths(strict_c_sd) == missing
+        assert c_paths.is_covering(strict_c_nd) is covering
+        assert c_paths.coverage(strict_c_nd) == coverage
+        assert c_paths.uncovered_paths(strict_c_nd) == uncovered
+        assert c_paths.missing_paths(strict_c_nd) == missing

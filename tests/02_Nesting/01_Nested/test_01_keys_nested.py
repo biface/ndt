@@ -2,8 +2,8 @@ import re
 
 import pytest
 
+from ndict_tools import NestedDictionary
 from ndict_tools.exception import StackedKeyError, StackedTypeError
-from ndict_tools.tools import _StackedDict
 
 
 @pytest.mark.parametrize(
@@ -24,14 +24,14 @@ from ndict_tools.tools import _StackedDict
         ),
     ],
 )
-def test_stacked_dict_keys(strict_f_sd, keys, leaf):
-    value = strict_f_sd[keys[0]]
+def test_main_nested_dictionary_keys(strict_f_nd, keys, leaf):
+    value = strict_f_nd[keys[0]]
     for key in keys[1:]:
         value = value[key]
     assert value == leaf
 
 
-class TestKeysStrictSD:
+class TestKeysStrictND:
 
     @pytest.mark.parametrize(
         "keys, end_key, old_value, new_value",
@@ -52,8 +52,8 @@ class TestKeysStrictSD:
             ),
         ],
     )
-    def test_change_value(self, strict_c_sd, keys, end_key, old_value, new_value):
-        d = strict_c_sd
+    def test_change_value(self, strict_c_nd, keys, end_key, old_value, new_value):
+        d = strict_c_nd
         for key in keys:
             d = d[key]
         assert d[end_key] == old_value
@@ -78,8 +78,8 @@ class TestKeysStrictSD:
             ),
         ],
     )
-    def test_change_control(self, strict_c_sd, keys, leaf):
-        value = strict_c_sd[keys[0]]
+    def test_change_control(self, strict_c_nd, keys, leaf):
+        value = strict_c_nd[keys[0]]
         for key in keys[1:]:
             value = value[key]
         assert value == leaf
@@ -104,12 +104,12 @@ class TestKeysStrictSD:
         ],
     )
     def test_change_keys_failed(
-        self, strict_c_sd, keys, false_end_key, error, error_msg
+        self, strict_c_nd, keys, false_end_key, error, error_msg
     ):
-        d = strict_c_sd
+        d = strict_c_nd
         for key in keys:
             d = d[key]
-        assert isinstance(d, _StackedDict)
+        assert isinstance(d, NestedDictionary)
         assert d.default_factory == None
         with pytest.raises(error, match=re.escape(error_msg)):
             test = d[false_end_key]
@@ -125,26 +125,26 @@ class TestKeysStrictSD:
             ),
         ],
     )
-    def test_key_type_failed(self, strict_c_sd, false_keys_type, error, error_msg):
+    def test_key_type_failed(self, strict_c_nd, false_keys_type, error, error_msg):
         with pytest.raises(error, match=re.escape(error_msg)):
-            strict_c_sd[false_keys_type] = None
+            strict_c_nd[false_keys_type] = None
 
     @pytest.mark.parametrize(
         "key_a, key_b, type",
         [
-            (("security", "encryption"), ["security", "encryption"], _StackedDict),
+            (("security", "encryption"), ["security", "encryption"], NestedDictionary),
             (["security", "encryption"], ("security", "encryption"), str),
         ],
     )
-    def test_hybrid_keys(self, strict_c_sd, key_a, key_b, type):
+    def test_hybrid_keys(self, strict_c_nd, key_a, key_b, type):
         assert (
-            strict_c_sd["global_settings"][key_a]
-            != strict_c_sd["global_settings"][key_b]
+            strict_c_nd["global_settings"][key_a]
+            != strict_c_nd["global_settings"][key_b]
         )
-        assert isinstance(strict_c_sd["global_settings"][key_a], type)
+        assert isinstance(strict_c_nd["global_settings"][key_a], type)
 
 
-class TestUnpackStrictSD:
+class TestUnpackStrictND:
 
     @pytest.mark.parametrize(
         "unpacked_keys",
@@ -229,8 +229,8 @@ class TestUnpackStrictSD:
             ),
         ],
     )
-    def test_upack_keys(self, strict_c_sd, unpacked_keys):
-        assert unpacked_keys in strict_c_sd.unpacked_keys()
+    def test_upack_keys(self, strict_c_nd, unpacked_keys):
+        assert unpacked_keys in strict_c_nd.unpacked_keys()
 
     @pytest.mark.parametrize(
         "unpacked_items",
@@ -377,8 +377,8 @@ class TestUnpackStrictSD:
             ),
         ],
     )
-    def test_unpack_items(self, strict_c_sd, unpacked_items):
-        assert unpacked_items in strict_c_sd.unpacked_items()
+    def test_unpack_items(self, strict_c_nd, unpacked_items):
+        assert unpacked_items in strict_c_nd.unpacked_items()
 
     @pytest.mark.parametrize(
         "unpacked_values",
@@ -390,8 +390,8 @@ class TestUnpackStrictSD:
             "http://dev-monitoring.internal.com",
         ],
     )
-    def test_unpack_values(self, strict_c_sd, unpacked_values):
-        assert unpacked_values in strict_c_sd.unpacked_values()
+    def test_unpack_values(self, strict_c_nd, unpacked_values):
+        assert unpacked_values in strict_c_nd.unpacked_values()
 
     @pytest.mark.parametrize(
         "key, associated_list",
@@ -585,8 +585,8 @@ class TestUnpackStrictSD:
             ),
         ],
     )
-    def test_key_list(self, strict_c_sd, key, associated_list):
-        assert strict_c_sd.key_list(key) == associated_list
+    def test_key_list(self, strict_c_nd, key, associated_list):
+        assert strict_c_nd.key_list(key) == associated_list
 
     @pytest.mark.parametrize(
         "false_key, error, error_msg",
@@ -608,9 +608,9 @@ class TestUnpackStrictSD:
             ),
         ],
     )
-    def test_key_list_false(self, strict_c_sd, false_key, error, error_msg):
+    def test_key_list_false(self, strict_c_nd, false_key, error, error_msg):
         with pytest.raises(error, match=re.escape(error_msg)):
-            strict_c_sd.key_list(false_key)
+            strict_c_nd.key_list(false_key)
 
     @pytest.mark.parametrize(
         "key, items_list",
@@ -643,8 +643,8 @@ class TestUnpackStrictSD:
             ("error", ["/var/log/error.log"]),
         ],
     )
-    def test_items_list(self, strict_c_sd, key, items_list):
-        assert strict_c_sd.items_list(key) == items_list
+    def test_items_list(self, strict_c_nd, key, items_list):
+        assert strict_c_nd.items_list(key) == items_list
 
     @pytest.mark.parametrize(
         "false_key, error, error_msg",
@@ -666,12 +666,12 @@ class TestUnpackStrictSD:
             ),
         ],
     )
-    def test_items_list_false(self, strict_c_sd, false_key, error, error_msg):
+    def test_items_list_false(self, strict_c_nd, false_key, error, error_msg):
         with pytest.raises(error, match=re.escape(error_msg)):
             if false_key:
-                strict_c_sd.items_list(false_key)
+                strict_c_nd.items_list(false_key)
             else:
-                strict_c_sd.items_list()
+                strict_c_nd.items_list()
 
     @pytest.mark.parametrize(
         "value, confirm, first_occurrence",
@@ -687,15 +687,15 @@ class TestUnpackStrictSD:
             (True, True, 33),
         ],
     )
-    def test_leaves(self, strict_c_sd, value, confirm, first_occurrence):
+    def test_leaves(self, strict_c_nd, value, confirm, first_occurrence):
         if confirm:
-            assert value in strict_c_sd.leaves()
-            assert strict_c_sd.leaves().index(value) == first_occurrence - 1
+            assert value in strict_c_nd.leaves()
+            assert strict_c_nd.leaves().index(value) == first_occurrence - 1
         else:
-            assert value not in strict_c_sd.leaves()
+            assert value not in strict_c_nd.leaves()
 
 
-class TestKeysSmoothSD:
+class TestKeysSmoothND:
 
     @pytest.mark.parametrize(
         "keys, end_key, old_value, new_value",
@@ -716,8 +716,8 @@ class TestKeysSmoothSD:
             ),
         ],
     )
-    def test_change_keys(self, smooth_c_sd, keys, end_key, old_value, new_value):
-        d = smooth_c_sd
+    def test_change_keys(self, smooth_c_nd, keys, end_key, old_value, new_value):
+        d = smooth_c_nd
         for key in keys:
             d = d[key]
         assert d[end_key] == old_value
@@ -742,8 +742,8 @@ class TestKeysSmoothSD:
             ),
         ],
     )
-    def test_change_control(self, smooth_c_sd, keys, leaf):
-        value = smooth_c_sd[keys[0]]
+    def test_change_control(self, smooth_c_nd, keys, leaf):
+        value = smooth_c_nd[keys[0]]
         for key in keys[1:]:
             value = value[key]
         assert value == leaf
@@ -759,23 +759,23 @@ class TestKeysSmoothSD:
             ),
         ],
     )
-    def test_key_type_failed(self, smooth_c_sd, false_keys_type, error, error_msg):
+    def test_key_type_failed(self, smooth_c_nd, false_keys_type, error, error_msg):
         with pytest.raises(error, match=re.escape(error_msg)):
-            smooth_c_sd[false_keys_type] = None
+            smooth_c_nd[false_keys_type] = None
 
     @pytest.mark.parametrize(
         "key_a, key_b, type",
         [
-            (("security", "encryption"), ["security", "encryption"], _StackedDict),
+            (("security", "encryption"), ["security", "encryption"], NestedDictionary),
             (["security", "encryption"], ("security", "encryption"), str),
         ],
     )
-    def test_hybrid_keys(self, smooth_c_sd, key_a, key_b, type):
+    def test_hybrid_keys(self, smooth_c_nd, key_a, key_b, type):
         assert (
-            smooth_c_sd["global_settings"][key_a]
-            != smooth_c_sd["global_settings"][key_b]
+            smooth_c_nd["global_settings"][key_a]
+            != smooth_c_nd["global_settings"][key_b]
         )
-        assert isinstance(smooth_c_sd["global_settings"][key_a], type)
+        assert isinstance(smooth_c_nd["global_settings"][key_a], type)
 
     @pytest.mark.parametrize(
         "key, associated_list",
@@ -969,8 +969,8 @@ class TestKeysSmoothSD:
             ),
         ],
     )
-    def test_key_list(self, smooth_c_sd, key, associated_list):
-        assert smooth_c_sd.key_list(key) == associated_list
+    def test_key_list(self, smooth_c_nd, key, associated_list):
+        assert smooth_c_nd.key_list(key) == associated_list
 
 
 class TestUnpackSmoothSD:
@@ -1062,8 +1062,8 @@ class TestUnpackSmoothSD:
             ),
         ],
     )
-    def test_upack_keys(self, smooth_c_sd, unpacked_keys):
-        assert unpacked_keys in smooth_c_sd.unpacked_keys()
+    def test_upack_keys(self, smooth_c_nd, unpacked_keys):
+        assert unpacked_keys in smooth_c_nd.unpacked_keys()
 
     @pytest.mark.parametrize(
         "unpacked_items",
@@ -1204,8 +1204,8 @@ class TestUnpackSmoothSD:
             ),
         ],
     )
-    def test_unpack_items(self, smooth_c_sd, unpacked_items):
-        assert unpacked_items in smooth_c_sd.unpacked_items()
+    def test_unpack_items(self, smooth_c_nd, unpacked_items):
+        assert unpacked_items in smooth_c_nd.unpacked_items()
 
     @pytest.mark.parametrize(
         "unpacked_values",
@@ -1219,8 +1219,8 @@ class TestUnpackSmoothSD:
             "eu-west",
         ],
     )
-    def test_unpack_values(self, strict_c_sd, unpacked_values):
-        assert unpacked_values in strict_c_sd.unpacked_values()
+    def test_unpack_values(self, smooth_c_nd, unpacked_values):
+        assert unpacked_values in smooth_c_nd.unpacked_values()
 
     @pytest.mark.parametrize(
         "key, associated_list",
@@ -1414,8 +1414,8 @@ class TestUnpackSmoothSD:
             ),
         ],
     )
-    def test_key_list(self, smooth_c_sd, key, associated_list):
-        assert smooth_c_sd.key_list(key) == associated_list
+    def test_key_list(self, smooth_c_nd, key, associated_list):
+        assert smooth_c_nd.key_list(key) == associated_list
 
     @pytest.mark.parametrize(
         "false_key, error, error_msg",
@@ -1437,9 +1437,9 @@ class TestUnpackSmoothSD:
             ),
         ],
     )
-    def test_key_list_false(self, smooth_c_sd, false_key, error, error_msg):
+    def test_key_list_false(self, smooth_c_nd, false_key, error, error_msg):
         with pytest.raises(error, match=re.escape(error_msg)):
-            smooth_c_sd.key_list(false_key)
+            smooth_c_nd.key_list(false_key)
 
     @pytest.mark.parametrize(
         "key, items_list",
@@ -1472,8 +1472,8 @@ class TestUnpackSmoothSD:
             ("error", ["/var/log/error.log"]),
         ],
     )
-    def test_items_list(self, smooth_c_sd, key, items_list):
-        assert smooth_c_sd.items_list(key) == items_list
+    def test_items_list(self, smooth_c_nd, key, items_list):
+        assert smooth_c_nd.items_list(key) == items_list
 
     @pytest.mark.parametrize(
         "false_key, error, error_msg",
@@ -1495,12 +1495,12 @@ class TestUnpackSmoothSD:
             ),
         ],
     )
-    def test_items_list_false(self, smooth_c_sd, false_key, error, error_msg):
+    def test_items_list_false(self, smooth_c_nd, false_key, error, error_msg):
         with pytest.raises(error, match=re.escape(error_msg)):
             if false_key:
-                smooth_c_sd.items_list(false_key)
+                smooth_c_nd.items_list(false_key)
             else:
-                smooth_c_sd.items_list()
+                smooth_c_nd.items_list()
 
     @pytest.mark.parametrize(
         "value, confirm, first_occurrence",
@@ -1516,15 +1516,15 @@ class TestUnpackSmoothSD:
             (True, True, 33),
         ],
     )
-    def test_leaves(self, smooth_c_sd, value, confirm, first_occurrence):
+    def test_leaves(self, smooth_c_nd, value, confirm, first_occurrence):
         if confirm:
-            assert value in smooth_c_sd.leaves()
-            assert smooth_c_sd.leaves().index(value) == first_occurrence - 1
+            assert value in smooth_c_nd.leaves()
+            assert smooth_c_nd.leaves().index(value) == first_occurrence - 1
         else:
-            assert value not in smooth_c_sd.leaves()
+            assert value not in smooth_c_nd.leaves()
 
 
-class TestBuildStrictStackedDict:
+class TestBuildStrictND:
 
     @pytest.mark.parametrize(
         "keys, value",
@@ -1719,25 +1719,24 @@ class TestBuildStrictStackedDict:
         ],
     )
     def test_build_with_keys(
-        self, strict_c_sd, empty_c_strict_sd, standard_strict_c_setup, keys, value
+        self, strict_c_nd, empty_c_strict_nd, nested_strict_c_setup, keys, value
     ):
-        stacked_dictionary = empty_c_strict_sd
+        stacked_dictionary = empty_c_strict_nd
         d_path = []
         for key in keys[:-1]:
             stacked_dictionary = stacked_dictionary[key]
             d_path.append(key)
         if isinstance(value, dict):
-            stacked_dictionary[keys[-1]] = _StackedDict(
-                value, default_setup=standard_strict_c_setup
+            stacked_dictionary[keys[-1]] = NestedDictionary(
+                value, default_setup=nested_strict_c_setup
             )
         else:
             stacked_dictionary[keys[-1]] = value
         d_path.append(keys[-1])
-        assert empty_c_strict_sd[d_path] == stacked_dictionary[keys[-1]]
-        print(empty_c_strict_sd)
+        assert empty_c_strict_nd[d_path] == stacked_dictionary[keys[-1]]
 
-    def test_compare(self, strict_c_sd, empty_c_strict_sd):
-        assert strict_c_sd == empty_c_strict_sd
+    def test_compare(self, strict_c_nd, empty_c_strict_nd):
+        assert strict_c_nd == empty_c_strict_nd
 
     @pytest.mark.parametrize(
         "keys",
@@ -1745,10 +1744,10 @@ class TestBuildStrictStackedDict:
             [("env", "dev"), "database", "instances", 12, "max_connections"],
         ],
     )
-    def test_delete_with_key(self, empty_c_strict_sd, keys):
-        del empty_c_strict_sd[keys]
+    def test_delete_with_key(self, empty_c_strict_nd, keys):
+        del empty_c_strict_nd[keys]
         with pytest.raises(KeyError):
-            assert empty_c_strict_sd[keys]
+            assert empty_c_strict_nd[keys]
 
     @pytest.mark.parametrize(
         "keys, value",
@@ -1756,28 +1755,29 @@ class TestBuildStrictStackedDict:
             ([("env", "dev"), "database", "instances", 12, "max_connections"], 200),
         ],
     )
-    def test_update_with_key(self, empty_c_strict_sd, strict_c_sd, keys, value):
-        empty_c_strict_sd[keys[:-1]].update({keys[-1]: value})
-        assert empty_c_strict_sd[keys] == strict_c_sd[keys]
+    def test_update_with_key(self, empty_c_strict_nd, strict_c_nd, keys, value):
+        empty_c_strict_nd[keys[:-1]].update({keys[-1]: value})
+        assert empty_c_strict_nd[keys] == strict_c_nd[keys]
 
-    def test_kwargs_update(self, empty_c_strict_sd, strict_c_sd):
-        del empty_c_strict_sd[[("env", "production"), "api", "timeout"]]
-        del empty_c_strict_sd[[("env", "production"), "api", "rate_limit"]]
+    def test_kwargs_update(self, empty_c_strict_nd, strict_c_nd):
+        print(empty_c_strict_nd)
+        del empty_c_strict_nd[[("env", "production"), "api", "timeout"]]
+        del empty_c_strict_nd[[("env", "production"), "api", "rate_limit"]]
         with pytest.raises(KeyError):
-            assert empty_c_strict_sd[[("env", "production"), "api", "timeout"]]
-            assert empty_c_strict_sd[[("env", "production"), "api", "rate_limit"]]
-        empty_c_strict_sd[[("env", "production")]].update(api={"rate_limit": 10000})
-        empty_c_strict_sd[[("env", "production"), "api"]].update(timeout=30)
+            assert empty_c_strict_nd[[("env", "production"), "api", "timeout"]]
+            assert empty_c_strict_nd[[("env", "production"), "api", "rate_limit"]]
+        empty_c_strict_nd[[("env", "production")]].update(api={"rate_limit": 10000})
+        empty_c_strict_nd[[("env", "production"), "api"]].update(timeout=30)
         assert (
-            empty_c_strict_sd[[("env", "production"), "api", "timeout"]]
-            == strict_c_sd[[("env", "production"), "api", "timeout"]]
+            empty_c_strict_nd[[("env", "production"), "api", "timeout"]]
+            == strict_c_nd[[("env", "production"), "api", "timeout"]]
         )
 
-    def test_compare_again(self, empty_c_strict_sd, strict_c_sd):
-        assert empty_c_strict_sd == strict_c_sd
+    def test_compare_again(self, empty_c_strict_nd, strict_c_nd):
+        assert empty_c_strict_nd == strict_c_nd
 
 
-class TestBuildSmoothStackedDict:
+class TestBuildSmoothND:
 
     @pytest.mark.parametrize(
         "path, value",
@@ -2021,10 +2021,10 @@ class TestBuildSmoothStackedDict:
             ),
         ],
     )
-    def test_build_with_paths(self, smooth_c_sd, empty_c_smooth_sd, path, value):
-        empty_c_smooth_sd[path] = value
-        assert smooth_c_sd[path] == empty_c_smooth_sd[path]
-        print(empty_c_smooth_sd)
+    def test_build_with_paths(self, smooth_c_nd, empty_c_smooth_nd, path, value):
+        empty_c_smooth_nd[path] = value
+        assert smooth_c_nd[path] == empty_c_smooth_nd[path]
+        print(empty_c_smooth_nd)
 
-    def test_compare(self, smooth_c_sd, empty_c_smooth_sd):
-        assert smooth_c_sd == empty_c_smooth_sd
+    def test_compare(self, smooth_c_nd, empty_c_smooth_nd):
+        assert smooth_c_nd == empty_c_smooth_nd
