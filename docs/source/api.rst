@@ -161,8 +161,22 @@ Tools
 Core
 ----
 .. automodule:: ndict_tools.core
+.. autoclass:: PathsView
+    :show-inheritance:
+
+    .. automethod:: to_compact
+
+.. autoclass:: CompactPathsView
+    :show-inheritance:
+
+    .. automethod:: to_paths
+
 .. autoclass:: NestedDictionary
     :show-inheritance:
+
+    .. automethod:: paths
+    .. automethod:: compact_paths
+
 .. autoclass:: StrictNestedDictionary
     :show-inheritance:
 .. autoclass:: SmoothNestedDictionary
