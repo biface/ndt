@@ -22,6 +22,7 @@ designed to:
 
 from __future__ import annotations
 
+import warnings
 from collections import defaultdict, deque
 from textwrap import indent
 from typing import (
@@ -1816,6 +1817,12 @@ class _StackedDict(defaultdict):
         settings = kwargs.pop("default_setup", None)
 
         if settings is None:
+            warnings.warn(
+                "indent and default parameters will be remove in further version "
+                "use default_setup instead",
+                DeprecationWarning,
+                stacklevel=2,
+            )
             if "indent" not in kwargs:
                 raise StackedKeyError("Missing 'indent' arguments", key="indent")
             else:
