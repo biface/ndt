@@ -1760,7 +1760,6 @@ class TestBuildStrictND:
         assert empty_c_strict_nd[keys] == strict_c_nd[keys]
 
     def test_kwargs_update(self, empty_c_strict_nd, strict_c_nd):
-        print(empty_c_strict_nd)
         del empty_c_strict_nd[[("env", "production"), "api", "timeout"]]
         del empty_c_strict_nd[[("env", "production"), "api", "rate_limit"]]
         with pytest.raises(KeyError):

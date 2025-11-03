@@ -1734,7 +1734,6 @@ class TestBuildStrictStackedDict:
             stacked_dictionary[keys[-1]] = value
         d_path.append(keys[-1])
         assert empty_c_strict_sd[d_path] == stacked_dictionary[keys[-1]]
-        print(empty_c_strict_sd)
 
     def test_compare(self, strict_c_sd, empty_c_strict_sd):
         assert strict_c_sd == empty_c_strict_sd
@@ -2024,7 +2023,6 @@ class TestBuildSmoothStackedDict:
     def test_build_with_paths(self, smooth_c_sd, empty_c_smooth_sd, path, value):
         empty_c_smooth_sd[path] = value
         assert smooth_c_sd[path] == empty_c_smooth_sd[path]
-        print(empty_c_smooth_sd)
 
     def test_compare(self, smooth_c_sd, empty_c_smooth_sd):
         assert smooth_c_sd == empty_c_smooth_sd

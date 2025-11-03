@@ -935,7 +935,6 @@ class TestBuildStrictNestedDictionary:
         assert empty_c_strict_snd[keys] == strict_c_snd[keys]
 
     def test_kwargs_update(self, empty_c_strict_snd, strict_c_snd):
-        print(empty_c_strict_snd)
         del empty_c_strict_snd[[("env", "production"), "api", "timeout"]]
         del empty_c_strict_snd[[("env", "production"), "api", "rate_limit"]]
         with pytest.raises(KeyError):

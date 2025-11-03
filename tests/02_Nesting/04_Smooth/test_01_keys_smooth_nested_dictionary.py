@@ -1111,7 +1111,6 @@ class TestBuildSmoothND:
     def test_build_with_paths(self, smooth_c_snd, empty_c_smooth_snd, path, value):
         empty_c_smooth_snd[path] = value
         assert smooth_c_snd[path] == empty_c_smooth_snd[path]
-        print(empty_c_smooth_snd)
 
     def test_compare(self, smooth_c_snd, empty_c_smooth_snd):
         assert smooth_c_snd == empty_c_smooth_snd

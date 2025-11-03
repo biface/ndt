@@ -23,7 +23,6 @@ class TestPrioritySetUp:
         instance = _StackedDict(
             {}, default_setup={"default_factory": None, "indent": 10}
         )
-        print(instance._default_setup)
         assert instance.indent == 10
         assert instance.default_factory is None
         assert instance._default_setup == {("default_factory", None), ("indent", 10)}
