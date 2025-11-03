@@ -1818,8 +1818,8 @@ class _StackedDict(defaultdict):
 
         if settings is None:
             warnings.warn(
-                "indent and default parameters will be remove in further version "
-                "use default_setup instead",
+                "indent and default parameters are obsolete since version 0.8.0"
+                "and will be remove in version 1.2.0. Use kwargs default_setup dictionary instead",
                 DeprecationWarning,
                 stacklevel=2,
             )
