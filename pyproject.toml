@@ -41,7 +41,7 @@ deps = [
     "pytest-cov"
 ]
 commands = [
-    "pytest --cov=src --cov-report=term-missing --cov-report=xml:coverage/coverage.xml --cov-report=html:coverage/coverage_html tests"
+    "pytest --cov=ndict_tools --cov-report=term-missing --cov-report=xml:coverage/coverage.xml --cov-report=html:coverage/coverage_html tests"
 ]
 
 [tool.tox.testenv.lint]
@@ -71,7 +71,7 @@ commands = [
 description = "Generate code coverage report"
 deps = ["pytest", "pytest-cov"]
 commands = [
-    "pytest --cov=src --cov-report=term-missing --cov-report=xml:coverage/coverage.xml --cov-report=html:coverage/coverage_html tests"
+    "pytest --cov=ndict_tools --cov-report=term-missing --cov-report=xml:coverage/coverage.xml --cov-report=html:coverage/coverage_html tests"
 ]
 
 [tool.tox.testenv.bandit]
@@ -86,14 +86,16 @@ commands = [
     "black src tests",
     "isort src tests",
     "bandit -r src",
-    "pytest --cov=src --cov-report=term-missing --cov-report=xml:coverage/coverage.xml --cov-report=html:coverage/coverage_html tests"
+    "pytest --import-mode=importlib --cov=ndict_tools --cov-report=term-missing --cov-report=xml:coverage/coverage.xml --cov-report=html:coverage/coverage_html tests"
 ]
 
 [tool.tox.testenv.gh-ci]
 description = "Run checks (Black, isort, Bandit, pytest with coverage) for GitHub CI"
 deps = ["black", "isort", "bandit", "pytest", "pytest-cov"]
 commands = [
-    "pytest --cov=src --cov-report=term-missing --cov-report=xml:coverage/coverage.xml --cov-report=html:coverage/coverage_html tests"
+    "black --check src",
+    "isort --check-only src",
+    "pytest --import-mode=importlib --cov=ndict_tools --cov-report=term-missing --cov-report=xml:coverage/coverage.xml --cov-report=html:coverage/coverage_html tests"
 ]
 
 [tool.flake8]
