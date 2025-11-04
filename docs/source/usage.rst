@@ -221,42 +221,111 @@ Examples
 
     a == b == c == d == e
 
+Extending nested dictionaries : A Developer Guide
+=================================================
 
-For Developers
-==============
+The ``_StackedDict`` class in the ``ndict_tools`` package is designed to manage nested dictionaries and can be extended
+for custom use cases. This guide covers two critical aspects: **attribute and parameter management**,
+and **dictionary initialization with nested keys**.
 
-The core class of the ``ndict_tools`` package is the internal class ``_StackedDict`` within the module. This class
-orchestrates all tasks related to the nesting of dictionaries.
+Attribute Initialization and ``default_setup`` Parameterization
+---------------------------------------------------------------
 
-This class can be extended for other uses by adhering to the following rules:
+To extend ``_StackedDict``, adhere to these rules:
 
-  **R1**: Instance attributes must be initialized in the ``__init__`` function of the new class.
+**Rules:**
 
-  **R2**: Instance attributes to be propagated should be characterized in the ``default_setup`` parameter.
+- **R1:** Initialize instance attributes in the subclass's ``__init__`` method.
+- **R2:** Specify attributes to propagate via the ``default_setup`` parameter.
+- **R3:** Configure class attributes **before** calling the parent's ``__init__``.
 
-  **R3**: The management of class attribute parameterization must be performed before calling the ``__init__`` function of the parent class.
-
-Here is an example from test evaluations :
+**Example:**
 
 .. code-block:: python
 
     from ndict_tools.tools import _StackedDict
 
-    class BDict(_StackedDict):
-
+    class CustomDict(_StackedDict):
         def __init__(self, *args, **kwargs):
+            # Initialize custom attributes
+            self.is_custom = True
 
-            # initialize proper attributes
-            self.balanced = False
-
-            # manage default_setup settings parameters
+            # Configure default_setup
             settings = kwargs.pop("default_setup", {})
             settings["indent"] = 4
             settings["default_factory"] = None
-            settings["balanced"] = True
 
-            # call __init__
+            # Call parent __init__
             super().__init__(*args, **kwargs, default_setup=settings)
 
+
+Dictionary Initialization and Nested Key Management
+---------------------------------------------------
+
+After calling the parent's ``__init__``, you can safely add or modify keys, including hierarchical ones. Use helper methods to ensure consistency and avoid infinite recursion.
+
+**Rules:**
+
+- **R4:** Add or modify keys **only after** calling ``super().__init__()``.
+- Use helper methods (e.g., ``_new_section``) to create nested dictionaries with shared settings.
+
+**Example:**
+
+.. code-block:: python
+
+    from ndict_tools.tools import _StackedDict
+    from datetime import datetime
+
+    class ConfigRepository(_StackedDict):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs, default_setup={"indent": 2, "default_factory": dict})
+
+            # Initialize nested sections
+            self["metadata"] = self._new_section({
+                "name": "",
+                "version": "1.0",
+                "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                "flags": {"active": True, "read_only": False},
+            })
+            self["paths"] = self._new_section({
+                "root": "",
+                "config": "config.yaml",
+            })
+
+            # Apply args/kwargs
+            self._apply_args(args)
+            self._apply_kwargs(kwargs)
+
+        def _new_section(self, data: dict) -> "_StackedDict":
+            """Create a new section with shared settings."""
+            return _StackedDict(data, default_setup=self.default_setup)
+
+        def _apply_args(self, args) -> None:
+            """Apply positional arguments as (path, value) pairs."""
+            for path, value in args:
+                if not isinstance(path, (list, str)) or not self.is_key(path):
+                    raise KeyError(f"Invalid path/key: {path}")
+                if isinstance(value, dict):
+                    self[path].update(value)
+                else:
+                    self[path] = value
+
+        def _apply_kwargs(self, kwargs: dict) -> None:
+            """Apply keyword arguments as key-value pairs."""
+            for key, value in kwargs.items():
+                if key not in self.keys():
+                    raise KeyError(f"Invalid key: {key}")
+                if isinstance(value, dict):
+                    self[key].update(value)
+                else:
+                    self[key] = value
+
+
+Key Takeaways
+-------------
+
+- **Order Matters:** Always call ``super().__init__()`` before adding keys.
+- **Validation:** Use helper methods to validate and apply arguments.
+- **Consistency:** Factorize nested dictionary creation with ``_new_section``
 
 .. _defaultdict: https://docs.python.org/3/library/collections.html#collections.defaultdict

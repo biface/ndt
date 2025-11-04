@@ -12,9 +12,9 @@ from sphinx.ext.graphviz import graphviz
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'Nested Dictionary Tools'
-copyright = '2024, biface'
+copyright = '2024-2025, biface'
 author = 'biface'
-release = '0.0.5'
+release = '0.8.0'
 version = release
 
 # -- General configuration ---------------------------------------------------

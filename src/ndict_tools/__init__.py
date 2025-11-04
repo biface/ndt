@@ -1,4 +1,11 @@
-from .core import NestedDictionary, SmoothNestedDictionary, StrictNestedDictionary
+from .core import (
+    CompactPathsView,
+    DictPaths,
+    NestedDictionary,
+    PathsView,
+    SmoothNestedDictionary,
+    StrictNestedDictionary,
+)
 from .exception import (
     NestedDictionaryException,
     StackedAttributeError,
@@ -9,10 +16,12 @@ from .exception import (
     StackedValueError,
 )
 
-__version__ = "0.8.0"
+__version__ = "0.9.0"
 __author__ = "biface"
 
 __all__ = [
+    "PathsView",
+    "CompactPathsView",
     "NestedDictionary",
     "SmoothNestedDictionary",
     "StrictNestedDictionary",

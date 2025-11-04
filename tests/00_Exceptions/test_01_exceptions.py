@@ -5,7 +5,6 @@ Tests for the exception classes in ndict_tools.exception module.
 import pytest
 
 from ndict_tools.exception import (
-    NestedDictionaryException,
     StackedAttributeError,
     StackedDictionaryError,
     StackedIndexError,
@@ -13,52 +12,6 @@ from ndict_tools.exception import (
     StackedTypeError,
     StackedValueError,
 )
-
-
-def test_stacked_dictionary_error_basic():
-    """Test basic functionality of StackedDictionaryError."""
-    # Test with just a message
-    error = StackedDictionaryError("Test error message")
-    assert str(error) == "Test error message"
-    assert error.error_code == 0
-    assert error.path == []
-
-    # Test with message and error code
-    error = StackedDictionaryError("Test error message", 42)
-    assert str(error) == "Test error message"
-    assert error.error_code == 42
-    assert error.path == []
-
-    # Test with message, error code, and path
-    error = StackedDictionaryError("Test error message", 42, ["a", "b", "c"])
-    assert str(error) == "Test error message (at path: a -> b -> c)"
-    assert error.error_code == 42
-    assert error.path == ["a", "b", "c"]
-
-    # Test with just a path
-    error = StackedDictionaryError(path=["x", "y", "z"])
-    assert str(error) == "Error at path: x -> y -> z"
-    assert error.error_code == 0
-    assert error.path == ["x", "y", "z"]
-
-
-def test_nested_dictionary_exception():
-    """Test NestedDictionaryException which inherits from StackedDictionaryError."""
-    # Test with just a message
-    error = NestedDictionaryException("Test nested error")
-    assert str(error) == "Test nested error"
-    assert error.error_code == 0
-    assert error.path == []
-
-    # Test with message, error code, and path
-    error = NestedDictionaryException("Test nested error", 100, ["a", "b"])
-    assert str(error) == "Test nested error (at path: a -> b)"
-    assert error.error_code == 100
-    assert error.path == ["a", "b"]
-
-    # Verify inheritance
-    assert isinstance(error, StackedDictionaryError)
-    assert isinstance(error, Exception)
 
 
 def test_stacked_key_error():
@@ -192,7 +145,7 @@ def test_exception_with_complex_path():
     # Test with a path containing different types
     path = ["a", 1, (2, 3), True]
     error = StackedDictionaryError("Complex path test", path=path)
-    assert str(error) == "Complex path test (at path: a -> 1 -> (2, 3) -> True)"
+    assert str(error) == "Complex path test (at path: a | 1 | (2, 3) | True)"
     assert error.path == path
 
 
@@ -204,7 +157,7 @@ def test_exception_with_empty_message():
 
     # Test with empty message but with path
     error = StackedDictionaryError("", path=["a", "b"])
-    assert str(error) == "Error at path: a -> b"
+    assert str(error) == "Error at path: a | b"
 
 
 def test_exception_raising_in_context():

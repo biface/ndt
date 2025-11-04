@@ -35,7 +35,7 @@ class StackedDictionaryError(Exception):
 
         # Add path information to the message if available
         if path:
-            path_str = " -> ".join(str(k) for k in path)
+            path_str = " | ".join(str(k) for k in path)
             if message:
                 message = f"{message} (at path: {path_str})"
             else:

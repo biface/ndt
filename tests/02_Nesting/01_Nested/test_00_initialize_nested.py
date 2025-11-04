@@ -41,6 +41,16 @@ def ref_mixed_nd():
     )
 
 
+@pytest.fixture(scope="function")
+def nested_strict_f_setup():
+    return {"indent": 3, "default_factory": None}
+
+
+@pytest.fixture(scope="function")
+def nested_smooth_f_setup():
+    return {"indent": 3, "default_factory": NestedDictionary}
+
+
 def test_verify_smooth_ref(ref_smooth_nd):
     assert ref_smooth_nd.default_factory == NestedDictionary
     assert ref_smooth_nd.indent == 3
@@ -54,9 +64,32 @@ def test_verify_smooth_ref(ref_smooth_nd):
         [("3", 3), ("1", 1), ("2", {"1": "2:1", "2": "2:2", "3": "3:2"}), ("4", 4)],
     ],
 )
-def test_smooth_sources(ref_smooth_nd, source):
-    source_nd = NestedDictionary(source)
-    assert source_nd == ref_smooth_nd
+def test_smooth_eq_sources(ref_smooth_nd, source, nested_smooth_f_setup):
+    source_nd = NestedDictionary(source, default_setup=nested_smooth_f_setup)
+    assert ref_smooth_nd == source_nd
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        zip(["1", "2", "3", "5"], [1, {"1": "2:1", "2": "2:2", "3": "3:2"}, 3, 4]),
+        [
+            ("1", 1),
+            ("2", {"1": "2:1", "2": "2:2", "3": "3:2", 4: (4, 2)}),
+            ("3", 3),
+            ("4", 4),
+        ],
+        [
+            ("3", 3),
+            ("1", 1),
+            ("2", {"1": "2:1", "2": "2:2", "3": "3:2"}),
+            ("4", {1: (4, 1), 2: (4, 2)}),
+        ],
+    ],
+)
+def test_smooth_neq_sources(ref_smooth_nd, source, nested_smooth_f_setup):
+    source_nd = NestedDictionary(source, default_setup=nested_smooth_f_setup)
+    assert ref_smooth_nd != source_nd
 
 
 def test_verify_strict_ref(ref_strict_nd):
@@ -84,6 +117,6 @@ def test_mixed_sources(ref_mixed_nd):
         [("first", 1), ("fourth", 4)],
         third=3,
         second={"1": "2:1", "2": "2:2", "3": "3:2"},
-        default_setup={"indent": 10, "default_factory": True},
+        default_setup={"indent": 5, "default_factory": True},
     )
     assert mixed_nd == ref_mixed_nd
