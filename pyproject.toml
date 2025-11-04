@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ndict-tools"
-version = "0.9.0"
+version = "1.0.0"
 authors = [
     {name="biface"}
 ]
@@ -12,7 +12,7 @@ description = "An implementation of nested dictionaries"
 readme = "README.md"
 requires-python = ">=3.9"
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
