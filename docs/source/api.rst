@@ -158,17 +158,13 @@ Tools
     .. automethod:: _validate_structure
     .. automethod:: _compare_path_sets
 
-.. autoclass:: DictPaths
-
-    .. automethod:: _iterate_paths()
-    .. automethod:: __iter__()
-    .. automethod:: __len__()
-    .. automethod:: __contains__()
-    .. automethod:: __repr__()
-
 Core
 ----
 .. automodule:: ndict_tools.core
+
+.. autoclass:: DictPaths
+    :show-inheritance:
+
 .. autoclass:: PathsView
     :show-inheritance:
 

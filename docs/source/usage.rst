@@ -123,18 +123,18 @@ hierarchical paths with lists offers several advantages in the context of nested
    such as JSON or XML parsers, use lists or similar structures to represent paths. By adopting this convention,
    we maintain consistency with established practices.
 
-Introducing DictPaths
----------------------
+Introducing a view of paths
+---------------------------
 
-To manage and access these paths efficiently, we provide the ``DictPaths`` class. This class offers a view object that
+To manage and access these paths efficiently, we provide the ``PathsView`` class. This class offers a view object that
 provides a dictionary-like interface for accessing hierarchical keys as lists. Similar to ``dict_keys``, but tailored
-for hierarchical paths in a ``_StackedDict``, ``DictPaths`` allows you to:
+for hierarchical paths in a ``_StackedDict``, ``PathsView`` allows you to:
 
 - **Iterate** over all hierarchical paths in the ``_StackedDict`` as lists.
 - **Check** if a specific hierarchical path exists within the ``_StackedDict``.
 - **Retrieve** the number of hierarchical paths present in the ``_StackedDict``.
 
-By using ``DictPaths``, you can easily navigate and manipulate complex nested dictionary structures, making your code
+By using ``PathsView``, you can easily navigate and manipulate complex nested dictionary structures, making your code
 more readable and maintainable.
 
 

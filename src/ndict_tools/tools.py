@@ -243,7 +243,7 @@ class _HKey:
 
     .. warning::
        This is a private class (underscore prefix) and should not be instantiated
-       directly by external code. Access it through ``DictSearch`` or ``NestedDictionary``.
+       directly by external code. Access it through ``CompactPathsView`` or ``NestedDictionary``.
 
     Parameters
     ----------
@@ -277,13 +277,13 @@ class _HKey:
 
     See Also
     --------
-    DictSearch : Uses _HKey internally for tree representation
+    _CPaths : Uses _HKey internally for tree representation
     """
 
     __slots__ = ("key", "children", "parent", "is_root")
 
     def __init__(
-        self, key: Any, parent: Optional["_HKey"] = None, is_root: bool = False
+            self, key: Any, parent: Optional["_HKey"] = None, is_root: bool = False
     ) -> None:
         self.key: Any = key
         self.children: Tuple[_HKey, ...] = ()
@@ -680,7 +680,7 @@ class _HKey:
     # ========================================================================
 
     def dfs_preorder(
-        self, visit: Optional[Callable[["_HKey"], None]] = None
+            self, visit: Optional[Callable[["_HKey"], None]] = None
     ) -> Iterator["_HKey"]:
         """
         Depth-First Search traversal in pre-order (node, then children).
@@ -718,7 +718,7 @@ class _HKey:
             yield from child.dfs_preorder(visit)
 
     def dfs_postorder(
-        self, visit: Optional[Callable[["_HKey"], None]] = None
+            self, visit: Optional[Callable[["_HKey"], None]] = None
     ) -> Iterator["_HKey"]:
         """
         Depth-First Search traversal in post-order (children, then node).
@@ -756,7 +756,7 @@ class _HKey:
         yield self
 
     def bfs(
-        self, visit: Optional[Callable[["_HKey"], None]] = None
+            self, visit: Optional[Callable[["_HKey"], None]] = None
     ) -> Iterator["_HKey"]:
         """
         Breadth-First Search (level-order) traversal.
@@ -913,7 +913,7 @@ class _HKey:
         return results
 
     def find_by_key(
-        self, key: Any, find_all: bool = False
+            self, key: Any, find_all: bool = False
     ) -> Optional["_HKey"] | List["_HKey"]:
         """
         Find node(s) with specific key value.
@@ -1070,54 +1070,116 @@ class _HKey:
 
     def prune(self, predicate: Callable[["_HKey"], bool]) -> "_HKey":
         """
-        Create a new tree with nodes filtered by predicate.
+        Create a new tree containing only nodes matching the predicate and their ancestors.
 
-        Returns a new tree containing only nodes (and their ancestors) that
-        match the predicate. This is useful for creating filtered views.
+        This method implements "pruning with path preservation", which filters the tree
+        to keep only branches that lead to nodes satisfying the predicate. All ancestor
+        nodes are automatically preserved to maintain tree connectivity and hierarchical
+        structure.
+
+        The algorithm:
+
+        1. Identifies all nodes matching the predicate
+        2. Preserves all ancestors of matching nodes to maintain paths
+        3. Removes all other branches
+        4. Returns a new tree (original is unchanged)
 
         Parameters
         ----------
         predicate : Callable[[_HKey], bool]
-            Function that returns True for nodes to keep
+            Function that takes an _HKey node and returns True if the node should
+            be kept in the pruned tree. The function is called on each node during
+            traversal.
 
         Returns
         -------
         _HKey
-            New pruned tree (root node)
+            A new pruned tree (root node) containing only the filtered branches.
+            The original tree remains unchanged. The returned tree preserves the
+            same root properties (key, is_root flag).
 
         Examples
         --------
-        >>> root = _HKey.build_forest({'a': {'b': 1, 'c': 2}, 'd': 3})
-        >>> # Keep only paths containing 'b'
-        >>> pruned = root.prune(lambda n: n.key == 'b' or n.is_root or n.key == 'a')
+        >>> # Keep only nodes with key 'b' at depth 2
+        >>> root = _HKey.build_forest({'a': {'b': {'c': 1}, 'x': {'b': {'z': 1}}}})
+        >>> pruned = root.prune(lambda n: n.key == 'b' and n.get_depth() == 2)
         >>> pruned.get_all_paths()
-        [['a'], ['a', 'b']]
+        [['a'], ['a', 'b'], ['a', 'x'], ['a', 'x', 'b']]
+
+        >>> # Keep only leaf nodes
+        >>> root = _HKey.build_forest({'a': {'b': 1, 'c': 2}})
+        >>> pruned = root.prune(lambda n: n.is_leaf())
+        >>> pruned.get_all_paths()
+        [['a'], ['a', 'b'], ['a', 'c']]
+
+        >>> # Keep nodes with specific key value
+        >>> root = _HKey.build_forest({'a': {'target': 1, 'other': 2}, 'b': 3})
+        >>> pruned = root.prune(lambda n: n.key == 'target')
+        >>> pruned.get_all_paths()
+        [['a'], ['a', 'target']]
 
         Notes
         -----
-        The pruned tree maintains the hierarchical structure but excludes
-        branches that don't lead to matching nodes.
+        - The pruned tree maintains hierarchical connectivity by preserving ancestor paths
+        - This is a non-destructive operation; the original tree is not modified
+        - If no nodes match the predicate, returns a tree with only the root node
+        - The predicate is evaluated on every node in the tree (O(n) complexity)
+        - All intermediate nodes required to reach matching nodes are preserved,
+          even if they don't match the predicate themselves
+
+        See Also
+        --------
+        filter_paths : Filter paths based on a predicate function
+        find_all : Find all nodes matching a predicate
+        dfs_find : Find first node matching a predicate using DFS
+        get_all_paths : Get all paths in the tree
         """
         new_root = _HKey(self.key, is_root=self.is_root)
 
-        def copy_if_match(source: _HKey, target: _HKey) -> bool:
-            """Recursively copy matching nodes."""
-            has_matching_child = False
+        def has_matching_descendant(node: _HKey) -> bool:
+            """
+            Check if node or any of its descendants matches the predicate.
 
+            Parameters
+            ----------
+            node : _HKey
+                Node to check
+
+            Returns
+            -------
+            bool
+                True if node or any descendant matches predicate
+            """
+            if predicate(node):
+                return True
+            for child in node.children:
+                if has_matching_descendant(child):
+                    return True
+            return False
+
+        def copy_matching_subtree(source: _HKey, target: _HKey) -> None:
+            """
+            Recursively copy nodes that match or have matching descendants.
+
+            This function traverses the source tree and copies nodes to the target
+            tree only if they match the predicate or have descendants that match.
+            This preserves the hierarchical path to all matching nodes.
+
+            Parameters
+            ----------
+            source : _HKey
+                Source node to copy from
+            target : _HKey
+                Target node to copy to
+            """
             for child in source.children:
-                if predicate(child):
+                # Only process this child if it or its descendants match
+                if has_matching_descendant(child):
                     new_child = target.add_child(child.key)
-                    copy_if_match(child, new_child)
-                    has_matching_child = True
-                elif copy_if_match(child, target):
-                    # Child doesn't match but has matching descendants
-                    new_child = target.add_child(child.key)
-                    copy_if_match(child, new_child)
-                    has_matching_child = True
+                    # Recursively copy the subtree
+                    copy_matching_subtree(child, new_child)
 
-            return has_matching_child or predicate(source)
-
-        copy_if_match(self, new_root)
+        copy_matching_subtree(self, new_root)
         return new_root
 
     def get_statistics(self) -> Dict[str, Any]:
@@ -2126,7 +2188,7 @@ class _StackedDict(defaultdict):
             current = self
             for sub_key in key[:-1]:  # Traverse the hierarchy
                 if sub_key not in current or not isinstance(
-                    current[sub_key], _StackedDict
+                        current[sub_key], _StackedDict
                 ):
                     current[sub_key] = self.__class__(
                         default_setup=dict(self.default_setup)
@@ -2236,7 +2298,7 @@ class _StackedDict(defaultdict):
         """
 
         if isinstance(
-            key, list
+                key, list
         ):  # Une liste est interprétée comme une hiérarchie de clés
             current = self
             parents = []
@@ -3226,7 +3288,7 @@ class _StackedDict(defaultdict):
             for key, value in current_dict.items():
                 new_path = path + (key,)  # Extend the path with the current key
                 if isinstance(
-                    value, _StackedDict
+                        value, _StackedDict
                 ):  # Check if the value is a nested _StackedDict
                     queue.append(
                         (new_path, value)
@@ -3504,7 +3566,7 @@ class _Paths:
 
     See Also
     --------
-    DictSearch : Factorized representation of paths
+    _CPaths : Factorized representation of paths
     _StackedDict.paths : building paths for nested dictionaries.
     """
 
@@ -3946,7 +4008,7 @@ class _CPaths(_Paths):
 
     @structure.setter
     def structure(
-        self, value: Union[_StackedDict, _HKey, List[Any], Dict[str, Any]]
+            self, value: Union[_StackedDict, _HKey, List[Any], Dict[str, Any]]
     ) -> None:
         """
         Set or build the compact structure representation.
@@ -4185,9 +4247,9 @@ class _CPaths(_Paths):
         --------
         >>> c_paths = _CPaths(_StackedDict({'a': {'b': 1}, 'c': 2}))
         >>> str(c_paths)
-        "CompactPaths(3 paths): [['a', 'b'], ['c']]"
+        "_CPaths(3 paths): [['a', 'b'], ['c']]"
         """
-        return f"CompactPaths({len(self)} paths): {self.structure}"
+        return f"_CPaths({len(self)} paths): {self.structure}"
 
     # ========================================================================
     # COVERAGE ANALYSIS METHODS
