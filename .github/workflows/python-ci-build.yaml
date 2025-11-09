@@ -1,0 +1,149 @@
+name: Python CI - Build
+
+on:
+  workflow_run:
+    workflows: ["Python CI - Coverage"]
+    types:
+      - completed
+    branches:
+      - "staging/**"     # Toutes les branches de staging (pré-production)
+      - main
+      - master
+
+jobs:
+  build:
+    name: Check versions and build package
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build tomli packaging requests
+
+    - name: Check and sync versions
+      id: version_check
+      run: |
+        python - <<'EOF'
+        import sys
+        import tomli
+        import re
+        import os
+        from pathlib import Path
+        from packaging import version as pkg_version
+        
+        # Lire __version__ depuis __init__.py
+        init_files = list(Path('.').rglob('__init__.py'))
+        init_version = None
+        
+        for init_file in init_files:
+            content = init_file.read_text()
+            match = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', content)
+            if match:
+                init_version = match.group(1)
+                init_path = init_file
+                break
+        
+        if not init_version:
+            print("::error::No __version__ found in __init__.py")
+            sys.exit(1)
+        
+        # Lire version depuis pyproject.toml
+        pyproject_path = Path('pyproject.toml')
+        if not pyproject_path.exists():
+            print("::error::pyproject.toml not found")
+            sys.exit(1)
+        
+        with open(pyproject_path, 'rb') as f:
+            pyproject_data = tomli.load(f)
+        
+        pyproject_version = pyproject_data.get('project', {}).get('version')
+        
+        if not pyproject_version:
+            print("::error::No version found in pyproject.toml [project] section")
+            sys.exit(1)
+        
+        print(f"__init__.py version: {init_version}")
+        print(f"pyproject.toml version: {pyproject_version}")
+        
+        # Comparer les versions
+        init_v = pkg_version.parse(init_version)
+        pyproject_v = pkg_version.parse(pyproject_version)
+        
+        if init_v > pyproject_v:
+            print(f"Updating pyproject.toml version from {pyproject_version} to {init_version}")
+            content = pyproject_path.read_text()
+            new_content = re.sub(
+                r'(version\s*=\s*["\'])([^"\']+)(["\'])',
+                f'\\g<1>{init_version}\\g<3>',
+                content
+            )
+            pyproject_path.write_text(new_content)
+            final_version = init_version
+        elif init_v == pyproject_v:
+            print(f"Versions are equal: {init_version}")
+            final_version = init_version
+        else:
+            print("::error::pyproject.toml version is higher than __init__.py version")
+            sys.exit(1)
+        
+        # Écrire la version finale dans GITHUB_OUTPUT
+        with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+            f.write(f"version={final_version}\n")
+        EOF
+      env:
+        PYTHONPATH: .
+
+    - name: Check if version exists on PyPI
+      id: check_pypi
+      run: |
+        VERSION="${{ steps.version_check.outputs.version }}"
+        PACKAGE_NAME=$(python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['name'])")
+        
+        echo "Checking version $VERSION for package $PACKAGE_NAME"
+        echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+        
+        # Vérifier sur PyPI
+        if curl -s "https://pypi.org/pypi/$PACKAGE_NAME/json" | grep -q "\"$VERSION\""; then
+          echo "exists_on_pypi=true" >> $GITHUB_OUTPUT
+          echo "Version $VERSION already exists on PyPI"
+        else
+          echo "exists_on_pypi=false" >> $GITHUB_OUTPUT
+          echo "Version $VERSION does not exist on PyPI"
+        fi
+        
+        # Vérifier sur TestPyPI
+        if curl -s "https://test.pypi.org/pypi/$PACKAGE_NAME/json" | grep -q "\"$VERSION\""; then
+          echo "exists_on_testpypi=true" >> $GITHUB_OUTPUT
+          echo "Version $VERSION already exists on TestPyPI"
+        else
+          echo "exists_on_testpypi=false" >> $GITHUB_OUTPUT
+          echo "Version $VERSION does not exist on TestPyPI"
+        fi
+
+    - name: Build package
+      if: steps.check_pypi.outputs.exists_on_pypi == 'false' || steps.check_pypi.outputs.exists_on_testpypi == 'false'
+      run: python -m build
+
+    - name: Upload build artifacts
+      if: steps.check_pypi.outputs.exists_on_pypi == 'false' || steps.check_pypi.outputs.exists_on_testpypi == 'false'
+      uses: actions/upload-artifact@v4
+      with:
+        name: python-package-distributions
+        path: dist/
+        retention-days: 7
+
+    outputs:
+      version: ${{ steps.version_check.outputs.version }}
+      package_name: ${{ steps.check_pypi.outputs.package_name }}
+      exists_on_pypi: ${{ steps.check_pypi.outputs.exists_on_pypi }}
+      exists_on_testpypi: ${{ steps.check_pypi.outputs.exists_on_testpypi }}

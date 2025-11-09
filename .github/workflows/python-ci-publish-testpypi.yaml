@@ -1,0 +1,145 @@
+name: Python CI - Publish TestPyPI
+
+on:
+  workflow_run:
+    workflows: ["Python CI - Build"]
+    types:
+      - completed
+    branches:
+      - "staging/**"     # Pré-production : publie sur TestPyPI
+      - main
+      - master
+
+jobs:
+  publish-testpypi:
+    name: Publish to TestPyPI and verify
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: python-package-distributions
+        path: dist/
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        run-id: ${{ github.event.workflow_run.id }}
+
+    - name: Get build info
+      id: build_info
+      run: |
+        pip install tomli
+        VERSION=$(python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['version'])")
+        PACKAGE_NAME=$(python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['name'])")
+        
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+        
+        # Vérifier si existe sur TestPyPI
+        if curl -s "https://test.pypi.org/pypi/$PACKAGE_NAME/json" | grep -q "\"$VERSION\""; then
+          echo "exists_on_testpypi=true" >> $GITHUB_OUTPUT
+        else
+          echo "exists_on_testpypi=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Publish to TestPyPI
+      if: steps.build_info.outputs.exists_on_testpypi == 'false'
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://test.pypi.org/legacy/
+        password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+        skip-existing: true
+
+    - name: Wait and verify TestPyPI availability
+      if: steps.build_info.outputs.exists_on_testpypi == 'false'
+      run: |
+        VERSION="${{ steps.build_info.outputs.version }}"
+        PACKAGE_NAME="${{ steps.build_info.outputs.package_name }}"
+        
+        echo "Waiting for TestPyPI to propagate the package..."
+        
+        MAX_ATTEMPTS=30
+        ATTEMPT=0
+        
+        while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+          ATTEMPT=$((ATTEMPT + 1))
+          echo "Attempt $ATTEMPT/$MAX_ATTEMPTS: Checking if package is available..."
+          
+          if curl -s "https://test.pypi.org/pypi/$PACKAGE_NAME/$VERSION/json" | grep -q "\"$VERSION\""; then
+            echo "✓ Package $PACKAGE_NAME==$VERSION is now available on TestPyPI"
+            exit 0
+          fi
+          
+          if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
+            echo "Package not yet available, waiting 10 seconds..."
+            sleep 10
+          fi
+        done
+        
+        echo "::error::Package did not become available on TestPyPI after $MAX_ATTEMPTS attempts"
+        exit 1
+
+    - name: Verify TestPyPI installation
+      if: steps.build_info.outputs.exists_on_testpypi == 'false'
+      run: |
+        VERSION="${{ steps.build_info.outputs.version }}"
+        PACKAGE_NAME="${{ steps.build_info.outputs.package_name }}"
+        
+        python -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ "$PACKAGE_NAME==$VERSION"
+        
+        echo "✓ TestPyPI installation verified successfully"
+
+    - name: Determine version type
+      id: version_type
+      run: |
+        VERSION="${{ steps.build_info.outputs.version }}"
+        MINOR=$(echo $VERSION | cut -d. -f2)
+        
+        # Vérifier si le mineur est pair ou impair
+        if [ $((MINOR % 2)) -eq 0 ]; then
+          echo "type=stable" >> $GITHUB_OUTPUT
+          echo "label=✅ STABLE" >> $GITHUB_OUTPUT
+        else
+          echo "type=experimental" >> $GITHUB_OUTPUT
+          echo "label=⚠️ EXPERIMENTAL" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Add staging comment
+      if: startsWith(github.ref, 'refs/heads/staging/')
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const version = '${{ steps.build_info.outputs.version }}';
+          const packageName = '${{ steps.build_info.outputs.package_name }}';
+          const versionType = '${{ steps.version_type.outputs.type }}';
+          const versionLabel = '${{ steps.version_type.outputs.label }}';
+          
+          github.rest.repos.createCommitComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            commit_sha: context.sha,
+            body: `## 📦 Package published to TestPyPI (Staging)
+            
+            **Version:** ${version} ${versionLabel}
+            **Package:** ${packageName}
+            **TestPyPI:** https://test.pypi.org/project/${packageName}/${version}/
+            
+            ✅ Installation from TestPyPI verified successfully
+            
+            **To test manually:**
+            \`\`\`bash
+            pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ ${packageName}==${version}
+            \`\`\`
+            
+            ${versionType === 'experimental' ? '⚠️ **This is an EXPERIMENTAL version** (odd minor number) - Use with caution!' : '✅ **This is a STABLE version** (even minor number)'}
+            
+            If validation is successful, merge to \`main\` to publish to production.`
+          })
