@@ -6,8 +6,9 @@ on:
     types:
       - completed
     branches:
-      - "updates/**"     # Toutes les branches de versions (updates/1.0.0, updates/1.1.0, etc.)
-      - "staging/**"     # Toutes les branches de staging (staging/1.0.x, staging/1.1.x, etc.)
+      - "updates/**"      # Toutes les branches de versions (updates/1.0.0, updates/1.1.0, etc.)
+      - "updates/code/**" # Compatibilité avec les branches actuelles
+      - "staging/**"      # Toutes les branches de staging (staging/1.0.x, staging/1.1.x, etc.)
       - main
       - master
 

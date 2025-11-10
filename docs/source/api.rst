@@ -98,7 +98,10 @@ Tools
 
                 $ sd
                 _StackedDict(None, {'x': 'value3', 'a': {'b': {}}})
-                
+
+    .. automethod:: equal()
+    .. automethod:: similar()
+    .. automethod:: isomorph()
     .. automethod:: is_key()
     .. automethod:: occurrences()
     .. automethod:: key_list()
@@ -114,6 +117,8 @@ Tools
     .. automethod:: size()
     .. automethod:: ancestors()
     .. automethod:: leaves()
+    .. automethod:: __eq__()
+    .. automethod:: __ne__()
     .. automethod:: __str__()
     .. automethod:: __copy__()
     .. automethod:: __deepcopy__()

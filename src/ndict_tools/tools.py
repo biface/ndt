@@ -2362,6 +2362,70 @@ class _StackedDict(defaultdict):
 
     def __eq__(self, other):
         """
+        Override __eq__ to compare two dictionaries, this function an isomorphism to dictionaries set
+
+        Two structures are isomorphic if they represent the same nested
+        dictionary structure, regardless of whether they're _StackedDict,
+        plain dict, or any other dict-like type.
+
+        Parameters
+        ----------
+        other : dict or _StackedDict
+            Dictionary to compare with
+
+        Returns
+        -------
+        bool
+            True if structure-preserving mapping exists
+
+        Examples
+        --------
+        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> regular_dict = {'a': {'b': 1}}
+        >>> sd == regular_dict
+        True
+        >>> sd == {'a': {'b': 1}}
+        True
+        >>> sd == {'a': {'b': 2}}
+        False
+
+        Notes
+        -----
+        Checks if sd[k1]...[kn] == other[k1]...[kn] for all paths.
+        This is the most permissive comparison method.
+
+        See Also
+        --------
+        equal : Strict equality
+        similar : Compare _StackedDict instances
+        isomorph : Compare as plain dicts
+        """
+
+        if not isinstance(other, (dict, _StackedDict)):
+            return False
+        elif isinstance(other, _StackedDict):
+            return compare_dict(self.to_dict(), other.to_dict())
+        else:
+            return compare_dict(self.to_dict(), dict(other))
+
+    def __ne__(self, other):
+        """
+        Check inequality (negation of __eq__).
+
+        Returns
+        -------
+        bool
+            True if not equal
+
+        See Also
+        --------
+        __eq__ : Equality check
+        """
+
+        return not self.__eq__(other)
+
+    def equal(self, other):
+        """
         Check equality: same class, configuration, and content.
 
         Two _StackedDict instances are equal if they have:
@@ -2394,6 +2458,7 @@ class _StackedDict(defaultdict):
 
         See Also
         --------
+        __eq__ : dictionaries equalities
         __ne__ : Inequality check
         similar : Compare content only (ignore class/setup)
         isomorph : Compare as plain dicts
@@ -2404,22 +2469,6 @@ class _StackedDict(defaultdict):
         if self._default_setup != other._default_setup:
             return False
         return compare_dict(self.to_dict(), other.to_dict())
-
-    def __ne__(self, other):
-        """
-        Check inequality (negation of __eq__).
-
-        Returns
-        -------
-        bool
-            True if not equal
-
-        See Also
-        --------
-        __eq__ : Equality check
-        """
-
-        return not self.__eq__(other)
 
     def similar(self, other):
         """
@@ -2454,7 +2503,9 @@ class _StackedDict(defaultdict):
 
         See Also
         --------
-        __eq__ : Strict equality (includes setup)
+        __eq__ : dictionaries equalities
+        __ne__ : Inequality check
+        equal : Strict equality (includes setup)
         isomorph : Compare as plain dicts
         """
         if not isinstance(other, _StackedDict):
@@ -2497,7 +2548,9 @@ class _StackedDict(defaultdict):
 
         See Also
         --------
-        __eq__ : Strict equality
+        __eq__ : dictionaries equalities
+        __ne__ : Inequality check
+        equal : Strict equality
         similar : Compare _StackedDict instances
         """
 
