@@ -1,0 +1,120 @@
+name: Python CI - Publish PyPI
+
+on:
+  workflow_run:
+    workflows: ["Python CI - Publish TestPyPI"]
+    types:
+      - completed
+    branches:
+      - main         # Production uniquement
+      - master       # Production (alias)
+
+jobs:
+  publish-pypi:
+    name: Publish to PyPI (Production)
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: python-package-distributions
+        path: dist/
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        run-id: ${{ github.event.workflow_run.id }}
+
+    - name: Get build info
+      id: build_info
+      run: |
+        pip install tomli
+        VERSION=$(python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['version'])")
+        PACKAGE_NAME=$(python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['name'])")
+        
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+        
+        # Vérifier si existe sur PyPI
+        if curl -s "https://pypi.org/pypi/$PACKAGE_NAME/json" | grep -q "\"$VERSION\""; then
+          echo "exists_on_pypi=true" >> $GITHUB_OUTPUT
+          echo "⚠️ Version $VERSION already exists on PyPI - skipping publication"
+        else
+          echo "exists_on_pypi=false" >> $GITHUB_OUTPUT
+          echo "✓ Version $VERSION does not exist on PyPI - ready to publish"
+        fi
+
+    - name: Publish to PyPI
+      if: steps.build_info.outputs.exists_on_pypi == 'false'
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.PYPI_API_TOKEN }}
+        skip-existing: true
+
+    - name: Verify PyPI publication
+      if: steps.build_info.outputs.exists_on_pypi == 'false'
+      run: |
+        VERSION="${{ steps.build_info.outputs.version }}"
+        PACKAGE_NAME="${{ steps.build_info.outputs.package_name }}"
+        
+        echo "Waiting for PyPI to propagate the package..."
+        
+        MAX_ATTEMPTS=20
+        ATTEMPT=0
+        
+        while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+          ATTEMPT=$((ATTEMPT + 1))
+          echo "Attempt $ATTEMPT/$MAX_ATTEMPTS: Checking if package is available on PyPI..."
+          
+          if curl -s "https://pypi.org/pypi/$PACKAGE_NAME/$VERSION/json" | grep -q "\"$VERSION\""; then
+            echo "✓ Package $PACKAGE_NAME==$VERSION is now available on PyPI"
+            exit 0
+          fi
+          
+          if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
+            echo "Package not yet available, waiting 15 seconds..."
+            sleep 15
+          fi
+        done
+        
+        echo "::warning::Package may not be fully propagated yet, but continuing..."
+
+    - name: Add production comment
+      if: steps.build_info.outputs.exists_on_pypi == 'false'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const version = '${{ steps.build_info.outputs.version }}';
+          const packageName = '${{ steps.build_info.outputs.package_name }}';
+          
+          github.rest.repos.createCommitComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            commit_sha: context.sha,
+            body: `## 🚀 Package published to PyPI (Production)
+            
+            **Version:** ${version}
+            **Package:** ${packageName}
+            **PyPI:** https://pypi.org/project/${packageName}/${version}/
+            
+            ✅ Successfully published to production PyPI
+            
+            **Installation:**
+            \`\`\`bash
+            pip install ${packageName}==${version}
+            \`\`\`
+            
+            ⏳ Git tag and GitHub Release will be created in the next workflow...`
+          })
+
+    outputs:
+      version: ${{ steps.build_info.outputs.version }}
+      package_name: ${{ steps.build_info.outputs.package_name }}
+      published: ${{ steps.build_info.outputs.exists_on_pypi == 'false' }}
