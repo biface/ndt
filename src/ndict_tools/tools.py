@@ -283,7 +283,7 @@ class _HKey:
     __slots__ = ("key", "children", "parent", "is_root")
 
     def __init__(
-            self, key: Any, parent: Optional["_HKey"] = None, is_root: bool = False
+        self, key: Any, parent: Optional["_HKey"] = None, is_root: bool = False
     ) -> None:
         self.key: Any = key
         self.children: Tuple[_HKey, ...] = ()
@@ -679,14 +679,58 @@ class _HKey:
     # Tree Traversal Algorithms
     # ========================================================================
 
+    def _dfs_traverse(
+        self,
+        visit: Optional[Callable[["_HKey"], None]] = None,
+        *,
+        preorder: bool = True,
+    ) -> Iterator["_HKey"]:
+        """
+        Internal helper generator for DFS traversals with cycle protection.
+
+        Parameters
+        ----------
+        visit : Optional[Callable[["_HKey"], None]]
+            Optional callback invoked for each yielded node.
+        preorder : bool
+            If True, yield node before children (pre-order). If False, yield
+            after children (post-order).
+        """
+        seen: Set[int] = set()
+
+        def traverse(node: "_HKey") -> Iterator["_HKey"]:
+            nid = id(node)
+            if nid in seen:
+                return
+            seen.add(nid)
+
+            if preorder:
+                if visit:
+                    visit(node)
+                yield node
+
+            for child in node.children:
+                yield from traverse(child)
+
+            if not preorder:
+                if visit:
+                    visit(node)
+                yield node
+
+        yield from traverse(self)
+
     def dfs_preorder(
-            self, visit: Optional[Callable[["_HKey"], None]] = None
+        self, visit: Optional[Callable[["_HKey"], None]] = None
     ) -> Iterator["_HKey"]:
         """
         Depth-First Search traversal in pre-order (node, then children).
 
         Pre-order: Visit current node before its children.
         Order: Root → Left subtree → Right subtree
+
+        This traversal is cycle-safe: if the underlying structure contains
+        cycles (which should not happen in a valid tree), nodes that have
+        already been seen will be skipped to prevent infinite loops.
 
         Parameters
         ----------
@@ -710,15 +754,10 @@ class _HKey:
         dfs_postorder : Post-order DFS traversal
         bfs : Breadth-first traversal
         """
-        if visit:
-            visit(self)
-        yield self
-
-        for child in self.children:
-            yield from child.dfs_preorder(visit)
+        yield from self._dfs_traverse(visit, preorder=True)
 
     def dfs_postorder(
-            self, visit: Optional[Callable[["_HKey"], None]] = None
+        self, visit: Optional[Callable[["_HKey"], None]] = None
     ) -> Iterator["_HKey"]:
         """
         Depth-First Search traversal in post-order (children, then node).
@@ -726,6 +765,9 @@ class _HKey:
         Post-order: Visit children before current node.
         Order: Left subtree → Right subtree → Root
         Useful for deletion or bottom-up calculations.
+
+        This traversal is cycle-safe: previously visited nodes are skipped to
+        prevent infinite recursion if a cycle is present.
 
         Parameters
         ----------
@@ -748,21 +790,19 @@ class _HKey:
         --------
         dfs_preorder : Pre-order DFS traversal
         """
-        for child in self.children:
-            yield from child.dfs_postorder(visit)
-
-        if visit:
-            visit(self)
-        yield self
+        yield from self._dfs_traverse(visit, preorder=False)
 
     def bfs(
-            self, visit: Optional[Callable[["_HKey"], None]] = None
+        self, visit: Optional[Callable[["_HKey"], None]] = None
     ) -> Iterator["_HKey"]:
         """
         Breadth-First Search (level-order) traversal.
 
         BFS explores all nodes at depth N before moving to depth N+1.
         Uses a queue (deque) for optimal O(1) operations.
+
+        This traversal is cycle-safe: nodes already seen are not enqueued
+        again, preventing infinite loops in the presence of cycles.
 
         Parameters
         ----------
@@ -797,6 +837,7 @@ class _HKey:
         iter_by_level : Get nodes grouped by level
         """
         queue: deque = deque([self])
+        seen: Set[int] = {id(self)}
 
         while queue:
             node = queue.popleft()
@@ -804,7 +845,11 @@ class _HKey:
                 visit(node)
             yield node
 
-            queue.extend(node.children)
+            for child in node.children:
+                cid = id(child)
+                if cid not in seen:
+                    seen.add(cid)
+                    queue.append(child)
 
     def dfs_find(self, predicate: Callable[["_HKey"], bool]) -> Optional["_HKey"]:
         """
@@ -812,6 +857,8 @@ class _HKey:
 
         Performs depth-first search and returns the first node for which
         the predicate returns True. Returns None if no match found.
+        This method is cycle-safe as it leverages `dfs_preorder` which
+        guards against revisiting nodes.
 
         Parameters
         ----------
@@ -837,14 +884,9 @@ class _HKey:
         bfs_find : BFS-based search
         find_all : Find all matching nodes
         """
-        if predicate(self):
-            return self
-
-        for child in self.children:
-            result = child.dfs_find(predicate)
-            if result is not None:
-                return result
-
+        for node in self.dfs_preorder():
+            if predicate(node):
+                return node
         return None
 
     def bfs_find(self, predicate: Callable[["_HKey"], bool]) -> Optional["_HKey"]:
@@ -913,7 +955,7 @@ class _HKey:
         return results
 
     def find_by_key(
-            self, key: Any, find_all: bool = False
+        self, key: Any, find_all: bool = False
     ) -> Optional["_HKey"] | List["_HKey"]:
         """
         Find node(s) with specific key value.
@@ -1376,7 +1418,10 @@ class _HKey:
 
             # Verify parent's children contain this node
             if node.parent and not node.is_root:
+                print("->")
+                print(node, ":", node.parent, ":", node.parent.children)
                 if node not in node.parent.children:
+                    print("-->")
                     issues.append(f"Node {node.key} not in parent's children list")
 
         return len(issues) == 0, issues
@@ -2188,7 +2233,7 @@ class _StackedDict(defaultdict):
             current = self
             for sub_key in key[:-1]:  # Traverse the hierarchy
                 if sub_key not in current or not isinstance(
-                        current[sub_key], _StackedDict
+                    current[sub_key], _StackedDict
                 ):
                     current[sub_key] = self.__class__(
                         default_setup=dict(self.default_setup)
@@ -2298,7 +2343,7 @@ class _StackedDict(defaultdict):
         """
 
         if isinstance(
-                key, list
+            key, list
         ):  # Une liste est interprétée comme une hiérarchie de clés
             current = self
             parents = []
@@ -3288,7 +3333,7 @@ class _StackedDict(defaultdict):
             for key, value in current_dict.items():
                 new_path = path + (key,)  # Extend the path with the current key
                 if isinstance(
-                        value, _StackedDict
+                    value, _StackedDict
                 ):  # Check if the value is a nested _StackedDict
                     queue.append(
                         (new_path, value)
@@ -4008,7 +4053,7 @@ class _CPaths(_Paths):
 
     @structure.setter
     def structure(
-            self, value: Union[_StackedDict, _HKey, List[Any], Dict[str, Any]]
+        self, value: Union[_StackedDict, _HKey, List[Any], Dict[str, Any]]
     ) -> None:
         """
         Set or build the compact structure representation.
