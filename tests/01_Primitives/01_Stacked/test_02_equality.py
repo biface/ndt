@@ -19,6 +19,7 @@ def test_eq_stacked_dictionary(
     )
     assert dict_source == dictionary
 
+
 @pytest.mark.parametrize("source_name", ["strict_f_sd", "smooth_f_sd"])
 def test_eq(source_name, function_system_config, request):
     dict_source = request.getfixturevalue(source_name)
@@ -46,11 +47,27 @@ def test_equality(source_name, setup_name, function_system_config, request):
         ("smooth_f_sd", "standard_strict_f_setup"),
     ],
 )
-def test_not_equality(source_name, setup_name, function_system_config, request):
+def test_not_equality_same_class(
+    source_name, setup_name, function_system_config, request
+):
     dict_source = request.getfixturevalue(source_name)
     default_setup = request.getfixturevalue(setup_name)
     dictionary = _StackedDict(function_system_config, default_setup=default_setup)
     assert not dict_source.equal(dictionary)
+
+
+@pytest.mark.parametrize(
+    "source_name, setup_name",
+    [
+        ("strict_f_sd", "standard_smooth_f_setup"),
+        ("smooth_f_sd", "standard_strict_f_setup"),
+    ],
+)
+def test_not_equality_simple_dict(
+    source_name, setup_name, function_system_config, request
+):
+    dict_source = request.getfixturevalue(source_name)
+    assert not dict_source.equal(function_system_config)
 
 
 @pytest.mark.parametrize(
