@@ -26,12 +26,13 @@ jobs:
         python-version: "3.12"
 
     - name: Download build artifacts
-      uses: actions/download-artifact@v4
+      uses: dawidd6/action-download-artifact@v6
       with:
+        workflow: python-ci-build.yaml
+        workflow_conclusion: success
         name: python-package-distributions
         path: dist/
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        run-id: ${{ github.event.workflow_run.id }}
+        github_token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Get build info
       id: build_info
