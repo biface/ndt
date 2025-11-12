@@ -11,8 +11,8 @@ on:
       - master
 
 jobs:
-  publish-testpypi:
-    name: Publish to TestPyPI and verify
+  check-and-publish-testpypi:
+    name: Check version and publish to TestPyPI
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
@@ -25,7 +25,34 @@ jobs:
       with:
         python-version: "3.12"
 
+    - name: Get version info
+      id: version_info
+      run: |
+        pip install tomli
+        VERSION=$(python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['version'])")
+        PACKAGE_NAME=$(python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['name'])")
+        
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+
+    - name: Check if version exists on TestPyPI
+      id: check_testpypi
+      run: |
+        VERSION="${{ steps.version_info.outputs.version }}"
+        PACKAGE_NAME="${{ steps.version_info.outputs.package_name }}"
+        
+        echo "Checking if $PACKAGE_NAME==$VERSION exists on TestPyPI..."
+        
+        if curl -s "https://test.pypi.org/pypi/$PACKAGE_NAME/json" | grep -q "\"$VERSION\""; then
+          echo "exists=true" >> $GITHUB_OUTPUT
+          echo "✅ Version $VERSION already exists on TestPyPI - skipping publication"
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+          echo "📦 Version $VERSION does not exist on TestPyPI - will publish"
+        fi
+
     - name: Download build artifacts
+      if: steps.check_testpypi.outputs.exists == 'false'
       uses: dawidd6/action-download-artifact@v6
       with:
         workflow: python-ci-build.yaml
@@ -34,25 +61,8 @@ jobs:
         path: dist/
         github_token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Get build info
-      id: build_info
-      run: |
-        pip install tomli
-        VERSION=$(python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['version'])")
-        PACKAGE_NAME=$(python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['name'])")
-        
-        echo "version=$VERSION" >> $GITHUB_OUTPUT
-        echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
-        
-        # Vérifier si existe sur TestPyPI
-        if curl -s "https://test.pypi.org/pypi/$PACKAGE_NAME/json" | grep -q "\"$VERSION\""; then
-          echo "exists_on_testpypi=true" >> $GITHUB_OUTPUT
-        else
-          echo "exists_on_testpypi=false" >> $GITHUB_OUTPUT
-        fi
-
     - name: Publish to TestPyPI
-      if: steps.build_info.outputs.exists_on_testpypi == 'false'
+      if: steps.check_testpypi.outputs.exists == 'false'
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         repository-url: https://test.pypi.org/legacy/

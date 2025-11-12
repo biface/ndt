@@ -132,7 +132,11 @@ jobs:
 
     - name: Build package
       if: steps.check_pypi.outputs.exists_on_pypi == 'false' || steps.check_pypi.outputs.exists_on_testpypi == 'false'
-      run: python -m build
+      run: |
+        echo "📦 Building package..."
+        python -m build
+        echo "✅ Build completed"
+        ls -la dist/
 
     - name: Upload build artifacts
       if: steps.check_pypi.outputs.exists_on_pypi == 'false' || steps.check_pypi.outputs.exists_on_testpypi == 'false'
@@ -141,6 +145,12 @@ jobs:
         name: python-package-distributions
         path: dist/
         retention-days: 7
+
+    - name: Skip build comment
+      if: steps.check_pypi.outputs.exists_on_pypi == 'true' && steps.check_pypi.outputs.exists_on_testpypi == 'true'
+      run: |
+        echo "ℹ️ Package version already exists on both TestPyPI and PyPI"
+        echo "✅ No build needed - skipping artifact creation"
 
     outputs:
       version: ${{ steps.version_check.outputs.version }}
