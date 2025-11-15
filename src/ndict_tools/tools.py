@@ -30,11 +30,15 @@ from typing import (
     Callable,
     Dict,
     Generator,
+    Iterable,
     Iterator,
     List,
+    Mapping,
     Optional,
     Set,
     Tuple,
+    Type,
+    TypeVar,
     Union,
 )
 
@@ -47,6 +51,8 @@ from .exception import (
 )
 
 MAX_DEPTH = 100
+
+T = TypeVar("T", bound="_StackedDict")
 
 """Internal functions"""
 
@@ -154,7 +160,7 @@ def unpack_items(dictionary: dict) -> Generator:
             yield (key,), value
 
 
-def from_dict(dictionary: dict, class_name: object, **class_options) -> _StackedDict:
+def from_dict(dictionary: dict, class_name: Type["T"], **class_options) -> T:
     """
     Recursively convert a standard dictionary to a _StackedDict or subclass.
 
@@ -167,21 +173,25 @@ def from_dict(dictionary: dict, class_name: object, **class_options) -> _Stacked
     ----------
     dictionary : dict
         The dictionary to transform (may be nested)
-    class_name : type
-        The _StackedDict class (or subclass) to instantiate
+    class_name : Type[T]
+        The _StackedDict class (or subclass) to instantiate.
+        Must be a subclass of _StackedDict.
     **class_options : dict
         Initialization options for the class instances.
         Must contain 'default_setup' key with configuration dict.
 
     Returns
     -------
-    _StackedDict
-        New instance of class_name containing the dictionary structure
+    T
+        New instance of the specified class_name containing the dictionary structure.
+        The return type matches the class type passed as class_name.
 
     Raises
     ------
     StackedKeyError
         If 'default_setup' key is missing from class_options
+    StackedTypeError
+        If class_name is not a valid _StackedDict class or subclass
 
     Examples
     --------
@@ -198,6 +208,7 @@ def from_dict(dictionary: dict, class_name: object, **class_options) -> _Stacked
     - Regular dict values are recursively converted
     - Non-dict values are assigned directly
     - All created instances share the same class_options
+    - Type variable T preserves the exact subclass type through the transformation
 
     See Also
     --------
@@ -206,7 +217,11 @@ def from_dict(dictionary: dict, class_name: object, **class_options) -> _Stacked
     """
 
     if "default_setup" in class_options:
-        dict_object = class_name(**class_options)
+        if not isinstance(class_name, type) or not issubclass(class_name, _StackedDict):
+            raise StackedTypeError(
+                f"class_name must be a _StackedDict class, got {type(class_name)}"
+            )
+        dict_object: T = class_name(**class_options)
     else:
         raise StackedKeyError(
             f"The key 'default_setup' must be present in class options : {class_options}",
@@ -2907,37 +2922,57 @@ class _StackedDict(defaultdict):
 
         return path, value
 
-    def update(self, dictionary: dict = None, **kwargs) -> None:
+    def update(
+        self,
+        __m: Union[Mapping[Any, Any], Iterable[tuple[Any, Any]], None] = None,
+        **kwargs,
+    ) -> None:
         """
-        Update _StackedDict with key/value pairs from dict or kwargs.
+        Update _StackedDict with key/value pairs from mapping, iterable, or kwargs.
 
-        Merges the provided dictionary or keyword arguments into this
-        _StackedDict, converting regular dicts to _StackedDict instances
-        recursively while preserving existing _StackedDict values.
+        Merges the provided mapping, iterable of key-value pairs, or keyword
+        arguments into this _StackedDict, converting regular dicts to _StackedDict
+        instances recursively while preserving existing _StackedDict values.
 
         Parameters
         ----------
-        dictionary : dict, optional
-            Dictionary with key/value pairs to merge
-        **kwargs : dict
+        __m : Mapping[Any, Any] or Iterable[tuple[Any, Any]], optional
+            Either a mapping (dict, _StackedDict) or an iterable of (key, value)
+            tuples to merge. If None, only kwargs are used.
+        **kwargs : Any
             Additional key/value pairs to merge
 
         Examples
         --------
         >>> sd = _StackedDict({'a': 1}, default_setup={'indent': 2, 'default_factory': None})
+
+        >>> # From dict
         >>> sd.update({'b': 2, 'c': {'d': 3}})
         >>> sd['c']['d']
         3
 
-        >>> # Using kwargs
-        >>> sd.update(e=4, f={'g': 5})
+        >>> # From iterable
+        >>> sd.update([('e', 4), ('f', {'g': 5})])
         >>> sd['f']['g']
         5
 
+        >>> # Using kwargs
+        >>> sd.update(h=6, i={'j': 7})
+        >>> sd['i']['j']
+        7
+
+        >>> # Combined
+        >>> sd.update({'k': 8}, l=9)
+        >>> sd['k'], sd['l']
+        (8, 9)
+
         Notes
         -----
+        - Accepts mappings (dict, _StackedDict, etc.)
+        - Accepts iterables of (key, value) tuples
+        - Accepts keyword arguments
         - Regular dicts are converted to _StackedDict recursively
-        - _StackedDict values are accepted directly
+        - _StackedDict values are accepted directly with synchronized config
         - Configuration is synchronized across all nested instances
         - Later values override earlier ones for duplicate keys
 
@@ -2945,10 +2980,24 @@ class _StackedDict(defaultdict):
         --------
         __init__ : Initialization with data
         __setitem__ : Set individual items
+        from_dict : Convert dict to _StackedDict
         """
 
-        if dictionary:
-            for key, value in dictionary.items():
+        # Handle mapping or iterable argument
+        if __m is not None:
+            # Convert to dict if it's an iterable of tuples
+            if not isinstance(__m, Mapping):
+                try:
+                    __m = dict(__m)
+                except (TypeError, ValueError) as e:
+                    raise StackedTypeError(
+                        f"update() argument must be a mapping or iterable of pairs, got {type(__m).__name__}",
+                        expected_type=Mapping,
+                        actual_type=type(__m),
+                    ) from e
+
+            # Process the mapping
+            for key, value in __m.items():
                 if isinstance(value, _StackedDict):
                     value.indent = self.indent
                     value.default_factory = self.default_factory
@@ -2960,6 +3009,8 @@ class _StackedDict(defaultdict):
                     self[key] = nested_dict
                 else:
                     self[key] = value
+
+        # Process kwargs
 
         for key, value in kwargs.items():
             if isinstance(value, _StackedDict):
@@ -3668,7 +3719,7 @@ class _Paths:
     _StackedDict.paths : building paths for nested dictionaries.
     """
 
-    def __init__(self, stacked_dict: _StackedDict = None):
+    def __init__(self, stacked_dict: Optional[_StackedDict] = None):
         self._stacked_dict = stacked_dict
         self._hkey: Optional[_HKey] = None  # Lazy initialization
 
@@ -4023,7 +4074,7 @@ class _CPaths(_Paths):
     _Paths : Base class for path views
     """
 
-    def __init__(self, stacked_dict: _StackedDict = None):
+    def __init__(self, stacked_dict: Optional[_StackedDict] = None):
         super().__init__(stacked_dict)
         self._structure: Optional[List[Any]] = None
 
@@ -4259,7 +4310,7 @@ class _CPaths(_Paths):
         """
         all_paths = []
 
-        def expand_node(node: Any, prefix: List[Any] = None) -> None:
+        def expand_node(node: Any, prefix: Optional[List[Any]] = None) -> None:
             """
             Recursively expand a node.
 
