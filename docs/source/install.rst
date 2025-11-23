@@ -47,16 +47,28 @@ This project follows semantic versioning with named releases that reflect their 
     - Stabilized JSON serialization with comprehensive file save/load testing.
     - Added a JSON converter for nested dictionaries that preserves non-string key types (e.g., integers, tuples).
       This ensures compatibility with complex data structures during serialization and deserialization.
+    - Support of Python 3.13
+    - Tests with Python 3.14
 
 .. versionremoved:: 1.2.0
 
     - The ``NestedDictionary`` class no longer uses class-specific definition attributes for initialization.
       Instead, it now systematically uses class-specific attribute initialization.
+    - End of Python 3.9
+
+.. deprecated:: 1.2.0
+
+    - End of support Python 3.10
 
 .. versionadded:: 1.1.0 "JSON Bridge (Encoder)" - *Experimental*
 
     - Introduced JSON encoding and decoding capabilities for nested dictionaries.
     - This experimental version lays the groundwork for full persistence features in version 1.2.0.
+    - Tests with Python 3.13
+
+.. deprecated:: 1.1.0
+
+    - End of support Python 3.9
 
 .. versionadded:: 1.0.0 "Path Manager (Compass)" - *Stable*
 
@@ -107,5 +119,5 @@ This project follows semantic versioning with named releases that reflect their 
 
 .. important::
 
-    - Versions prior to 0.6.0 are no longer supported.
     - Version 1.0.0 is the first production-stable release with finalized public API names.
+    - Versions prior to 1.0.0 are no longer supported and will be removed from Python Package Index repository.

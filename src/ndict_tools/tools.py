@@ -749,7 +749,7 @@ class _HKey:
 
         Parameters
         ----------
-        visit : Optional[Callable[[_HKey], None]], optional
+        visit : Optional[Callable[[_HKey], None]],
             Optional callback function called on each node
 
         Yields
@@ -786,7 +786,7 @@ class _HKey:
 
         Parameters
         ----------
-        visit : Optional[Callable[[_HKey], None]], optional
+        visit : Optional[Callable[[_HKey], None]],
             Optional callback function called on each node
 
         Yields
@@ -821,7 +821,7 @@ class _HKey:
 
         Parameters
         ----------
-        visit : Optional[Callable[[_HKey], None]], optional
+        visit : Optional[Callable[[_HKey], None]]
             Optional callback function called on each node
 
         Yields
@@ -987,7 +987,7 @@ class _HKey:
         Returns
         -------
         Optional[_HKey] or List[_HKey]
-            Single node if find_all=False, list of nodes if find_all=True
+            Single node if find_all=False, list of nodes if value find_all=True
 
         Examples
         --------
@@ -1021,7 +1021,7 @@ class _HKey:
         >>> for depth, nodes in root.iter_by_level():
         ...     keys = [n.key for n in nodes if not n.is_root]
         ...     if keys:
-        ...         print(f"Level {depth}: {keys}")
+        ...         print(f'Level {depth}: {keys}')
         Level 0: ['a']
         Level 1: ['b', 'c']
 
@@ -1957,7 +1957,6 @@ class _StackedDict(defaultdict):
             setup = {("indent", ind), ("default_factory", default)}
         else:
             if not "indent" in settings.keys():
-                print("verifed")
                 raise StackedKeyError(
                     "Missing 'indent' argument in default settings", key="indent"
                 )
@@ -2922,7 +2921,7 @@ class _StackedDict(defaultdict):
 
         return path, value
 
-    def update(
+    def update(  # type: ignore[override]
         self,
         __m: Union[Mapping[Any, Any], Iterable[tuple[Any, Any]], None] = None,
         **kwargs,
@@ -3138,7 +3137,7 @@ class _StackedDict(defaultdict):
 
         Returns
         -------
-        list
+        list :
             List of paths (as tuples) containing the key
 
         Raises
@@ -3191,7 +3190,7 @@ class _StackedDict(defaultdict):
 
         Returns
         -------
-        list
+        list :
             List of values from paths containing the key
 
         Raises
@@ -3311,12 +3310,12 @@ class _StackedDict(defaultdict):
         Examples
         --------
         >>> sd = _StackedDict({'a': {'b': 1, 'c': 2}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> cpaths = sd.compact_paths()
-        >>> cpaths.structure
+        >>> c_paths = sd.compact_paths()
+        >>> c_paths.structure
         [['a', 'b', 'c']]
 
         >>> # Expand back to full paths
-        >>> cpaths.expand()
+        >>> c_paths.expand()
         [['a'], ['a', 'b'], ['a', 'c']]
 
         Notes
@@ -3357,7 +3356,7 @@ class _StackedDict(defaultdict):
         --------
         >>> sd = _StackedDict({'a': {'b': 1}, 'c': 2}, default_setup={'indent': 2, 'default_factory': None})
         >>> for path, value in sd.dfs():
-        ...     print(f"{path} -> {value}")
+        ...     print(f'{path} -> {value}')
         ['a'] -> <_StackedDict>
         ['a', 'b'] -> 1
         ['c'] -> 2
@@ -3388,7 +3387,7 @@ class _StackedDict(defaultdict):
                     value, current_path
                 )  # Recursively traverse the nested dictionary
 
-    def bfs(self) -> Generator[Tuple[Tuple, Any], None, None]:
+    def bfs(self) -> Generator[Tuple[Tuple[Any, ...], Any], None, None]:
         """
         Breadth-First Search traversal of the nested dictionary.
 
@@ -3405,7 +3404,7 @@ class _StackedDict(defaultdict):
         --------
         >>> sd = _StackedDict({'a': {'b': {'c': 1}}}, default_setup={'indent': 2, 'default_factory': None})
         >>> for path, value in sd.bfs():
-        ...     print(f"{path} -> {value}")
+        ...     print(f'{path} -> {value}')
         ('a',) -> <_StackedDict>
         ('a', 'b') -> <_StackedDict>
         ('a', 'b', 'c') -> 1
@@ -3429,7 +3428,7 @@ class _StackedDict(defaultdict):
         _HKey.bfs : Tree-based BFS traversal
         """
 
-        queue = deque(
+        queue: deque[Tuple[Tuple[Any, ...], _StackedDict]] = deque(
             [((), self)]
         )  # Start with an empty path and the top-level dictionary
         while queue:
@@ -3530,7 +3529,7 @@ class _StackedDict(defaultdict):
 
         Returns
         -------
-        list
+        list :
             List of all leaf values
 
         Examples
@@ -3631,7 +3630,7 @@ class _StackedDict(defaultdict):
 
         Returns
         -------
-        list
+        list :
             List of keys forming the path to the value (excluding final key)
 
         Raises
@@ -4254,7 +4253,7 @@ class _CPaths(_Paths):
 
             Parameters
             ----------
-            node : _HKey node
+            node : _HKey
                 Node from the _hkey hierarchical structure
 
             Returns
@@ -4448,13 +4447,13 @@ class _CPaths(_Paths):
         Examples
         --------
         >>> sdict = _StackedDict({'a': {'b': 1}, 'c': 2})
-        >>> cpaths = _CPaths(sdict)
-        >>> cpaths.is_covering(sdict)
+        >>> c_paths = _CPaths(sdict)
+        >>> c_paths.is_covering(sdict)
         True
 
         >>> # Partial coverage
-        >>> cpaths.structure = [['a']]  # Only covers 'a', not 'a.b' or 'c'
-        >>> cpaths.is_covering(sdict)
+        >>> c_paths.structure = [['a']]  # Only covers 'a', not 'a.b' or 'c'
+        >>> c_paths.is_covering(sdict)
         False
 
         Notes
@@ -4490,18 +4489,18 @@ class _CPaths(_Paths):
         Examples
         --------
         >>> sdict = _StackedDict({'a': {'b': 1, 'c': 2}, 'd': 3})
-        >>> cpaths = _CPaths(sdict)
-        >>> cpaths.coverage(sdict)
+        >>> c_paths = _CPaths(sdict)
+        >>> c_paths.coverage(sdict)
         1.0
 
         >>> # Partial coverage: only 'a' and 'a.b' out of 4 paths
-        >>> cpaths.structure = [['a', 'b']]
-        >>> cpaths.coverage(sdict)
+        >>> c_paths.structure = [['a', 'b']]
+        >>> c_paths.coverage(sdict)
         0.5
 
         >>> # Over-coverage: includes paths not in sdict
-        >>> cpaths.structure = [['a', 'b', 'c'], ['d'], ['e']]
-        >>> cpaths.coverage(sdict)
+        >>> c_paths.structure = [['a', 'b', 'c'], ['d'], ['e']]
+        >>> c_paths.coverage(sdict)
         1.25
 
         Notes
@@ -4546,13 +4545,13 @@ class _CPaths(_Paths):
         Examples
         --------
         >>> sdict = _StackedDict({'a': {'b': 1}})
-        >>> cpaths = _CPaths(sdict)
-        >>> cpaths.missing_paths(sdict)
+        >>> c_paths = _CPaths(sdict)
+        >>> c_paths.missing_paths(sdict)
         []
 
         >>> # Add extra paths
-        >>> cpaths.structure = [['a', 'b', 'c'], ['d']]
-        >>> cpaths.missing_paths(sdict)
+        >>> c_paths.structure = [['a', 'b', 'c'], ['d']]
+        >>> c_paths.missing_paths(sdict)
         [['a', 'c'], ['d']]
 
         Notes
@@ -4596,13 +4595,13 @@ class _CPaths(_Paths):
         Examples
         --------
         >>> sdict = _StackedDict({'a': {'b': 1, 'c': 2}, 'd': 3})
-        >>> cpaths = _CPaths(sdict)
-        >>> cpaths.uncovered_paths(sdict)
+        >>> c_paths = _CPaths(sdict)
+        >>> c_paths.uncovered_paths(sdict)
         []
 
         >>> # Partial structure
-        >>> cpaths.structure = [['a', 'b']]
-        >>> cpaths.uncovered_paths(sdict)
+        >>> c_paths.structure = [['a', 'b']]
+        >>> c_paths.uncovered_paths(sdict)
         [['a', 'c'], ['d']]
 
         Notes
