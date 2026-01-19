@@ -14,7 +14,7 @@ from sphinx.ext.graphviz import graphviz
 project = 'Nested Dictionary Tools'
 copyright = '2024-2025, biface'
 author = 'biface'
-release = '0.8.0'
+release = '1.0.0'
 version = release
 
 # -- General configuration ---------------------------------------------------
@@ -23,8 +23,6 @@ version = release
 sys.path.append(os.path.abspath('..'))
 sys.path.append(os.path.abspath('../..'))
 sys.path.append(os.path.abspath('../../src'))
-
-print(sys.path)
 
 extensions = [
     'sphinx.ext.duration',
@@ -50,6 +48,9 @@ language = 'en'
 
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
+
+html_logo = "_static/images/logo.svg"
+html_favicon = "_static/images/logo.svg"
 
 mathjax_path = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'
 mathjax3_config = {'chtml': {'displayAlign': 'left', 'displayIndent': '2em'}}
