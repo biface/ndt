@@ -1,51 +1,73 @@
-# Lecteur francophone
+# Contributing to NDT
 
-Merci de votre intérêt pour contribuer au projet NDT ! Voici comment vous pouvez participer :
+**[Version française disponible](CONTRIBUTING.fr.md)**
 
-## Devenir Membre
+Thank you for your interest in contributing to the NDT project!
 
-1. Ouvrez une issue avec le tag "question" pour exprimer votre intérêt à devenir membre du projet.
-2. Les mainteneurs vous contacteront pour discuter de votre participation.
+## Becoming a Contributor
 
-## Contributions
+To become an official contributor:
 
-1. **Définir les Objectifs :**
-   - Ouvrez une issue avec le tag "enhancement" pour définir les objectifs de votre contribution.
-   - Décrivez les modifications envisagées et les critères d'acceptation.
+1. **Open an issue** with the label `Applying`
+2. **Include the following information:**
+   - First name and last name
+   - GitHub username (@username)
+   - Email address
+   - What motivates you to contribute to this project
 
-2. **Créer une Branche :**
-   - Créez une branche spécifique pour votre contribution : `/update/contribute/nom-de-la-fonctionnalité`.
+Maintainers will review your application and contact you to discuss next steps.
 
-3. **Écrire des Tests :**
-   - Intégrez des tests unitaires avec Pytest pour vos modifications.
-   - Assurez-vous que tous les tests passent localement avant de soumettre une pull request.
+## Development Process
 
-4. **Soumettre une Pull Request :**
-   - Une fois les tests validés localement et via GitHub Actions, ouvrez une pull request.
-   - Les mainteneurs ou le propriétaire évalueront votre contribution.
+This project follows a **controlled software delivery methodology** with automated workflows. The complete methodology is documented in detail here:
 
-# English reader and ROW
+**📖 [Controlled Delivery Software - Full Documentation](https://gitlab.com/biface/biface/-/wikis/controlled-delivery-software)**
 
-Thank you for your interest in contributing to the NDT Project! Here's how you can participate:
+### Branch Structure Overview
 
-## Becoming a Member
+| Branch Type | Pattern | Purpose | Example |
+|-------------|---------|---------|---------|
+| **Production** | `main` | Stable versions published to PyPI | `main` |
+| **Version Development** | `updates/X.Y.0` | Development for specific version | `updates/1.0.0` |
+| **Pre-production** | `staging/X.Y.x` | Testing before publication | `staging/1.0.x` |
+| **Feature** | `feature/*` | New features | `feature/add-validation` |
+| **Hotfix** | `hotfix/*` | Urgent fixes | `hotfix/security-fix` |
 
-1. Open an issue with the "question" tag to express your interest in becoming a member of the project.
-2. Maintainers will contact you to discuss your participation.
+### Versioning Strategy
 
-## Contributions
+We use an **even/odd minor version system**:
 
-1. **Define Objectives:**
-   - Open an issue with the "enhancement" tag to define the objectives of your contribution.
-   - Describe the planned modifications and acceptance criteria.
+- **Odd versions** (1.1.x, 1.3.x): Experimental, published to TestPyPI only
+- **Even versions** (1.0.x, 1.2.x): Stable, published to official PyPI
 
-2. **Create a Branch:**
-   - Create a specific branch for your contribution: `/update/contribute/feature-name`.
+**Example flow:**
+```
+Feature development → updates/1.1.0 → staging/1.1.x → TestPyPI (experimental)
+                                                      → Validation
+Stabilization → updates/1.2.0 → staging/1.2.x → TestPyPI → main → PyPI (stable)
+```
+## Automated Workflows
 
-3. **Write Tests:**
-   - Integrate unit tests using Pytest for your modifications.
-   - Ensure all tests pass locally before submitting a pull request.
+This project uses 6 automated GitHub Actions workflows. Full technical documentation is available here:
 
-4. **Submit a Pull Request:**
-   - Once tests are validated locally and via GitHub Actions, open a pull request.
-   - Maintainers or the project owner will evaluate your contribution.
+**📖 [Automation Pipelines Documentation](https://github.com/biface/biface/blob/main/automation/pipelines.md)**
+
+### Workflow Overview
+
+| Workflow | Trigger | Branches | Action |
+|----------|---------|----------|--------|
+| **1. Tests** | Push, PR | All branches | Run test suite on Python 3.9-3.12 |
+| **2. Coverage** | After Tests | `updates/*`, `staging/*`, `main` | Calculate code coverage |
+| **3. Build** | After Coverage | `staging/*`, `main` | Build package (.whl, .tar.gz) |
+| **4. TestPyPI** | After Build | `staging/*`, `main` | Publish to test.pypi.org |
+| **5. PyPI** | After TestPyPI | `main` only | Publish to pypi.org (production) |
+| **6. Release** | After PyPI | `main` only | Create Git tag and GitHub Release |
+
+**Workflow execution by branch:**
+
+| Branch Type | Tests | Coverage | Build | TestPyPI | PyPI | Release |
+|-------------|-------|----------|-------|----------|------|---------|
+| `feature/*` | ✅ | - | - | - | - | - |
+| `updates/*` | ✅ | ✅ | - | - | - | - |
+| `staging/*` | ✅ | ✅ | ✅ | ✅ | - | - |
+| `main` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |

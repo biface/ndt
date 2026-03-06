@@ -9,6 +9,34 @@ from __future__ import annotations
 from typing import Any, List, Optional, Union
 
 
+# Compatibility helper for representing types across Python versions (3.9+)
+# In Python 3.9, typing module constructs (e.g., typing.Mapping) don't expose
+# __name__, which can raise AttributeError when formatting messages. This helper
+# normalizes a human-friendly type name for both regular classes and typing
+# aliases/Parameterized types.
+def _type_name(t: Optional[type]) -> str:
+    if t is None:
+        return "None"
+
+    # Regular classes and many ABCs
+    name = getattr(t, "__name__", None)
+    if name:
+        return name
+
+    # typing constructs often expose `_name` (e.g., 'Mapping', 'List', ...)
+    name = getattr(t, "_name", None)
+    if name:
+        return name
+
+    # typing constructs may also have an `__origin__` pointing to a real class
+    origin = getattr(t, "__origin__", None)
+    if origin is not None:
+        return getattr(origin, "__name__", str(origin))
+
+    # Fallback: string representation
+    return str(t)
+
+
 class StackedDictionaryError(Exception):
     """
     Base exception class for all stacked dictionary errors.
@@ -18,7 +46,10 @@ class StackedDictionaryError(Exception):
     """
 
     def __init__(
-        self, message: str = None, error_code: int = 0, path: List[Any] = None
+        self,
+        message: Optional[str] = None,
+        error_code: int = 0,
+        path: Optional[List[Any]] = None,
     ) -> None:
         """
         Initialize a StackedDictionaryError.
@@ -36,10 +67,11 @@ class StackedDictionaryError(Exception):
         # Add path information to the message if available
         if path:
             path_str = " | ".join(str(k) for k in path)
-            if message:
-                message = f"{message} (at path: {path_str})"
-            else:
-                message = f"Error at path: {path_str}"
+            message = (
+                f"{message} (at path: {path_str})"
+                if message
+                else f"Error at path: {path_str}"
+            )
 
         super().__init__(message)
 
@@ -53,7 +85,10 @@ class NestedDictionaryException(StackedDictionaryError):
     """
 
     def __init__(
-        self, message: str = None, error_code: int = 0, path: List[Any] = None
+        self,
+        message: Optional[str] = None,
+        error_code: int = 0,
+        path: Optional[List[Any]] = None,
     ) -> None:
         """
         Initialize a NestedDictionaryException.
@@ -77,7 +112,10 @@ class StackedKeyError(KeyError, StackedDictionaryError):
     """
 
     def __init__(
-        self, message: str = None, key: Any = None, path: List[Any] = None
+        self,
+        message: Optional[str] = None,
+        key: Optional[Any] = None,
+        path: Optional[List[Any]] = None,
     ) -> None:
         """
         Initialize a StackedKeyError.
@@ -108,7 +146,10 @@ class StackedAttributeError(AttributeError, StackedDictionaryError):
     """
 
     def __init__(
-        self, message: str = None, attribute: str = None, path: List[Any] = None
+        self,
+        message: Optional[str] = None,
+        attribute: Optional[str] = None,
+        path: Optional[List[Any]] = None,
     ) -> None:
         """
         Initialize a StackedAttributeError.
@@ -140,10 +181,10 @@ class StackedTypeError(TypeError, StackedDictionaryError):
 
     def __init__(
         self,
-        message: str = None,
+        message: Optional[str] = None,
         expected_type: Optional[type] = None,
         actual_type: Optional[type] = None,
-        path: List[Any] = None,
+        path: Optional[List[Any]] = None,
     ) -> None:
         """
         Initialize a StackedTypeError.
@@ -160,9 +201,9 @@ class StackedTypeError(TypeError, StackedDictionaryError):
         self.expected_type = expected_type
         self.actual_type = actual_type
 
-        # Add type information to the message if available
+        # Add type information to the message if available (Python 3.9+ compatible)
         if expected_type and actual_type and message:
-            message = f"{message} (expected: {expected_type.__name__}, got: {actual_type.__name__})"
+            message = f"{message} (expected: {_type_name(expected_type)}, got: {_type_name(actual_type)})"
 
         StackedDictionaryError.__init__(self, message, 0, path)
         TypeError.__init__(self, message)
@@ -177,7 +218,10 @@ class StackedValueError(ValueError, StackedDictionaryError):
     """
 
     def __init__(
-        self, message: str = None, value: Any = None, path: List[Any] = None
+        self,
+        message: Optional[str] = None,
+        value: Optional[Any] = None,
+        path: Optional[List[Any]] = None,
     ) -> None:
         """
         Initialize a StackedValueError.
@@ -207,7 +251,9 @@ class StackedIndexError(IndexError, StackedDictionaryError):
     or when an operation cannot be performed due to the dictionary being empty.
     """
 
-    def __init__(self, message: str = None, path: List[Any] = None) -> None:
+    def __init__(
+        self, message: Optional[str] = None, path: Optional[List[Any]] = None
+    ) -> None:
         """
         Initialize a StackedIndexError.
 

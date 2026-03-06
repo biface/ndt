@@ -16,6 +16,35 @@ class TestHKeyTree:
             "levels": 5,
         }
 
+    @pytest.mark.parametrize(
+        "key, expected",
+        [
+            ("monitoring", ["monitoring", 3]),
+            (("env", "production"), [("env", "production"), 2]),
+            (frozenset({"cache", "redis"}), [frozenset({"cache", "redis"}), 3]),
+        ],
+    )
+    def test_key_child(self, key_tree, key, expected):
+        assert key_tree[key].key == expected[0]
+        assert len(key_tree[key].children) == expected[1]
+
+    def test_key_child_failed(self, key_tree):
+        with pytest.raises(KeyError):
+            key_tree["false_key"]
+
+    @pytest.mark.parametrize(
+        "key, expected",
+        [
+            ("monitoring", True),
+            (("non", "existant"), False),
+            (("env", "production"), True),
+            ("security", False),
+            (frozenset({"cache", "redis"}), True),
+        ],
+    )
+    def test_key_child_in(self, key_tree, key, expected):
+        assert (key in key_tree) == expected
+
     def test_balance(self, key_tree):
         assert not key_tree.is_balanced()
         assert key_tree.get_balance_factor() != 0

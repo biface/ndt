@@ -30,11 +30,15 @@ from typing import (
     Callable,
     Dict,
     Generator,
+    Iterable,
     Iterator,
     List,
+    Mapping,
     Optional,
     Set,
     Tuple,
+    Type,
+    TypeVar,
     Union,
 )
 
@@ -47,6 +51,8 @@ from .exception import (
 )
 
 MAX_DEPTH = 100
+
+T = TypeVar("T", bound="_StackedDict")
 
 """Internal functions"""
 
@@ -154,7 +160,7 @@ def unpack_items(dictionary: dict) -> Generator:
             yield (key,), value
 
 
-def from_dict(dictionary: dict, class_name: object, **class_options) -> _StackedDict:
+def from_dict(dictionary: dict, class_name: Type["T"], **class_options) -> T:
     """
     Recursively convert a standard dictionary to a _StackedDict or subclass.
 
@@ -167,21 +173,25 @@ def from_dict(dictionary: dict, class_name: object, **class_options) -> _Stacked
     ----------
     dictionary : dict
         The dictionary to transform (may be nested)
-    class_name : type
-        The _StackedDict class (or subclass) to instantiate
+    class_name : Type[T]
+        The _StackedDict class (or subclass) to instantiate.
+        Must be a subclass of _StackedDict.
     **class_options : dict
         Initialization options for the class instances.
         Must contain 'default_setup' key with configuration dict.
 
     Returns
     -------
-    _StackedDict
-        New instance of class_name containing the dictionary structure
+    T
+        New instance of the specified class_name containing the dictionary structure.
+        The return type matches the class type passed as class_name.
 
     Raises
     ------
     StackedKeyError
         If 'default_setup' key is missing from class_options
+    StackedTypeError
+        If class_name is not a valid _StackedDict class or subclass
 
     Examples
     --------
@@ -198,6 +208,7 @@ def from_dict(dictionary: dict, class_name: object, **class_options) -> _Stacked
     - Regular dict values are recursively converted
     - Non-dict values are assigned directly
     - All created instances share the same class_options
+    - Type variable T preserves the exact subclass type through the transformation
 
     See Also
     --------
@@ -206,7 +217,11 @@ def from_dict(dictionary: dict, class_name: object, **class_options) -> _Stacked
     """
 
     if "default_setup" in class_options:
-        dict_object = class_name(**class_options)
+        if not isinstance(class_name, type) or not issubclass(class_name, _StackedDict):
+            raise StackedTypeError(
+                f"class_name must be a _StackedDict class, got {type(class_name)}"
+            )
+        dict_object: T = class_name(**class_options)
     else:
         raise StackedKeyError(
             f"The key 'default_setup' must be present in class options : {class_options}",
@@ -243,7 +258,7 @@ class _HKey:
 
     .. warning::
        This is a private class (underscore prefix) and should not be instantiated
-       directly by external code. Access it through ``DictSearch`` or ``NestedDictionary``.
+       directly by external code. Access it through ``CompactPathsView`` or ``NestedDictionary``.
 
     Parameters
     ----------
@@ -277,7 +292,7 @@ class _HKey:
 
     See Also
     --------
-    DictSearch : Uses _HKey internally for tree representation
+    _CPaths : Uses _HKey internally for tree representation
     """
 
     __slots__ = ("key", "children", "parent", "is_root")
@@ -679,6 +694,46 @@ class _HKey:
     # Tree Traversal Algorithms
     # ========================================================================
 
+    def _dfs_traverse(
+        self,
+        visit: Optional[Callable[["_HKey"], None]] = None,
+        *,
+        preorder: bool = True,
+    ) -> Iterator["_HKey"]:
+        """
+        Internal helper generator for DFS traversals with cycle protection.
+
+        Parameters
+        ----------
+        visit : Optional[Callable[["_HKey"], None]]
+            Optional callback invoked for each yielded node.
+        preorder : bool
+            If True, yield node before children (pre-order). If False, yield
+            after children (post-order).
+        """
+        seen: Set[int] = set()
+
+        def traverse(node: "_HKey") -> Iterator["_HKey"]:
+            nid = id(node)
+            if nid in seen:
+                return
+            seen.add(nid)
+
+            if preorder:
+                if visit:
+                    visit(node)
+                yield node
+
+            for child in node.children:
+                yield from traverse(child)
+
+            if not preorder:
+                if visit:
+                    visit(node)
+                yield node
+
+        yield from traverse(self)
+
     def dfs_preorder(
         self, visit: Optional[Callable[["_HKey"], None]] = None
     ) -> Iterator["_HKey"]:
@@ -688,9 +743,13 @@ class _HKey:
         Pre-order: Visit current node before its children.
         Order: Root → Left subtree → Right subtree
 
+        This traversal is cycle-safe: if the underlying structure contains
+        cycles (which should not happen in a valid tree), nodes that have
+        already been seen will be skipped to prevent infinite loops.
+
         Parameters
         ----------
-        visit : Optional[Callable[[_HKey], None]], optional
+        visit : Optional[Callable[[_HKey], None]],
             Optional callback function called on each node
 
         Yields
@@ -710,12 +769,7 @@ class _HKey:
         dfs_postorder : Post-order DFS traversal
         bfs : Breadth-first traversal
         """
-        if visit:
-            visit(self)
-        yield self
-
-        for child in self.children:
-            yield from child.dfs_preorder(visit)
+        yield from self._dfs_traverse(visit, preorder=True)
 
     def dfs_postorder(
         self, visit: Optional[Callable[["_HKey"], None]] = None
@@ -727,9 +781,12 @@ class _HKey:
         Order: Left subtree → Right subtree → Root
         Useful for deletion or bottom-up calculations.
 
+        This traversal is cycle-safe: previously visited nodes are skipped to
+        prevent infinite recursion if a cycle is present.
+
         Parameters
         ----------
-        visit : Optional[Callable[[_HKey], None]], optional
+        visit : Optional[Callable[[_HKey], None]],
             Optional callback function called on each node
 
         Yields
@@ -748,12 +805,7 @@ class _HKey:
         --------
         dfs_preorder : Pre-order DFS traversal
         """
-        for child in self.children:
-            yield from child.dfs_postorder(visit)
-
-        if visit:
-            visit(self)
-        yield self
+        yield from self._dfs_traverse(visit, preorder=False)
 
     def bfs(
         self, visit: Optional[Callable[["_HKey"], None]] = None
@@ -764,9 +816,12 @@ class _HKey:
         BFS explores all nodes at depth N before moving to depth N+1.
         Uses a queue (deque) for optimal O(1) operations.
 
+        This traversal is cycle-safe: nodes already seen are not enqueued
+        again, preventing infinite loops in the presence of cycles.
+
         Parameters
         ----------
-        visit : Optional[Callable[[_HKey], None]], optional
+        visit : Optional[Callable[[_HKey], None]]
             Optional callback function called on each node
 
         Yields
@@ -797,6 +852,7 @@ class _HKey:
         iter_by_level : Get nodes grouped by level
         """
         queue: deque = deque([self])
+        seen: Set[int] = {id(self)}
 
         while queue:
             node = queue.popleft()
@@ -804,7 +860,11 @@ class _HKey:
                 visit(node)
             yield node
 
-            queue.extend(node.children)
+            for child in node.children:
+                cid = id(child)
+                if cid not in seen:
+                    seen.add(cid)
+                    queue.append(child)
 
     def dfs_find(self, predicate: Callable[["_HKey"], bool]) -> Optional["_HKey"]:
         """
@@ -812,6 +872,8 @@ class _HKey:
 
         Performs depth-first search and returns the first node for which
         the predicate returns True. Returns None if no match found.
+        This method is cycle-safe as it leverages `dfs_preorder` which
+        guards against revisiting nodes.
 
         Parameters
         ----------
@@ -837,14 +899,9 @@ class _HKey:
         bfs_find : BFS-based search
         find_all : Find all matching nodes
         """
-        if predicate(self):
-            return self
-
-        for child in self.children:
-            result = child.dfs_find(predicate)
-            if result is not None:
-                return result
-
+        for node in self.dfs_preorder():
+            if predicate(node):
+                return node
         return None
 
     def bfs_find(self, predicate: Callable[["_HKey"], bool]) -> Optional["_HKey"]:
@@ -930,7 +987,7 @@ class _HKey:
         Returns
         -------
         Optional[_HKey] or List[_HKey]
-            Single node if find_all=False, list of nodes if find_all=True
+            Single node if find_all=False, list of nodes if value find_all=True
 
         Examples
         --------
@@ -964,7 +1021,7 @@ class _HKey:
         >>> for depth, nodes in root.iter_by_level():
         ...     keys = [n.key for n in nodes if not n.is_root]
         ...     if keys:
-        ...         print(f"Level {depth}: {keys}")
+        ...         print(f'Level {depth}: {keys}')
         Level 0: ['a']
         Level 1: ['b', 'c']
 
@@ -1070,54 +1127,116 @@ class _HKey:
 
     def prune(self, predicate: Callable[["_HKey"], bool]) -> "_HKey":
         """
-        Create a new tree with nodes filtered by predicate.
+        Create a new tree containing only nodes matching the predicate and their ancestors.
 
-        Returns a new tree containing only nodes (and their ancestors) that
-        match the predicate. This is useful for creating filtered views.
+        This method implements "pruning with path preservation", which filters the tree
+        to keep only branches that lead to nodes satisfying the predicate. All ancestor
+        nodes are automatically preserved to maintain tree connectivity and hierarchical
+        structure.
+
+        The algorithm:
+
+        1. Identifies all nodes matching the predicate
+        2. Preserves all ancestors of matching nodes to maintain paths
+        3. Removes all other branches
+        4. Returns a new tree (original is unchanged)
 
         Parameters
         ----------
         predicate : Callable[[_HKey], bool]
-            Function that returns True for nodes to keep
+            Function that takes an _HKey node and returns True if the node should
+            be kept in the pruned tree. The function is called on each node during
+            traversal.
 
         Returns
         -------
         _HKey
-            New pruned tree (root node)
+            A new pruned tree (root node) containing only the filtered branches.
+            The original tree remains unchanged. The returned tree preserves the
+            same root properties (key, is_root flag).
 
         Examples
         --------
-        >>> root = _HKey.build_forest({'a': {'b': 1, 'c': 2}, 'd': 3})
-        >>> # Keep only paths containing 'b'
-        >>> pruned = root.prune(lambda n: n.key == 'b' or n.is_root or n.key == 'a')
+        >>> # Keep only nodes with key 'b' at depth 2
+        >>> root = _HKey.build_forest({'a': {'b': {'c': 1}, 'x': {'b': {'z': 1}}}})
+        >>> pruned = root.prune(lambda n: n.key == 'b' and n.get_depth() == 2)
         >>> pruned.get_all_paths()
-        [['a'], ['a', 'b']]
+        [['a'], ['a', 'b'], ['a', 'x'], ['a', 'x', 'b']]
+
+        >>> # Keep only leaf nodes
+        >>> root = _HKey.build_forest({'a': {'b': 1, 'c': 2}})
+        >>> pruned = root.prune(lambda n: n.is_leaf())
+        >>> pruned.get_all_paths()
+        [['a'], ['a', 'b'], ['a', 'c']]
+
+        >>> # Keep nodes with specific key value
+        >>> root = _HKey.build_forest({'a': {'target': 1, 'other': 2}, 'b': 3})
+        >>> pruned = root.prune(lambda n: n.key == 'target')
+        >>> pruned.get_all_paths()
+        [['a'], ['a', 'target']]
 
         Notes
         -----
-        The pruned tree maintains the hierarchical structure but excludes
-        branches that don't lead to matching nodes.
+        - The pruned tree maintains hierarchical connectivity by preserving ancestor paths
+        - This is a non-destructive operation; the original tree is not modified
+        - If no nodes match the predicate, returns a tree with only the root node
+        - The predicate is evaluated on every node in the tree (O(n) complexity)
+        - All intermediate nodes required to reach matching nodes are preserved,
+          even if they don't match the predicate themselves
+
+        See Also
+        --------
+        filter_paths : Filter paths based on a predicate function
+        find_all : Find all nodes matching a predicate
+        dfs_find : Find first node matching a predicate using DFS
+        get_all_paths : Get all paths in the tree
         """
         new_root = _HKey(self.key, is_root=self.is_root)
 
-        def copy_if_match(source: _HKey, target: _HKey) -> bool:
-            """Recursively copy matching nodes."""
-            has_matching_child = False
+        def has_matching_descendant(node: _HKey) -> bool:
+            """
+            Check if node or any of its descendants matches the predicate.
 
+            Parameters
+            ----------
+            node : _HKey
+                Node to check
+
+            Returns
+            -------
+            bool
+                True if node or any descendant matches predicate
+            """
+            if predicate(node):
+                return True
+            for child in node.children:
+                if has_matching_descendant(child):
+                    return True
+            return False
+
+        def copy_matching_subtree(source: _HKey, target: _HKey) -> None:
+            """
+            Recursively copy nodes that match or have matching descendants.
+
+            This function traverses the source tree and copies nodes to the target
+            tree only if they match the predicate or have descendants that match.
+            This preserves the hierarchical path to all matching nodes.
+
+            Parameters
+            ----------
+            source : _HKey
+                Source node to copy from
+            target : _HKey
+                Target node to copy to
+            """
             for child in source.children:
-                if predicate(child):
+                # Only process this child if it or its descendants match
+                if has_matching_descendant(child):
                     new_child = target.add_child(child.key)
-                    copy_if_match(child, new_child)
-                    has_matching_child = True
-                elif copy_if_match(child, target):
-                    # Child doesn't match but has matching descendants
-                    new_child = target.add_child(child.key)
-                    copy_if_match(child, new_child)
-                    has_matching_child = True
+                    # Recursively copy the subtree
+                    copy_matching_subtree(child, new_child)
 
-            return has_matching_child or predicate(source)
-
-        copy_if_match(self, new_root)
+        copy_matching_subtree(self, new_root)
         return new_root
 
     def get_statistics(self) -> Dict[str, Any]:
@@ -1314,7 +1433,10 @@ class _HKey:
 
             # Verify parent's children contain this node
             if node.parent and not node.is_root:
+                print("->")
+                print(node, ":", node.parent, ":", node.parent.children)
                 if node not in node.parent.children:
+                    print("-->")
                     issues.append(f"Node {node.key} not in parent's children list")
 
         return len(issues) == 0, issues
@@ -1835,7 +1957,6 @@ class _StackedDict(defaultdict):
             setup = {("indent", ind), ("default_factory", default)}
         else:
             if not "indent" in settings.keys():
-                print("verifed")
                 raise StackedKeyError(
                     "Missing 'indent' argument in default settings", key="indent"
                 )
@@ -2255,6 +2376,70 @@ class _StackedDict(defaultdict):
 
     def __eq__(self, other):
         """
+        Override __eq__ to compare two dictionaries, this function an isomorphism to dictionaries set
+
+        Two structures are isomorphic if they represent the same nested
+        dictionary structure, regardless of whether they're _StackedDict,
+        plain dict, or any other dict-like type.
+
+        Parameters
+        ----------
+        other : dict or _StackedDict
+            Dictionary to compare with
+
+        Returns
+        -------
+        bool
+            True if structure-preserving mapping exists
+
+        Examples
+        --------
+        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> regular_dict = {'a': {'b': 1}}
+        >>> sd == regular_dict
+        True
+        >>> sd == {'a': {'b': 1}}
+        True
+        >>> sd == {'a': {'b': 2}}
+        False
+
+        Notes
+        -----
+        Checks if sd[k1]...[kn] == other[k1]...[kn] for all paths.
+        This is the most permissive comparison method.
+
+        See Also
+        --------
+        equal : Strict equality
+        similar : Compare _StackedDict instances
+        isomorph : Compare as plain dicts
+        """
+
+        if not isinstance(other, (dict, _StackedDict)):
+            return False
+        elif isinstance(other, _StackedDict):
+            return compare_dict(self.to_dict(), other.to_dict())
+        else:
+            return compare_dict(self.to_dict(), dict(other))
+
+    def __ne__(self, other):
+        """
+        Check inequality (negation of __eq__).
+
+        Returns
+        -------
+        bool
+            True if not equal
+
+        See Also
+        --------
+        __eq__ : Equality check
+        """
+
+        return not self.__eq__(other)
+
+    def equal(self, other):
+        """
         Check equality: same class, configuration, and content.
 
         Two _StackedDict instances are equal if they have:
@@ -2287,6 +2472,7 @@ class _StackedDict(defaultdict):
 
         See Also
         --------
+        __eq__ : dictionaries equalities
         __ne__ : Inequality check
         similar : Compare content only (ignore class/setup)
         isomorph : Compare as plain dicts
@@ -2297,22 +2483,6 @@ class _StackedDict(defaultdict):
         if self._default_setup != other._default_setup:
             return False
         return compare_dict(self.to_dict(), other.to_dict())
-
-    def __ne__(self, other):
-        """
-        Check inequality (negation of __eq__).
-
-        Returns
-        -------
-        bool
-            True if not equal
-
-        See Also
-        --------
-        __eq__ : Equality check
-        """
-
-        return not self.__eq__(other)
 
     def similar(self, other):
         """
@@ -2347,7 +2517,9 @@ class _StackedDict(defaultdict):
 
         See Also
         --------
-        __eq__ : Strict equality (includes setup)
+        __eq__ : dictionaries equalities
+        __ne__ : Inequality check
+        equal : Strict equality (includes setup)
         isomorph : Compare as plain dicts
         """
         if not isinstance(other, _StackedDict):
@@ -2390,7 +2562,9 @@ class _StackedDict(defaultdict):
 
         See Also
         --------
-        __eq__ : Strict equality
+        __eq__ : dictionaries equalities
+        __ne__ : Inequality check
+        equal : Strict equality
         similar : Compare _StackedDict instances
         """
 
@@ -2747,37 +2921,57 @@ class _StackedDict(defaultdict):
 
         return path, value
 
-    def update(self, dictionary: dict = None, **kwargs) -> None:
+    def update(  # type: ignore[override]
+        self,
+        __m: Union[Mapping[Any, Any], Iterable[tuple[Any, Any]], None] = None,
+        **kwargs,
+    ) -> None:
         """
-        Update _StackedDict with key/value pairs from dict or kwargs.
+        Update _StackedDict with key/value pairs from mapping, iterable, or kwargs.
 
-        Merges the provided dictionary or keyword arguments into this
-        _StackedDict, converting regular dicts to _StackedDict instances
-        recursively while preserving existing _StackedDict values.
+        Merges the provided mapping, iterable of key-value pairs, or keyword
+        arguments into this _StackedDict, converting regular dicts to _StackedDict
+        instances recursively while preserving existing _StackedDict values.
 
         Parameters
         ----------
-        dictionary : dict, optional
-            Dictionary with key/value pairs to merge
-        **kwargs : dict
+        __m : Mapping[Any, Any] or Iterable[tuple[Any, Any]], optional
+            Either a mapping (dict, _StackedDict) or an iterable of (key, value)
+            tuples to merge. If None, only kwargs are used.
+        **kwargs : Any
             Additional key/value pairs to merge
 
         Examples
         --------
         >>> sd = _StackedDict({'a': 1}, default_setup={'indent': 2, 'default_factory': None})
+
+        >>> # From dict
         >>> sd.update({'b': 2, 'c': {'d': 3}})
         >>> sd['c']['d']
         3
 
-        >>> # Using kwargs
-        >>> sd.update(e=4, f={'g': 5})
+        >>> # From iterable
+        >>> sd.update([('e', 4), ('f', {'g': 5})])
         >>> sd['f']['g']
         5
 
+        >>> # Using kwargs
+        >>> sd.update(h=6, i={'j': 7})
+        >>> sd['i']['j']
+        7
+
+        >>> # Combined
+        >>> sd.update({'k': 8}, l=9)
+        >>> sd['k'], sd['l']
+        (8, 9)
+
         Notes
         -----
+        - Accepts mappings (dict, _StackedDict, etc.)
+        - Accepts iterables of (key, value) tuples
+        - Accepts keyword arguments
         - Regular dicts are converted to _StackedDict recursively
-        - _StackedDict values are accepted directly
+        - _StackedDict values are accepted directly with synchronized config
         - Configuration is synchronized across all nested instances
         - Later values override earlier ones for duplicate keys
 
@@ -2785,10 +2979,24 @@ class _StackedDict(defaultdict):
         --------
         __init__ : Initialization with data
         __setitem__ : Set individual items
+        from_dict : Convert dict to _StackedDict
         """
 
-        if dictionary:
-            for key, value in dictionary.items():
+        # Handle mapping or iterable argument
+        if __m is not None:
+            # Convert to dict if it's an iterable of tuples
+            if not isinstance(__m, Mapping):
+                try:
+                    __m = dict(__m)
+                except (TypeError, ValueError) as e:
+                    raise StackedTypeError(
+                        f"update() argument must be a mapping or iterable of pairs, got {type(__m).__name__}",
+                        expected_type=Mapping,
+                        actual_type=type(__m),
+                    ) from e
+
+            # Process the mapping
+            for key, value in __m.items():
                 if isinstance(value, _StackedDict):
                     value.indent = self.indent
                     value.default_factory = self.default_factory
@@ -2800,6 +3008,8 @@ class _StackedDict(defaultdict):
                     self[key] = nested_dict
                 else:
                     self[key] = value
+
+        # Process kwargs
 
         for key, value in kwargs.items():
             if isinstance(value, _StackedDict):
@@ -2927,7 +3137,7 @@ class _StackedDict(defaultdict):
 
         Returns
         -------
-        list
+        list :
             List of paths (as tuples) containing the key
 
         Raises
@@ -2980,7 +3190,7 @@ class _StackedDict(defaultdict):
 
         Returns
         -------
-        list
+        list :
             List of values from paths containing the key
 
         Raises
@@ -3100,12 +3310,12 @@ class _StackedDict(defaultdict):
         Examples
         --------
         >>> sd = _StackedDict({'a': {'b': 1, 'c': 2}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> cpaths = sd.compact_paths()
-        >>> cpaths.structure
+        >>> c_paths = sd.compact_paths()
+        >>> c_paths.structure
         [['a', 'b', 'c']]
 
         >>> # Expand back to full paths
-        >>> cpaths.expand()
+        >>> c_paths.expand()
         [['a'], ['a', 'b'], ['a', 'c']]
 
         Notes
@@ -3146,7 +3356,7 @@ class _StackedDict(defaultdict):
         --------
         >>> sd = _StackedDict({'a': {'b': 1}, 'c': 2}, default_setup={'indent': 2, 'default_factory': None})
         >>> for path, value in sd.dfs():
-        ...     print(f"{path} -> {value}")
+        ...     print(f'{path} -> {value}')
         ['a'] -> <_StackedDict>
         ['a', 'b'] -> 1
         ['c'] -> 2
@@ -3177,7 +3387,7 @@ class _StackedDict(defaultdict):
                     value, current_path
                 )  # Recursively traverse the nested dictionary
 
-    def bfs(self) -> Generator[Tuple[Tuple, Any], None, None]:
+    def bfs(self) -> Generator[Tuple[Tuple[Any, ...], Any], None, None]:
         """
         Breadth-First Search traversal of the nested dictionary.
 
@@ -3194,7 +3404,7 @@ class _StackedDict(defaultdict):
         --------
         >>> sd = _StackedDict({'a': {'b': {'c': 1}}}, default_setup={'indent': 2, 'default_factory': None})
         >>> for path, value in sd.bfs():
-        ...     print(f"{path} -> {value}")
+        ...     print(f'{path} -> {value}')
         ('a',) -> <_StackedDict>
         ('a', 'b') -> <_StackedDict>
         ('a', 'b', 'c') -> 1
@@ -3218,7 +3428,7 @@ class _StackedDict(defaultdict):
         _HKey.bfs : Tree-based BFS traversal
         """
 
-        queue = deque(
+        queue: deque[Tuple[Tuple[Any, ...], _StackedDict]] = deque(
             [((), self)]
         )  # Start with an empty path and the top-level dictionary
         while queue:
@@ -3319,7 +3529,7 @@ class _StackedDict(defaultdict):
 
         Returns
         -------
-        list
+        list :
             List of all leaf values
 
         Examples
@@ -3420,7 +3630,7 @@ class _StackedDict(defaultdict):
 
         Returns
         -------
-        list
+        list :
             List of keys forming the path to the value (excluding final key)
 
         Raises
@@ -3504,11 +3714,11 @@ class _Paths:
 
     See Also
     --------
-    DictSearch : Factorized representation of paths
+    _CPaths : Factorized representation of paths
     _StackedDict.paths : building paths for nested dictionaries.
     """
 
-    def __init__(self, stacked_dict: _StackedDict = None):
+    def __init__(self, stacked_dict: Optional[_StackedDict] = None):
         self._stacked_dict = stacked_dict
         self._hkey: Optional[_HKey] = None  # Lazy initialization
 
@@ -3863,7 +4073,7 @@ class _CPaths(_Paths):
     _Paths : Base class for path views
     """
 
-    def __init__(self, stacked_dict: _StackedDict = None):
+    def __init__(self, stacked_dict: Optional[_StackedDict] = None):
         super().__init__(stacked_dict)
         self._structure: Optional[List[Any]] = None
 
@@ -4043,7 +4253,7 @@ class _CPaths(_Paths):
 
             Parameters
             ----------
-            node : _HKey node
+            node : _HKey
                 Node from the _hkey hierarchical structure
 
             Returns
@@ -4099,7 +4309,7 @@ class _CPaths(_Paths):
         """
         all_paths = []
 
-        def expand_node(node: Any, prefix: List[Any] = None) -> None:
+        def expand_node(node: Any, prefix: Optional[List[Any]] = None) -> None:
             """
             Recursively expand a node.
 
@@ -4185,9 +4395,9 @@ class _CPaths(_Paths):
         --------
         >>> c_paths = _CPaths(_StackedDict({'a': {'b': 1}, 'c': 2}))
         >>> str(c_paths)
-        "CompactPaths(3 paths): [['a', 'b'], ['c']]"
+        "_CPaths(3 paths): [['a', 'b'], ['c']]"
         """
-        return f"CompactPaths({len(self)} paths): {self.structure}"
+        return f"_CPaths({len(self)} paths): {self.structure}"
 
     # ========================================================================
     # COVERAGE ANALYSIS METHODS
@@ -4237,13 +4447,13 @@ class _CPaths(_Paths):
         Examples
         --------
         >>> sdict = _StackedDict({'a': {'b': 1}, 'c': 2})
-        >>> cpaths = _CPaths(sdict)
-        >>> cpaths.is_covering(sdict)
+        >>> c_paths = _CPaths(sdict)
+        >>> c_paths.is_covering(sdict)
         True
 
         >>> # Partial coverage
-        >>> cpaths.structure = [['a']]  # Only covers 'a', not 'a.b' or 'c'
-        >>> cpaths.is_covering(sdict)
+        >>> c_paths.structure = [['a']]  # Only covers 'a', not 'a.b' or 'c'
+        >>> c_paths.is_covering(sdict)
         False
 
         Notes
@@ -4279,18 +4489,18 @@ class _CPaths(_Paths):
         Examples
         --------
         >>> sdict = _StackedDict({'a': {'b': 1, 'c': 2}, 'd': 3})
-        >>> cpaths = _CPaths(sdict)
-        >>> cpaths.coverage(sdict)
+        >>> c_paths = _CPaths(sdict)
+        >>> c_paths.coverage(sdict)
         1.0
 
         >>> # Partial coverage: only 'a' and 'a.b' out of 4 paths
-        >>> cpaths.structure = [['a', 'b']]
-        >>> cpaths.coverage(sdict)
+        >>> c_paths.structure = [['a', 'b']]
+        >>> c_paths.coverage(sdict)
         0.5
 
         >>> # Over-coverage: includes paths not in sdict
-        >>> cpaths.structure = [['a', 'b', 'c'], ['d'], ['e']]
-        >>> cpaths.coverage(sdict)
+        >>> c_paths.structure = [['a', 'b', 'c'], ['d'], ['e']]
+        >>> c_paths.coverage(sdict)
         1.25
 
         Notes
@@ -4335,13 +4545,13 @@ class _CPaths(_Paths):
         Examples
         --------
         >>> sdict = _StackedDict({'a': {'b': 1}})
-        >>> cpaths = _CPaths(sdict)
-        >>> cpaths.missing_paths(sdict)
+        >>> c_paths = _CPaths(sdict)
+        >>> c_paths.missing_paths(sdict)
         []
 
         >>> # Add extra paths
-        >>> cpaths.structure = [['a', 'b', 'c'], ['d']]
-        >>> cpaths.missing_paths(sdict)
+        >>> c_paths.structure = [['a', 'b', 'c'], ['d']]
+        >>> c_paths.missing_paths(sdict)
         [['a', 'c'], ['d']]
 
         Notes
@@ -4385,13 +4595,13 @@ class _CPaths(_Paths):
         Examples
         --------
         >>> sdict = _StackedDict({'a': {'b': 1, 'c': 2}, 'd': 3})
-        >>> cpaths = _CPaths(sdict)
-        >>> cpaths.uncovered_paths(sdict)
+        >>> c_paths = _CPaths(sdict)
+        >>> c_paths.uncovered_paths(sdict)
         []
 
         >>> # Partial structure
-        >>> cpaths.structure = [['a', 'b']]
-        >>> cpaths.uncovered_paths(sdict)
+        >>> c_paths.structure = [['a', 'b']]
+        >>> c_paths.uncovered_paths(sdict)
         [['a', 'c'], ['d']]
 
         Notes

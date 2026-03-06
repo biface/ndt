@@ -7,6 +7,8 @@ and compute various metrics (balance, node counts, statistics).
 Uses specialized test trees in addition to the main key_tree fixture.
 """
 
+from copy import deepcopy
+
 import pytest
 
 from ndict_tools.tools import _HKey
@@ -274,6 +276,30 @@ def cycle_tree():
     return root
 
 
+@pytest.fixture(scope="function")
+def simple_editable_tree():
+    """
+    Create a simple small tree for basic testing.
+
+    Structure:
+           A
+          / \
+         B   C
+        /
+      D
+     /
+    E
+    """
+
+    root = _HKey("A", is_root=True)
+    b = root.add_child("B")
+    root.add_child("C")
+    d = b.add_child("D")
+    d.add_child("E")
+
+    return root
+
+
 # ============================================================================
 # Tests for graph structural properties and validation
 # ============================================================================
@@ -467,6 +493,33 @@ class TestGraphStructure:
 
         assert len(reachable_nodes) > 0, "Should have reachable nodes"
         assert orphan_count == 0, "Should have no orphan nodes"
+
+    def test_is_valid_tree_detects_cycle(self, cycle_tree):
+        is_valid, issues = cycle_tree.is_valid_tree()
+        assert not is_valid
+        print(issues)
+
+    def test_is_valid_tree_detects_child_without_parent(self, simple_editable_tree):
+        child = simple_editable_tree.get_child("B")
+        child.parent = None
+        is_valid, issues = child.is_valid_tree()
+        assert not is_valid
+        assert any("Non-root node has no parent" in m for m in issues), issues
+
+    def test_is_valid_tree_reports_orphan_child_from_root_walk(
+        self, simple_editable_tree
+    ):
+        modified_child = simple_editable_tree.get_child("B")
+        child = modified_child.get_child("D")
+        child.parent = None
+
+        is_valid, issues = modified_child.is_valid_tree()
+
+        assert not is_valid
+        expected = f"Inconsistent parent: child {child.key} has parent None but is child of {modified_child.key}"
+        assert expected in issues
+        expected = f"Node {child.key} has no parent but is not marked as root"
+        assert expected in issues
 
     # ========================================================================
     # PARENT CONSISTENCY TESTS

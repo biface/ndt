@@ -2026,3 +2026,21 @@ class TestBuildSmoothStackedDict:
 
     def test_compare(self, smooth_c_sd, empty_c_smooth_sd):
         assert smooth_c_sd == empty_c_smooth_sd
+
+
+@pytest.mark.parametrize(
+    "failed_data, failed_msg",
+    [
+        (
+            [1, 2, 3],
+            "update() argument must be a mapping or iterable of pairs, got list (expected: Mapping, got: list)",
+        ),
+        (
+            1,
+            "update() argument must be a mapping or iterable of pairs, got int (expected: Mapping, got: int)",
+        ),
+    ],
+)
+def test_update_failed(strict_f_sd, failed_data, failed_msg):
+    with pytest.raises(StackedTypeError, match=re.escape(failed_msg)):
+        strict_f_sd.update(failed_data)

@@ -1616,3 +1616,45 @@ class TestTreeTransformation:
                 node = key_tree.find_by_path(path)
                 assert node is not None, f"Path {path} should exist"
                 assert node.is_leaf(), f"Path {path} should lead to leaf"
+
+    # ------------------------------------------------------------------------
+    # Prune Tests
+    # ------------------------------------------------------------------------
+
+    @pytest.mark.parametrize(
+        "lambda_function, expected",
+        [
+            (
+                (lambda node: node.key == ("env", "dev") and node.get_depth() == 2),
+                [
+                    [frozenset({"cache", "redis"})],
+                    [frozenset({"cache", "redis"}), "environments"],
+                    [frozenset({"cache", "redis"}), "environments", ("env", "dev")],
+                    ["monitoring"],
+                    ["monitoring", "dashboards"],
+                    ["monitoring", "dashboards", ("env", "dev")],
+                ],
+            ),
+            (
+                (lambda node: node.key == ("env", "dev") and node.get_depth() == 3),
+                [
+                    ["global_settings"],
+                    ["global_settings", ("security", "encryption")],
+                    ["global_settings", ("security", "encryption"), "key_rotation"],
+                    [
+                        "global_settings",
+                        ("security", "encryption"),
+                        "key_rotation",
+                        ("env", "dev"),
+                    ],
+                    ["global_settings", "networking"],
+                    ["global_settings", "networking", "load_balancer"],
+                    ["global_settings", "networking", "load_balancer", ("env", "dev")],
+                ],
+            ),
+            ((lambda node: node.key == ("env", "dev") and node.get_depth() == 4), []),
+        ],
+    )
+    def test_prune_tree_with_lambda(self, key_tree, lambda_function, expected):
+        pruned_tree = key_tree.prune(lambda_function)
+        assert pruned_tree.get_all_paths() == expected

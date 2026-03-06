@@ -98,7 +98,10 @@ Tools
 
                 $ sd
                 _StackedDict(None, {'x': 'value3', 'a': {'b': {}}})
-                
+
+    .. automethod:: equal()
+    .. automethod:: similar()
+    .. automethod:: isomorph()
     .. automethod:: is_key()
     .. automethod:: occurrences()
     .. automethod:: key_list()
@@ -114,6 +117,8 @@ Tools
     .. automethod:: size()
     .. automethod:: ancestors()
     .. automethod:: leaves()
+    .. automethod:: __eq__()
+    .. automethod:: __ne__()
     .. automethod:: __str__()
     .. automethod:: __copy__()
     .. automethod:: __deepcopy__()
@@ -158,17 +163,13 @@ Tools
     .. automethod:: _validate_structure
     .. automethod:: _compare_path_sets
 
-.. autoclass:: DictPaths
-
-    .. automethod:: _iterate_paths()
-    .. automethod:: __iter__()
-    .. automethod:: __len__()
-    .. automethod:: __contains__()
-    .. automethod:: __repr__()
-
 Core
 ----
 .. automodule:: ndict_tools.core
+
+.. autoclass:: DictPaths
+    :show-inheritance:
+
 .. autoclass:: PathsView
     :show-inheritance:
 
