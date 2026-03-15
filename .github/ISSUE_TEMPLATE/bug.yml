@@ -1,7 +1,6 @@
 name: "🐛 Bug"
 description: >
-  Signaler un comportement incorrect, une panique, ou un résultat inattendu
-  dans dynamic-cli.
+  Report an incorrect behaviour, an exception, or an unexpected result.
 title: "[BUG] "
 labels:
   - "type: bug"
@@ -9,149 +8,158 @@ labels:
   - "priority: high"
 
 body:
-  # ── Résumé ───────────────────────────────────────────────────────────────────
   - type: textarea
     id: summary
     attributes:
-      label: "Résumé du problème"
-      description: "Une phrase : ce qui se passe vs ce qui devrait se passer."
-      placeholder: "Lors de l'appel à `CliBuilder::build()` avec une config YAML vide, le programme panique au lieu de retourner `Err`."
+      label: "Summary"
+      description: "One sentence: what happens vs what should happen."
+      placeholder: >
+        When calling `MyClass.build()` with an empty config dict,
+        the function raises `KeyError` instead of returning a typed error.
     validations:
       required: true
 
-  # ── Comportement attendu ──────────────────────────────────────────────────────
   - type: textarea
     id: expected
     attributes:
-      label: "Comportement attendu"
-      placeholder: "Retourner `Err(DynamicCliError::ConfigError(…))` avec un message explicite."
+      label: "Expected behaviour"
+      placeholder: >
+        Raise `ConfigError` with an explicit message describing the missing key.
     validations:
       required: true
 
-  # ── Comportement observé ─────────────────────────────────────────────────────
   - type: textarea
     id: actual
     attributes:
-      label: "Comportement observé"
+      label: "Observed behaviour"
       placeholder: |
         ```
-        thread 'main' panicked at 'called `Option::unwrap()` on a `None` value', src/config/mod.rs:42:10
+        Traceback (most recent call last):
+          File "repro.py", line 12, in <module>
+            result = MyClass.build({})
+          File "src/mypackage/core.py", line 42, in build
+            return config["key"]
+        KeyError: 'key'
         ```
       render: markdown
     validations:
       required: true
 
-  # ── Reproduction ─────────────────────────────────────────────────────────────
   - type: textarea
     id: repro
     attributes:
-      label: "Étapes de reproduction"
+      label: "Reproduction steps"
       description: >
-        Code Rust minimal reproduisant le problème (MCVE).
-        Un test unitaire échouant est idéal.
+        Minimal Python code reproducing the issue (MCVE).
+        A failing pytest test is ideal.
       placeholder: |
-        ```rust
-        use dynamic_cli::prelude::*;
+        ```python
+        import pytest
+        from mypackage import MyClass, ConfigError
 
-        #[test]
-        fn repro_empty_config() {
-            let result = CliBuilder::new()
-                .config_file("non_existent.yaml")
-                .build();
-            assert!(result.is_err()); // panic ici au lieu d'Err
-        }
+        def test_repro_empty_config():
+            with pytest.raises(ConfigError):
+                MyClass.build({})  # raises KeyError instead
         ```
       render: markdown
     validations:
       required: true
 
-  # ── Environnement ────────────────────────────────────────────────────────────
   - type: input
-    id: rust-version
+    id: python-version
     attributes:
-      label: "Version Rust"
-      description: "Résultat de `rustc --version`"
-      placeholder: "rustc 1.85.0 (4d91de4e4 2025-02-17)"
+      label: "Python version"
+      description: "Output of `python --version`."
+      placeholder: "Python 3.12.3"
     validations:
       required: true
 
   - type: input
-    id: dcli-version
+    id: package-version
     attributes:
-      label: "Version dynamic-cli"
+      label: "Package version"
+      description: "Output of `pip show <package> | grep Version`."
       placeholder: "0.1.1"
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: "Environment"
+      description: "OS, relevant dependencies and their versions."
+      placeholder: |
+        - OS: Ubuntu 24.04 / macOS 15 / Windows 11
+        - pip: 24.x
+        - Relevant deps: dependency-a==1.2.3, dependency-b==4.5.6
     validations:
       required: true
 
   - type: dropdown
     id: os
     attributes:
-      label: "Système d'exploitation"
+      label: "Operating system"
       options:
         - "Linux"
         - "macOS"
         - "Windows"
-        - "Autre"
+        - "Other"
     validations:
       required: true
 
-  # ── Module concerné ──────────────────────────────────────────────────────────
   - type: checkboxes
     id: scope
     attributes:
-      label: "Module(s) concerné(s)"
-      description: "Ajouter les labels `scope:` correspondants manuellement après création."
+      label: "Affected module(s)"
+      description: "Apply the matching `scope:` labels manually after creation."
       options:
-        - label: "`api` — interface publique / prelude"
-        - label: "`cli` — parser, interface, builder"
-        - label: "`docs` — rustdoc, exemples"
-        - label: "`tests` — couverture"
-        - label: "`ci` — pipeline"
+        - label: "`api` — public interface"
+        - label: "`cli` — command-line interface"
+        - label: "`docs` — docstrings, examples"
+        - label: "`tests` — pytest, coverage"
+        - label: "`ci` — tox, pipeline"
 
-  # ── Métadonnées ──────────────────────────────────────────────────────────────
   - type: dropdown
     id: priority
     attributes:
-      label: "Sévérité / Priorité"
-      description: >
-        Le label `priority: high` est appliqué par défaut. Ajuster si nécessaire.
+      label: "Severity"
+      description: "`priority: high` is applied by default. Adjust if needed."
       options:
-        - "high — panique, corruption de données, régression publique"
-        - "medium — comportement incorrect, workaround disponible"
-        - "low — cosmétique, message d'erreur imprécis"
+        - "high — unhandled exception, data corruption, public regression"
+        - "medium — incorrect behaviour, workaround available"
+        - "low — cosmetic, imprecise error message"
     validations:
       required: true
 
   - type: dropdown
     id: effort
     attributes:
-      label: "Effort de correction estimé"
-      description: "Appliquer le label `effort:` correspondant après création."
+      label: "Estimated fix effort"
+      description: "Apply the matching `effort:` label after creation."
       options:
-        - "XS — typo, guard clause manquant"
-        - "S  — correction localisée (1 module)"
-        - "M  — correction multi-modules"
-        - "L  — refactoring requis"
-        - "XL — impact architectural"
+        - "XS — typo, missing guard clause"
+        - "S  — localised fix (1 module)"
+        - "M  — multi-module fix"
+        - "L  — refactoring required"
+        - "XL — architectural impact"
     validations:
       required: false
 
   - type: dropdown
     id: breaking-fix
     attributes:
-      label: "La correction est-elle un changement cassant ?"
-      description: "Si oui, ajouter aussi `type: breaking`."
+      label: "Is the fix a breaking change?"
+      description: "If yes, also add `type: breaking`."
       options:
-        - "Non — correction transparente"
-        - "Oui — modification d'API nécessaire"
+        - "No — transparent fix"
+        - "Yes — API change required"
     validations:
       required: true
 
-  # ── Contexte additionnel ─────────────────────────────────────────────────────
   - type: textarea
     id: extra
     attributes:
-      label: "Contexte additionnel"
-      description: "Logs complets, backtrace, config YAML utilisée, etc."
+      label: "Additional context"
+      description: "Full traceback, logs, config files used, `pip freeze` output, etc."
     validations:
       required: false
