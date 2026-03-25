@@ -1,7 +1,7 @@
 name: "🧭 Design Decision (DD)"
 description: >
   Propose or document an architecture / design decision.
-title: "[DD] "
+title: "[DD-NNN] "
 labels:
   - "type: decision"
   - "status: triage"
