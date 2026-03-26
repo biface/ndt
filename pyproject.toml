@@ -10,12 +10,11 @@ authors = [
 ]
 description = "An implementation of nested dictionaries"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -32,7 +31,7 @@ Issues = "https://github.com/biface/ndt/issues"
 
 [tool.tox]
 minversion = "3.24.5"
-envlist = ["py39", "py310", "py311", "py312", "lint", "isort", "black", "fix", "coverage", "bandit", "local", "gh-ci"]
+envlist = ["py310", "py311", "py312", "py313", "lint", "isort", "black", "fix", "coverage", "bandit", "local", "gh-ci"]
 
 [tool.tox.testenv]
 setenv = { PYTHONPATH = "{toxinidir}/src:{toxinidir}/tests" }
