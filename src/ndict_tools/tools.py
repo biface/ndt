@@ -20,23 +20,17 @@ designed to:
 
 """
 
-from __future__ import annotations
-
 import warnings
 from collections import defaultdict, deque
 from textwrap import indent
 from typing import (
     Any,
     Callable,
-    Dict,
     Generator,
     Iterable,
     Iterator,
-    List,
     Mapping,
     Optional,
-    Set,
-    Tuple,
     Type,
     TypeVar,
     Union,
@@ -273,7 +267,7 @@ class _HKey:
     ----------
     key : Any
         The key value this node represents
-    children : Tuple[_HKey, ...]
+    children : tuple[_HKey, ...]
         Immutable tuple of child nodes
     parent : Optional[_HKey]
         Reference to parent node (None for root)
@@ -301,12 +295,12 @@ class _HKey:
         self, key: Any, parent: Optional["_HKey"] = None, is_root: bool = False
     ) -> None:
         self.key: Any = key
-        self.children: Tuple[_HKey, ...] = ()
+        self.children: tuple[_HKey, ...] = ()
         self.parent: Optional[_HKey] = parent
         self.is_root: bool = is_root
 
     @classmethod
-    def build_forest(cls, stacked_dict: Dict) -> "_HKey":
+    def build_forest(cls, stacked_dict: dict) -> "_HKey":
         """
         Build a forest of _HKey trees from a nested dictionary.
 
@@ -336,7 +330,7 @@ class _HKey:
         root._build_from_dict(stacked_dict)
         return root
 
-    def _build_from_dict(self, current_dict: Dict) -> None:
+    def _build_from_dict(self, current_dict: dict) -> None:
         """
         Recursively build tree structure from a dictionary.
 
@@ -345,7 +339,7 @@ class _HKey:
         current_dict : dict
             Dictionary to process at current level
         """
-        children_list: List[_HKey] = []
+        children_list: list[_HKey] = []
 
         for key, value in current_dict.items():
             child: _HKey = _HKey(key, parent=self)
@@ -393,18 +387,18 @@ class _HKey:
         self.children = self.children + (new_child,)
         return new_child
 
-    def add_children(self, keys: List[Any]) -> Tuple["_HKey", ...]:
+    def add_children(self, keys: list[Any]) -> tuple["_HKey", ...]:
         """
         Add multiple children at once (more efficient than repeated add_child).
 
         Parameters
         ----------
-        keys : List[Any]
+        keys : list[Any]
             List of keys to add as children
 
         Returns
         -------
-        Tuple[_HKey, ...]
+        tuple[_HKey, ...]
             Tuple of newly created child nodes
 
         Examples
@@ -414,7 +408,7 @@ class _HKey:
         >>> len(node.children)
         3
         """
-        new_children: List[_HKey] = []
+        new_children: list[_HKey] = []
 
         for key in keys:
             exists = any(child.key == key for child in self.children)
@@ -454,13 +448,13 @@ class _HKey:
                 return child
         return None
 
-    def get_child_keys(self) -> List[Any]:
+    def get_child_keys(self) -> list[Any]:
         """
         Get list of all child keys.
 
         Returns
         -------
-        List[Any]
+        list[Any]
             List of keys for all children
 
         Examples
@@ -495,7 +489,7 @@ class _HKey:
         """
         return not (self.is_root or self.has_children())
 
-    def get_path(self) -> List[Any]:
+    def get_path(self) -> list[Any]:
         """
         Get the path from root to this node.
 
@@ -503,7 +497,7 @@ class _HKey:
 
         Returns
         -------
-        List[Any]
+        list[Any]
             List of keys from root to this node
 
         Examples
@@ -514,7 +508,7 @@ class _HKey:
         >>> grandchild.get_path()
         ['a', 'b', 'c']
         """
-        path: List[Any] = []
+        path: list[Any] = []
         current: Optional[_HKey] = self
 
         while current is not None and not current.is_root:
@@ -523,13 +517,13 @@ class _HKey:
 
         return list(reversed(path))
 
-    def find_by_path(self, path: List[Any]) -> Optional["_HKey"]:
+    def find_by_path(self, path: list[Any]) -> Optional["_HKey"]:
         """
         Find a node by following a path from this node.
 
         Parameters
         ----------
-        path : List[Any]
+        path : list[Any]
             List of keys to follow
 
         Returns
@@ -556,7 +550,7 @@ class _HKey:
 
         return current
 
-    def get_all_paths(self) -> List[List[Any]]:
+    def get_all_paths(self) -> list[list[Any]]:
         """
         Get all paths from this node to all descendants.
 
@@ -565,7 +559,7 @@ class _HKey:
 
         Returns
         -------
-        List[List[Any]]
+        list[list[Any]]
             List of all paths in the subtree
 
         Examples
@@ -577,12 +571,12 @@ class _HKey:
         >>> sorted([tuple(p) for p in paths])
         [('a',), ('a', 'b'), ('a', 'c')]
         """
-        paths: List[List[Any]] = []
-        base_path: List[Any] = self.get_path() if not self.is_root else []
+        paths: list[list[Any]] = []
+        base_path: list[Any] = self.get_path() if not self.is_root else []
 
-        def collect_paths(node: _HKey, current_path: List[Any]) -> None:
+        def collect_paths(node: _HKey, current_path: list[Any]) -> None:
             if not node.is_root:
-                node_path: List[Any] = current_path + [node.key]
+                node_path: list[Any] = current_path + [node.key]
                 paths.append(node_path)
 
                 for child in node.children:
@@ -594,16 +588,16 @@ class _HKey:
         collect_paths(self, base_path)
         return paths
 
-    def get_descendants(self) -> List["_HKey"]:
+    def get_descendants(self) -> list["_HKey"]:
         """
         Get all descendant nodes (children, grandchildren, etc.).
 
         Returns
         -------
-        List[_HKey]
+        list[_HKey]
             List of all descendant nodes in DFS order
         """
-        descendants: List[_HKey] = []
+        descendants: list[_HKey] = []
 
         def collect(node: _HKey) -> None:
             for child in node.children:
@@ -671,16 +665,16 @@ class _HKey:
             for child in self.children:
                 yield from child.iter_leaves()
 
-    # def to_dict(self) -> Dict[Any, Any]:
+    # def to_dict(self) -> dict[Any, Any]:
     #    """
     #    Convert the tree structure back to a nested dict.
 
     #    Returns
     #    -------
-    #    Dict[Any, Any]
+    #    dict[Any, Any]
     #        Nested dictionary representation of the tree
     #   """
-    #    result: Dict[Any, Any] = {}
+    #    result: dict[Any, Any] = {}
 
     #    for child in self.children:
     #        if child.has_children():
@@ -711,7 +705,7 @@ class _HKey:
             If True, yield node before children (pre-order). If False, yield
             after children (post-order).
         """
-        seen: Set[int] = set()
+        seen: set[int] = set()
 
         def traverse(node: "_HKey") -> Iterator["_HKey"]:
             nid = id(node)
@@ -852,7 +846,7 @@ class _HKey:
         iter_by_level : Get nodes grouped by level
         """
         queue: deque = deque([self])
-        seen: Set[int] = {id(self)}
+        seen: set[int] = {id(self)}
 
         while queue:
             node = queue.popleft()
@@ -938,7 +932,7 @@ class _HKey:
                 return node
         return None
 
-    def find_all(self, predicate: Callable[["_HKey"], bool]) -> List["_HKey"]:
+    def find_all(self, predicate: Callable[["_HKey"], bool]) -> list["_HKey"]:
         """
         Find all nodes matching predicate.
 
@@ -949,7 +943,7 @@ class _HKey:
 
         Returns
         -------
-        List[_HKey]
+        list[_HKey]
             List of all matching nodes
 
         Examples
@@ -961,7 +955,7 @@ class _HKey:
         >>> [n.get_path() for n in nodes]
         [['a', 'b'], ['c', 'b']]
         """
-        results: List[_HKey] = []
+        results: list[_HKey] = []
 
         for node in self.dfs_preorder():
             if predicate(node):
@@ -971,7 +965,7 @@ class _HKey:
 
     def find_by_key(
         self, key: Any, find_all: bool = False
-    ) -> Optional["_HKey"] | List["_HKey"]:
+    ) -> Optional["_HKey"] | list["_HKey"]:
         """
         Find node(s) with specific key value.
 
@@ -986,7 +980,7 @@ class _HKey:
 
         Returns
         -------
-        Optional[_HKey] or List[_HKey]
+        Optional[_HKey] or list[_HKey]
             Single node if find_all=False, list of nodes if value find_all=True
 
         Examples
@@ -1004,7 +998,7 @@ class _HKey:
         else:
             return self.dfs_find(lambda n: n.key == key)
 
-    def iter_by_level(self) -> Iterator[Tuple[int, List["_HKey"]]]:
+    def iter_by_level(self) -> Iterator[tuple[int, list["_HKey"]]]:
         """
         Iterate over nodes grouped by depth level.
 
@@ -1012,7 +1006,7 @@ class _HKey:
 
         Yields
         ------
-        Tuple[int, List[_HKey]]
+        tuple[int, list[_HKey]]
             (depth_level, list_of_nodes_at_that_level)
 
         Examples
@@ -1030,7 +1024,7 @@ class _HKey:
         bfs : Breadth-first traversal
         get_nodes_at_depth : Get nodes at specific depth
         """
-        levels: Dict[int, List[_HKey]] = defaultdict(list)
+        levels: dict[int, list[_HKey]] = defaultdict(list)
 
         for node in self.bfs():
             depth = node.get_depth() if not node.is_root else -1
@@ -1040,7 +1034,7 @@ class _HKey:
         for depth in sorted(levels.keys()):
             yield depth, levels[depth]
 
-    def get_nodes_at_depth(self, target_depth: int) -> List["_HKey"]:
+    def get_nodes_at_depth(self, target_depth: int) -> list["_HKey"]:
         """
         Get all nodes at a specific depth.
 
@@ -1051,7 +1045,7 @@ class _HKey:
 
         Returns
         -------
-        List[_HKey]
+        list[_HKey]
             All nodes at the specified depth
 
         Examples
@@ -1071,18 +1065,18 @@ class _HKey:
             if not node.is_root and node.get_depth() == target_depth
         ]
 
-    def filter_paths(self, predicate: Callable[[List[Any]], bool]) -> List[List[Any]]:
+    def filter_paths(self, predicate: Callable[[list[Any]], bool]) -> list[list[Any]]:
         """
         Filter paths based on a predicate function.
 
         Parameters
         ----------
-        predicate : Callable[[List[Any]], bool]
+        predicate : Callable[[list[Any]], bool]
             Function that takes a path and returns True to include it
 
         Returns
         -------
-        List[List[Any]]
+        list[list[Any]]
             Filtered list of paths
 
         Examples
@@ -1101,7 +1095,7 @@ class _HKey:
         all_paths = self.get_all_paths()
         return [path for path in all_paths if predicate(path)]
 
-    def map_nodes(self, func: Callable[["_HKey"], Any]) -> List[Any]:
+    def map_nodes(self, func: Callable[["_HKey"], Any]) -> list[Any]:
         """
         Apply a function to all nodes and collect results.
 
@@ -1112,7 +1106,7 @@ class _HKey:
 
         Returns
         -------
-        List[Any]
+        list[Any]
             List of results from applying func to each node
 
         Examples
@@ -1239,13 +1233,13 @@ class _HKey:
         copy_matching_subtree(self, new_root)
         return new_root
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """
         Get comprehensive statistics about the tree.
 
         Returns
         -------
-        Dict[str, Any]
+        dict[str, Any]
             Dictionary containing various tree statistics
 
         Examples
@@ -1285,7 +1279,7 @@ class _HKey:
     # Graph Theory & Structure Validation
     # ========================================================================
 
-    def has_cycles(self) -> Tuple[bool, Optional[List["_HKey"]]]:
+    def has_cycles(self) -> tuple[bool, Optional[list["_HKey"]]]:
         """
         Check if the tree contains cycles (should not in a proper tree).
 
@@ -1294,7 +1288,7 @@ class _HKey:
 
         Returns
         -------
-        Tuple[bool, Optional[List[_HKey]]]
+        tuple[bool, Optional[list[_HKey]]]
             (has_cycle, cycle_path) where cycle_path is the nodes forming the cycle
 
         Examples
@@ -1319,11 +1313,11 @@ class _HKey:
         is_valid_tree : Complete tree validation
         is_dag : Check if structure is a Directed Acyclic Graph
         """
-        visited: Set[int] = set()
-        rec_stack: Set[int] = set()
-        cycle_path: List[_HKey] = []
+        visited: set[int] = set()
+        rec_stack: set[int] = set()
+        cycle_path: list[_HKey] = []
 
-        def dfs_cycle_detect(node: _HKey, path: List[_HKey]) -> bool:
+        def dfs_cycle_detect(node: _HKey, path: list[_HKey]) -> bool:
             node_id = id(node)
             visited.add(node_id)
             rec_stack.add(node_id)
@@ -1376,7 +1370,7 @@ class _HKey:
         has_cycle, _ = self.has_cycles()
         return not has_cycle
 
-    def is_valid_tree(self) -> Tuple[bool, List[str]]:
+    def is_valid_tree(self) -> tuple[bool, list[str]]:
         """
         Validate that this is a proper tree structure.
 
@@ -1389,7 +1383,7 @@ class _HKey:
 
         Returns
         -------
-        Tuple[bool, List[str]]
+        tuple[bool, list[str]]
             (is_valid, list_of_issues) where issues describes any problems found
 
         Examples
@@ -1406,7 +1400,7 @@ class _HKey:
         has_cycles : Check for cycles
         check_parent_consistency : Verify parent references
         """
-        issues: List[str] = []
+        issues: list[str] = []
 
         # Check for cycles
         has_cycle, cycle = self.has_cycles()
@@ -1441,7 +1435,7 @@ class _HKey:
 
         return len(issues) == 0, issues
 
-    def check_parent_consistency(self) -> List[str]:
+    def check_parent_consistency(self) -> list[str]:
         """
         Check that parent-child relationships are consistent.
 
@@ -1452,7 +1446,7 @@ class _HKey:
 
         Returns
         -------
-        List[str]
+        list[str]
             List of inconsistency messages (empty if consistent)
 
         Examples
@@ -1462,7 +1456,7 @@ class _HKey:
         >>> len(issues)
         0
         """
-        issues: List[str] = []
+        issues: list[str] = []
 
         for node in self.dfs_preorder():
             for child in node.children:
@@ -1628,7 +1622,7 @@ class _HKey:
         is_perfect_tree : Check perfect balance
         """
 
-        def check_balance(node: _HKey) -> Tuple[bool, int]:
+        def check_balance(node: _HKey) -> tuple[bool, int]:
             """Returns (is_balanced, height)"""
             if not node.has_children():
                 return True, 0
@@ -1682,13 +1676,13 @@ class _HKey:
         child_depths = [child.get_max_depth() for child in self.children]
         return max(child_depths) - min(child_depths)
 
-    def count_nodes_by_degree(self) -> Dict[int, int]:
+    def count_nodes_by_degree(self) -> dict[int, int]:
         """
         Count nodes by their out-degree (number of children).
 
         Returns
         -------
-        Dict[int, int]
+        dict[int, int]
             Dictionary mapping degree to count of nodes with that degree
 
         Examples
@@ -1705,7 +1699,7 @@ class _HKey:
         --------
         get_statistics : Comprehensive tree statistics
         """
-        degree_counts: Dict[int, int] = defaultdict(int)
+        degree_counts: dict[int, int] = defaultdict(int)
 
         for node in self.dfs_preorder():
             if not node.is_root:
@@ -2119,7 +2113,7 @@ class _StackedDict(defaultdict):
 
         return d_str
 
-    def __copy__(self) -> _StackedDict:
+    def __copy__(self) -> "_StackedDict":
         """
         Create a shallow copy of the _StackedDict.
 
@@ -2152,7 +2146,7 @@ class _StackedDict(defaultdict):
             new[key] = value
         return new
 
-    def __deepcopy__(self) -> _StackedDict:
+    def __deepcopy__(self) -> "_StackedDict":
         """
         Create a deep copy of the _StackedDict.
 
@@ -2199,7 +2193,7 @@ class _StackedDict(defaultdict):
 
         Parameters
         ----------
-        key : Any or List[Any]
+        key : Any or list[Any]
             Single key or list representing hierarchical path
         value : Any
             Value to assign
@@ -2268,7 +2262,7 @@ class _StackedDict(defaultdict):
 
         Parameters
         ----------
-        key : Any or List[Any]
+        key : Any or list[Any]
             Single key or list representing hierarchical path
 
         Returns
@@ -2334,7 +2328,7 @@ class _StackedDict(defaultdict):
 
         Parameters
         ----------
-        key : Any or List[Any]
+        key : Any or list[Any]
             Single key or list representing hierarchical path
 
         Examples
@@ -2718,7 +2712,7 @@ class _StackedDict(defaultdict):
                 unpacked_dict[key] = self[key]
         return unpacked_dict
 
-    def copy(self) -> _StackedDict:
+    def copy(self) -> "_StackedDict":
         """
         Create a shallow copy of the _StackedDict.
 
@@ -2742,7 +2736,7 @@ class _StackedDict(defaultdict):
 
         return self.__copy__()
 
-    def deepcopy(self) -> _StackedDict:
+    def deepcopy(self) -> "_StackedDict":
         """
         Create a deep copy of the _StackedDict.
 
@@ -2770,7 +2764,7 @@ class _StackedDict(defaultdict):
 
         return self.__deepcopy__()
 
-    def pop(self, key: Union[Any, List[Any]], default=None) -> Any:
+    def pop(self, key: Union[Any, list[Any]], default=None) -> Any:
         """
         Remove and return value at key or hierarchical path.
 
@@ -2780,7 +2774,7 @@ class _StackedDict(defaultdict):
 
         Parameters
         ----------
-        key : Any or List[Any]
+        key : Any or list[Any]
             Single key or hierarchical path to remove
         default : Any, optional
             Value to return if key doesn't exist
@@ -3234,7 +3228,7 @@ class _StackedDict(defaultdict):
 
         return __items_list
 
-    def dict_paths(self) -> _Paths:
+    def dict_paths(self) -> "_Paths":
         """
         Get a view object for all hierarchical paths.
 
@@ -3254,7 +3248,7 @@ class _StackedDict(defaultdict):
 
         return _Paths(self)
 
-    def paths(self) -> _Paths:
+    def paths(self) -> "_Paths":
         """
         Get a view object for all hierarchical paths in the dictionary.
 
@@ -3294,7 +3288,7 @@ class _StackedDict(defaultdict):
 
         return _Paths(self)
 
-    def compact_paths(self) -> _CPaths:
+    def compact_paths(self) -> "_CPaths":
         """
         Get a compact/factorized representation of all paths.
 
@@ -3332,7 +3326,7 @@ class _StackedDict(defaultdict):
 
         return _CPaths(self)
 
-    def dfs(self, node=None, path=None) -> Generator[Tuple[List, Any], None, None]:
+    def dfs(self, node=None, path=None) -> Generator[tuple[list, Any], None, None]:
         """
         Depth-First Search traversal of the nested dictionary.
 
@@ -3387,7 +3381,7 @@ class _StackedDict(defaultdict):
                     value, current_path
                 )  # Recursively traverse the nested dictionary
 
-    def bfs(self) -> Generator[Tuple[Tuple[Any, ...], Any], None, None]:
+    def bfs(self) -> Generator[tuple[tuple[Any, ...], Any], None, None]:
         """
         Breadth-First Search traversal of the nested dictionary.
 
@@ -3428,7 +3422,7 @@ class _StackedDict(defaultdict):
         _HKey.bfs : Tree-based BFS traversal
         """
 
-        queue: deque[Tuple[Tuple[Any, ...], _StackedDict]] = deque(
+        queue: deque[tuple[tuple[Any, ...], _StackedDict]] = deque(
             [((), self)]
         )  # Start with an empty path and the top-level dictionary
         while queue:
@@ -3722,7 +3716,7 @@ class _Paths:
         self._stacked_dict = stacked_dict
         self._hkey: Optional[_HKey] = None  # Lazy initialization
 
-    def _ensure_hkey(self) -> _HKey:
+    def _ensure_hkey(self) -> "_HKey":
         """
         Ensure _HKey tree is built (lazy initialization).
 
@@ -3735,13 +3729,13 @@ class _Paths:
             self._hkey = _HKey.build_forest(self._stacked_dict)
         return self._hkey
 
-    def __iter__(self) -> Iterator[List[Any]]:
+    def __iter__(self) -> Iterator[list[Any]]:
         """
         Iterate over all hierarchical paths.
 
         Yields
         ------
-        List[Any]
+        list[Any]
             Each path as a list of keys from root to node
 
         Examples
@@ -3773,7 +3767,7 @@ class _Paths:
         hkey = self._ensure_hkey()
         return len(hkey.get_all_paths())
 
-    def __contains__(self, path: List[Any]) -> bool:
+    def __contains__(self, path: list[Any]) -> bool:
         """
         Check if a path exists.
 
@@ -3782,7 +3776,7 @@ class _Paths:
 
         Parameters
         ----------
-        path : List[Any]
+        path : list[Any]
             Path to verify
 
         Returns
@@ -3860,18 +3854,18 @@ class _Paths:
         """
         return f"{self.__class__.__name__}({list(self)})"
 
-    def get_children(self, path: List[Any]) -> List[Any]:
+    def get_children(self, path: list[Any]) -> list[Any]:
         """
         Get child keys at the next level after the given path.
 
         Parameters
         ----------
-        path : List[Any]
+        path : list[Any]
             Path to query
 
         Returns
         -------
-        List[Any]
+        list[Any]
             List of child keys, empty if path not found
 
         Examples
@@ -3892,13 +3886,13 @@ class _Paths:
             return []
         return node.get_child_keys()
 
-    def has_children(self, path: List[Any]) -> bool:
+    def has_children(self, path: list[Any]) -> bool:
         """
         Check if a path has any children.
 
         Parameters
         ----------
-        path : List[Any]
+        path : list[Any]
             Path to check
 
         Returns
@@ -3920,18 +3914,18 @@ class _Paths:
             return False
         return node.has_children()
 
-    def get_subtree_paths(self, prefix: List[Any]) -> List[List[Any]]:
+    def get_subtree_paths(self, prefix: list[Any]) -> list[list[Any]]:
         """
         Get all paths that start with the given prefix.
 
         Parameters
         ----------
-        prefix : List[Any]
+        prefix : list[Any]
             Prefix to filter by
 
         Returns
         -------
-        List[List[Any]]
+        list[list[Any]]
             List of paths with this prefix
 
         Examples
@@ -3956,18 +3950,18 @@ class _Paths:
 
         return subtree_paths
 
-    def filter_paths(self, predicate: Callable[[List[Any]], bool]) -> List[List[Any]]:
+    def filter_paths(self, predicate: Callable[[list[Any]], bool]) -> list[list[Any]]:
         """
         Filter paths based on a predicate function.
 
         Parameters
         ----------
-        predicate : Callable[[List[Any]], bool]
+        predicate : Callable[[list[Any]], bool]
             Function that returns True for paths to include
 
         Returns
         -------
-        List[List[Any]]
+        list[list[Any]]
             Filtered list of paths
 
         Examples
@@ -4002,13 +3996,13 @@ class _Paths:
         hkey = self._ensure_hkey()
         return hkey.get_max_depth()
 
-    def get_leaf_paths(self) -> List[List[Any]]:
+    def get_leaf_paths(self) -> list[list[Any]]:
         """
         Get all leaf paths (paths with no children).
 
         Returns
         -------
-        List[List[Any]]
+        list[list[Any]]
             List of leaf paths
 
         Examples
@@ -4020,7 +4014,7 @@ class _Paths:
         hkey = self._ensure_hkey()
         return [node.get_path() for node in hkey.iter_leaves()]
 
-    def to_compact(self) -> _CPaths:
+    def to_compact(self) -> "_CPaths":
         """
         Convert this _Paths to a _CPaths.
 
@@ -4056,7 +4050,7 @@ class _CPaths(_Paths):
 
     Attributes
     ----------
-    _structure : Optional[List[Any]]
+    _structure : Optional[list[Any]]
         Compact representation of paths (lazy-built)
 
     Examples
@@ -4075,15 +4069,15 @@ class _CPaths(_Paths):
 
     def __init__(self, stacked_dict: Optional[_StackedDict] = None):
         super().__init__(stacked_dict)
-        self._structure: Optional[List[Any]] = None
+        self._structure: Optional[list[Any]] = None
 
-    def _ensure_structure(self) -> List[Any]:
+    def _ensure_structure(self) -> list[Any]:
         """
         Ensure compact structure is built (lazy initialization).
 
         Returns
         -------
-        List[Any]
+        list[Any]
             The compact structure
         """
         if self._stacked_dict is not None and self._structure is None:
@@ -4091,13 +4085,13 @@ class _CPaths(_Paths):
         return self._structure
 
     @staticmethod
-    def _validate_structure(structure: List[Any]) -> None:
+    def _validate_structure(structure: list[Any]) -> None:
         """
         Validate the compact structure format.
 
         Parameters
         ----------
-        structure : List[Any]
+        structure : list[Any]
             Structure to validate
 
         Raises
@@ -4137,13 +4131,13 @@ class _CPaths(_Paths):
             validate_node(branch)
 
     @property
-    def structure(self) -> List[Any]:
+    def structure(self) -> list[Any]:
         """
         Get the compact structure representation.
 
         Returns
         -------
-        List[Any]
+        list[Any]
             Compact representation as nested lists
 
         Examples
@@ -4156,7 +4150,7 @@ class _CPaths(_Paths):
 
     @structure.setter
     def structure(
-        self, value: Union[_StackedDict, _HKey, List[Any], Dict[str, Any]]
+        self, value: Union[_StackedDict, _HKey, list[Any], dict[str, Any]]
     ) -> None:
         """
         Set or build the compact structure representation.
@@ -4164,11 +4158,11 @@ class _CPaths(_Paths):
         Accepts the following input types:
         - _StackedDict (or dict): the source nested mapping to analyze
         - _HKey: an already-built hierarchical key tree
-        - List[Any]: a compact structure as nested lists
+        - list[Any]: a compact structure as nested lists
 
         Parameters
         ----------
-        value : Union[_StackedDict, _HKey, List[Any]]
+        value : Union[_StackedDict, _HKey, list[Any]]
             Input used to define the structure.
 
         Raises
@@ -4228,7 +4222,7 @@ class _CPaths(_Paths):
             f"Unsupported type for structure: {type(value).__name__}. Expected _StackedDict, _HKey or list."
         )
 
-    def _build_compact_structure(self) -> List[Any]:
+    def _build_compact_structure(self) -> list[Any]:
         """
         Build the compact structure recursively from _hkey.
 
@@ -4238,7 +4232,7 @@ class _CPaths(_Paths):
 
         Returns
         -------
-        List[Any]
+        list[Any]
             Compact representation as nested lists
 
         Notes
@@ -4280,7 +4274,7 @@ class _CPaths(_Paths):
         return [compact_node(child) for child in hkey.iter_children()]
 
     @staticmethod
-    def expand_structure(structure: List[Any]) -> List[List[Any]]:
+    def expand_structure(structure: list[Any]) -> list[list[Any]]:
         """
         Expand compact structure back to full paths.
 
@@ -4289,12 +4283,12 @@ class _CPaths(_Paths):
 
         Parameters
         ----------
-        structure : List[Any]
+        structure : list[Any]
             Compact structure to expand
 
         Returns
         -------
-        List[List[Any]]
+        list[list[Any]]
             All expanded paths
 
         Examples
@@ -4309,7 +4303,7 @@ class _CPaths(_Paths):
         """
         all_paths = []
 
-        def expand_node(node: Any, prefix: Optional[List[Any]] = None) -> None:
+        def expand_node(node: Any, prefix: Optional[list[Any]] = None) -> None:
             """
             Recursively expand a node.
 
@@ -4317,7 +4311,7 @@ class _CPaths(_Paths):
             ----------
             node : Any
                 Either a key (leaf) or [key, children...] (internal node)
-            prefix : List[Any], optional
+            prefix : list[Any], optional
                 Current path prefix
             """
             if prefix is None:
@@ -4343,13 +4337,13 @@ class _CPaths(_Paths):
 
         return all_paths
 
-    def expand(self) -> List[List[Any]]:
+    def expand(self) -> list[list[Any]]:
         """
         Expand this instance's compact structure to full paths.
 
         Returns
         -------
-        List[List[Any]]
+        list[list[Any]]
             All expanded paths
 
         Examples
@@ -4404,15 +4398,15 @@ class _CPaths(_Paths):
     # ========================================================================
 
     @staticmethod
-    def _compare_path_sets(paths1: List[List[Any]], paths2: List[List[Any]]) -> tuple:
+    def _compare_path_sets(paths1: list[list[Any]], paths2: list[list[Any]]) -> tuple:
         """
         Compare two sets of paths and return statistics (private helper).
 
         Parameters
         ----------
-        paths1 : List[List[Any]]
+        paths1 : list[list[Any]]
             First set of paths
-        paths2 : List[List[Any]]
+        paths2 : list[list[Any]]
             Second set of paths
 
         Returns
@@ -4524,7 +4518,7 @@ class _CPaths(_Paths):
 
         return len(intersection) / len(set2)
 
-    def missing_paths(self, stacked_dict) -> List[List[Any]]:
+    def missing_paths(self, stacked_dict) -> list[list[Any]]:
         """
         Get paths from this _CPaths that are NOT in the _StackedDict.
 
@@ -4539,7 +4533,7 @@ class _CPaths(_Paths):
 
         Returns
         -------
-        List[List[Any]]
+        list[list[Any]]
             List of paths in _CPaths but not in stacked_dict
 
         Examples
@@ -4574,7 +4568,7 @@ class _CPaths(_Paths):
         extra_set = set(only_in_1)
         return [list(p) for p in expanded_paths if tuple(p) in extra_set]
 
-    def uncovered_paths(self, stacked_dict) -> List[List[Any]]:
+    def uncovered_paths(self, stacked_dict) -> list[list[Any]]:
         """
         Get paths from _StackedDict that are NOT covered by this _CPaths.
 
@@ -4589,7 +4583,7 @@ class _CPaths(_Paths):
 
         Returns
         -------
-        List[List[Any]]
+        list[list[Any]]
             List of paths in stacked_dict but not in _CPaths
 
         Examples

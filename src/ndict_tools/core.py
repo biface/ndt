@@ -3,8 +3,6 @@ This module provides tools and class for creating nested dictionaries, since sta
 dictionaries.
 """
 
-from __future__ import annotations
-
 import warnings
 
 from .tools import _CPaths, _Paths, _StackedDict
@@ -60,7 +58,7 @@ class NestedDictionary(_StackedDict):
             default_setup=default_setup,
         )
 
-    def paths(self) -> PathsView:
+    def paths(self) -> "PathsView":
         """
         Get a view of all hierarchical paths in this dictionary.
 
@@ -99,7 +97,7 @@ class NestedDictionary(_StackedDict):
         """
         return PathsView(self)
 
-    def compact_paths(self) -> CompactPathsView:
+    def compact_paths(self) -> "CompactPathsView":
         """
         Get a compact representation of all paths in this dictionary.
 
@@ -361,7 +359,7 @@ class CompactPathsView(_CPaths):
     expand_structure : Static method to expand a compact structure
     """
 
-    def to_paths(self) -> PathsView:
+    def to_paths(self) -> "PathsView":
         """
         Convert this CompactPathsView to a PathsView.
 
