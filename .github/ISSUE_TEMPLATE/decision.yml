@@ -12,9 +12,9 @@ body:
     attributes:
       label: "DD Identifier"
       description: >
-        Three-digit sequential number. Check existing closed DD issues
-        for the next available number.
-      placeholder: "DDxxx"
+        Three-digit sequential number with dash separator (e.g. DD-019).
+        Check existing closed DD issues for the next available number.
+      placeholder: "DD-NNN"
     validations:
       required: true
 
@@ -22,7 +22,7 @@ body:
     id: target-version
     attributes:
       label: "Target version"
-      description: "Project version where this decision takes effect."
+      description: "Project version where this decision takes effect (= milestone)."
       placeholder: "0.2.0"
     validations:
       required: true
@@ -74,7 +74,7 @@ body:
       placeholder: |
         - Changes the signature of `xxx` → breaking change if not feature-flagged
         - Requires a new dependency: `yyy`
-        - Related DD: DDxxx
+        - Related: #xx (DD-NNN)
     validations:
       required: false
 
@@ -85,7 +85,7 @@ body:
       description: "Apply the matching `scope:` labels manually after creation."
       options:
         - label: "`api` — public interface"
-        - label: "`cli` — command-line interface"
+        - label: "`ui` — user interface (CLI or GUI)"
         - label: "`docs` — docstrings, Sphinx, guides"
         - label: "`tests` — pytest, coverage"
         - label: "`ci` — tox, GitHub Actions, pipeline"
@@ -138,7 +138,7 @@ body:
       label: "Related issues & references"
       description: "Previous DD issues, GitHub issues, PRs, relevant PEPs."
       placeholder: |
-        - Follows from: #xx (DD001 — public API contract)
+        - Follows from: #xx (DD-001 — public API contract)
         - Blocks: #xx (feat: new interface)
         - PEP: https://peps.python.org/pep-xxxx/
     validations:
