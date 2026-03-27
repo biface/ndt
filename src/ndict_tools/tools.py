@@ -210,6 +210,14 @@ def from_dict(dictionary: dict, class_name: Type["T"], **class_options) -> T:
     _StackedDict.to_dict : Inverse operation (convert back to dict)
     """
 
+    warnings.warn(
+        "from_dict() free function is deprecated since 1.1.0 and will be removed "
+        "in 1.5.0. Use ClassName.from_dict(dictionary, **class_options) instead. "
+        "Example: NestedDictionary.from_dict(dictionary, default_setup={...})",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
     if "default_setup" in class_options:
         if not isinstance(class_name, type) or not issubclass(class_name, _StackedDict):
             raise StackedTypeError(
@@ -394,12 +402,12 @@ class _HKey:
         Parameters
         ----------
         keys : list[Any]
-            List of keys to add as children
+            list of keys to add as children
 
         Returns
         -------
         tuple[_HKey, ...]
-            Tuple of newly created child nodes
+            tuple of newly created child nodes
 
         Examples
         --------
@@ -455,7 +463,7 @@ class _HKey:
         Returns
         -------
         list[Any]
-            List of keys for all children
+            list of keys for all children
 
         Examples
         --------
@@ -498,7 +506,7 @@ class _HKey:
         Returns
         -------
         list[Any]
-            List of keys from root to this node
+            list of keys from root to this node
 
         Examples
         --------
@@ -524,7 +532,7 @@ class _HKey:
         Parameters
         ----------
         path : list[Any]
-            List of keys to follow
+            list of keys to follow
 
         Returns
         -------
@@ -560,7 +568,7 @@ class _HKey:
         Returns
         -------
         list[list[Any]]
-            List of all paths in the subtree
+            list of all paths in the subtree
 
         Examples
         --------
@@ -595,7 +603,7 @@ class _HKey:
         Returns
         -------
         list[_HKey]
-            List of all descendant nodes in DFS order
+            list of all descendant nodes in DFS order
         """
         descendants: list[_HKey] = []
 
@@ -944,7 +952,7 @@ class _HKey:
         Returns
         -------
         list[_HKey]
-            List of all matching nodes
+            list of all matching nodes
 
         Examples
         --------
@@ -1107,7 +1115,7 @@ class _HKey:
         Returns
         -------
         list[Any]
-            List of results from applying func to each node
+            list of results from applying func to each node
 
         Examples
         --------
@@ -1447,7 +1455,7 @@ class _HKey:
         Returns
         -------
         list[str]
-            List of inconsistency messages (empty if consistent)
+            list of inconsistency messages (empty if consistent)
 
         Examples
         --------
@@ -1984,24 +1992,89 @@ class _StackedDict(defaultdict):
                 if isinstance(item, self.__class__):
                     nested = item.deepcopy()
                 elif isinstance(item, dict):
-                    nested = from_dict(
-                        item, self.__class__, default_setup=dict(self.default_setup)
+                    nested = self.__class__.from_dict(
+                        item, default_setup=dict(self.default_setup)
                     )
                 else:
-                    nested = from_dict(
+                    nested = self.__class__.from_dict(
                         dict(item),
-                        self.__class__,
                         default_setup=dict(self.default_setup),
                     )
                 self.update(nested)
 
         if kwargs:
-            nested = from_dict(
+            nested = self.__class__.from_dict(
                 kwargs,
-                self.__class__,
                 default_setup=dict(self.default_setup),
             )
             self.update(nested)
+
+    # ========================================================================
+    # ALTERNATIVE CONSTRUCTORS
+    # ========================================================================
+
+    @classmethod
+    def from_dict(cls, dictionary: dict, **class_options) -> "_StackedDict":
+        """
+        Recursively convert a standard dictionary to a ``_StackedDict`` or subclass.
+
+        Alternative constructor that transforms a regular nested dictionary into a
+        ``_StackedDict``-based structure. The target class is ``cls`` itself,
+        eliminating the need to pass the class explicitly and preventing errors
+        in recursive calls.
+
+        Parameters
+        ----------
+        dictionary : dict
+            The dictionary to transform (may be nested)
+        **class_options : dict
+            Initialization options for the class instances.
+            Must contain 'default_setup' key with configuration dict.
+
+        Returns
+        -------
+        _StackedDict
+            New instance of ``cls`` containing the dictionary structure.
+
+        Raises
+        ------
+        StackedKeyError
+            If 'default_setup' key is missing from class_options
+
+        Examples
+        --------
+        >>> nd = NestedDictionary.from_dict(
+        ...     {'a': {'b': 1}},
+        ...     default_setup={'indent': 0, 'default_factory': None}
+        ... )
+        >>> nd['a']['b']
+        1
+
+        Notes
+        -----
+        - Already-instantiated _StackedDict values are preserved as-is
+        - Regular dict values are recursively converted using the same ``cls``
+        - Non-dict values are assigned directly
+        - All created instances share the same class_options
+
+        See Also
+        --------
+        to_dict : Inverse operation (convert back to dict)
+        """
+        if "default_setup" not in class_options:
+            raise StackedKeyError(
+                f"The key 'default_setup' must be present in class options : {class_options}",
+                key="default_setup",
+            )
+        dict_object = cls(**class_options)
+        for key, value in dictionary.items():
+            if isinstance(value, _StackedDict):
+                dict_object[key] = value
+            elif isinstance(value, dict):
+                dict_object[key] = cls.from_dict(value, **class_options)
+            else:
+                dict_object[key] = value
+        return dict_object
 
     @property
     def default_setup(self) -> list:
@@ -2024,7 +2097,7 @@ class _StackedDict(defaultdict):
 
         See Also
         --------
-        default_setup.setter : Set new configuration
+        default_setup.setter : set new configuration
         """
         priority = ["indent", "default_factory"]
         # Convert internal set of tuples to dict to deduplicate and access by key
@@ -2179,13 +2252,13 @@ class _StackedDict(defaultdict):
         deepcopy : Public method wrapper
         """
 
-        return from_dict(
-            self.to_dict(), self.__class__, default_setup=dict(self.default_setup)
+        return self.__class__.from_dict(
+            self.to_dict(), default_setup=dict(self.default_setup)
         )
 
     def __setitem__(self, key, value) -> None:
         """
-        Set item with support for hierarchical keys.
+        set item with support for hierarchical keys.
 
         Supports both flat keys and hierarchical paths (as lists).
         For hierarchical keys, automatically creates intermediate
@@ -2288,12 +2361,12 @@ class _StackedDict(defaultdict):
         Notes
         -----
         - Flat keys behave like standard dict access
-        - List keys traverse the hierarchy
+        - list keys traverse the hierarchy
         - Raises KeyError if path doesn't exist
 
         See Also
         --------
-        __setitem__ : Set items with hierarchical keys
+        __setitem__ : set items with hierarchical keys
         """
 
         if isinstance(key, list):
@@ -2972,7 +3045,7 @@ class _StackedDict(defaultdict):
         See Also
         --------
         __init__ : Initialization with data
-        __setitem__ : Set individual items
+        __setitem__ : set individual items
         from_dict : Convert dict to _StackedDict
         """
 
@@ -2996,8 +3069,8 @@ class _StackedDict(defaultdict):
                     value.default_factory = self.default_factory
                     self[key] = value
                 elif isinstance(value, dict):
-                    nested_dict = from_dict(
-                        value, self.__class__, default_setup=dict(self.default_setup)
+                    nested_dict = self.__class__.from_dict(
+                        value, default_setup=dict(self.default_setup)
                     )
                     self[key] = nested_dict
                 else:
@@ -3011,8 +3084,8 @@ class _StackedDict(defaultdict):
                 value.default_factory = self.default_factory
                 self[key] = value
             elif isinstance(value, dict):
-                nested_dict = from_dict(
-                    value, self.__class__, default_setup=dict(self.default_setup)
+                nested_dict = self.__class__.from_dict(
+                    value, default_setup=dict(self.default_setup)
                 )
                 self[key] = nested_dict
             else:
@@ -3132,7 +3205,7 @@ class _StackedDict(defaultdict):
         Returns
         -------
         list :
-            List of paths (as tuples) containing the key
+            list of paths (as tuples) containing the key
 
         Raises
         ------
@@ -3185,7 +3258,7 @@ class _StackedDict(defaultdict):
         Returns
         -------
         list :
-            List of values from paths containing the key
+            list of values from paths containing the key
 
         Raises
         ------
@@ -3524,7 +3597,7 @@ class _StackedDict(defaultdict):
         Returns
         -------
         list :
-            List of all leaf values
+            list of all leaf values
 
         Examples
         --------
@@ -3625,7 +3698,7 @@ class _StackedDict(defaultdict):
         Returns
         -------
         list :
-            List of keys forming the path to the value (excluding final key)
+            list of keys forming the path to the value (excluding final key)
 
         Raises
         ------
@@ -3866,7 +3939,7 @@ class _Paths:
         Returns
         -------
         list[Any]
-            List of child keys, empty if path not found
+            list of child keys, empty if path not found
 
         Examples
         --------
@@ -3926,7 +3999,7 @@ class _Paths:
         Returns
         -------
         list[list[Any]]
-            List of paths with this prefix
+            list of paths with this prefix
 
         Examples
         --------
@@ -4003,7 +4076,7 @@ class _Paths:
         Returns
         -------
         list[list[Any]]
-            List of leaf paths
+            list of leaf paths
 
         Examples
         --------
@@ -4153,7 +4226,7 @@ class _CPaths(_Paths):
         self, value: Union[_StackedDict, _HKey, list[Any], dict[str, Any]]
     ) -> None:
         """
-        Set or build the compact structure representation.
+        set or build the compact structure representation.
 
         Accepts the following input types:
         - _StackedDict (or dict): the source nested mapping to analyze
@@ -4534,7 +4607,7 @@ class _CPaths(_Paths):
         Returns
         -------
         list[list[Any]]
-            List of paths in _CPaths but not in stacked_dict
+            list of paths in _CPaths but not in stacked_dict
 
         Examples
         --------
@@ -4584,7 +4657,7 @@ class _CPaths(_Paths):
         Returns
         -------
         list[list[Any]]
-            List of paths in stacked_dict but not in _CPaths
+            list of paths in stacked_dict but not in _CPaths
 
         Examples
         --------
