@@ -20,8 +20,11 @@ designed to:
 
 """
 
+import json
+import pickle
 import warnings
 from collections import defaultdict, deque
+from pathlib import Path
 from textwrap import indent
 from typing import (
     Any,
@@ -47,6 +50,31 @@ from .exception import (
 MAX_DEPTH = 100
 
 T = TypeVar("T", bound="_StackedDict")
+
+
+def _reconstruct(cls: type, dictionary: dict, default_setup: dict) -> "_StackedDict":
+    """
+    Module-level reconstruction helper for pickle.
+
+    ``__reduce__`` must reference a module-level callable so that pickle can
+    locate it by name during unpickling. A method reference (``cls.from_dict``)
+    would not survive the pickle round-trip reliably across interpreter sessions.
+
+    Parameters
+    ----------
+    cls : type
+        The ``_StackedDict`` subclass to reconstruct.
+    dictionary : dict
+        Plain ``dict`` produced by ``to_dict()``.
+    default_setup : dict
+        Configuration dict (``indent``, ``default_factory``, …).
+
+    Returns
+    -------
+    _StackedDict
+        Reconstructed instance identical to the original.
+    """
+    return cls.from_dict(dictionary, default_setup=default_setup)
 
 """Internal functions"""
 
@@ -2026,10 +2054,9 @@ class _StackedDict(defaultdict):
         Parameters
         ----------
         dictionary : dict
-            The dictionary to transform (may be nested)
+            The dictionary to transform (may be nested).
         **class_options : dict
-            Initialization options for the class instances.
-            Must contain 'default_setup' key with configuration dict.
+            Initialization options. Must contain ``default_setup`` key.
 
         Returns
         -------
@@ -2039,7 +2066,7 @@ class _StackedDict(defaultdict):
         Raises
         ------
         StackedKeyError
-            If 'default_setup' key is missing from class_options
+            If ``default_setup`` is missing from ``class_options``.
 
         Examples
         --------
@@ -2052,14 +2079,13 @@ class _StackedDict(defaultdict):
 
         Notes
         -----
-        - Already-instantiated _StackedDict values are preserved as-is
-        - Regular dict values are recursively converted using the same ``cls``
-        - Non-dict values are assigned directly
-        - All created instances share the same class_options
+        - Already-instantiated ``_StackedDict`` values are preserved as-is.
+        - Regular ``dict`` values are recursively converted using ``cls``.
+        - Non-dict values are assigned directly.
 
         See Also
         --------
-        to_dict : Inverse operation (convert back to dict)
+        to_dict : Inverse operation.
         """
         if "default_setup" not in class_options:
             raise StackedKeyError(
@@ -2075,6 +2101,171 @@ class _StackedDict(defaultdict):
             else:
                 dict_object[key] = value
         return dict_object
+
+    # ========================================================================
+    # PICKLE SUPPORT
+    # ========================================================================
+
+    def __reduce__(self) -> tuple:
+        """
+        Support pickle serialization.
+
+        Returns a ``(callable, args)`` pair that pickle uses to reconstruct
+        the instance. Uses the module-level ``_reconstruct`` function so that
+        pickle can locate the callable by name across interpreter sessions.
+
+        ``default_setup`` (including ``default_factory``) is preserved so that
+        the reconstructed instance behaves identically to the original.
+
+        Returns
+        -------
+        tuple
+            ``(_reconstruct, (cls, dictionary, default_setup))``
+        """
+        return (
+            _reconstruct,
+            (self.__class__, self.to_dict(), dict(self.default_setup)),
+        )
+
+    # ========================================================================
+    # SERIALIZATION METHODS (JSON + PICKLE)
+    # ========================================================================
+
+    def to_json(self, path: "str | Path", indent: Optional[int] = None) -> None:
+        """
+        Serialize this dictionary to a JSON file.
+
+        Non-string keys are encoded using the strategy defined in DD-021.
+        File I/O is delegated to ``json.dump``.
+
+        Parameters
+        ----------
+        path : str or Path
+            Destination file path.
+        indent : int, optional
+            JSON indentation level. Defaults to ``self.indent`` if not provided.
+
+        Examples
+        --------
+        >>> nd = NestedDictionary({'a': {'b': 1}})
+        >>> nd.to_json('/tmp/nd.json')
+
+        See Also
+        --------
+        from_json : Reconstruct from a JSON file.
+        """
+        from pathlib import Path
+        from .serialize import NestedDictionaryEncoder
+        _indent = indent if indent is not None else self.indent
+        with open(Path(path), "w", encoding="utf-8") as f:
+            json.dump(self, f, cls=NestedDictionaryEncoder, indent=_indent or None)
+
+    @classmethod
+    def from_json(cls, path: "str | Path", **class_options) -> "_StackedDict":
+        """
+        Reconstruct a ``_StackedDict`` (or subclass) from a JSON file.
+
+        Encoded non-string keys are decoded back to their original Python
+        types using the strategy defined in DD-021.
+
+        Parameters
+        ----------
+        path : str or Path
+            Path to the JSON file.
+        **class_options : dict
+            Passed to ``cls.from_dict``; must include ``default_setup``.
+
+        Returns
+        -------
+        _StackedDict
+            Reconstructed instance of ``cls``.
+
+        Examples
+        --------
+        >>> nd = NestedDictionary.from_json(
+        ...     '/tmp/nd.json',
+        ...     default_setup={'indent': 0, 'default_factory': None}
+        ... )
+
+        See Also
+        --------
+        to_json : Serialize to a JSON file.
+        """
+        from pathlib import Path
+        from .serialize import _make_decoder_hook
+        with open(Path(path), "r", encoding="utf-8") as f:
+            return json.load(f, object_pairs_hook=_make_decoder_hook(cls, class_options))
+
+    def to_pickle(
+        self,
+        path: "str | Path",
+        protocol: Optional[int] = None,
+    ) -> None:
+        """
+        Serialize this dictionary to a pickle file with SHA-256 verification.
+
+        Writes two files: ``<path>`` (pickle) and ``<path>.sha256`` (hex digest).
+
+        Parameters
+        ----------
+        path : str or Path
+            Destination file path.
+        protocol : int, optional
+            Pickle protocol. Defaults to ``pickle.DEFAULT_PROTOCOL``.
+
+        Warns
+        -----
+        UserWarning
+            Pickle is unsafe with untrusted files.
+
+        See Also
+        --------
+        from_pickle : Reconstruct from a pickle file.
+        """
+        from .serialize import _pickle_dump
+        _pickle_dump(self, path, protocol=protocol)
+
+    @classmethod
+    def from_pickle(
+        cls,
+        path: "str | Path",
+        verify: bool = True,
+        **class_options,
+    ) -> "_StackedDict":
+        """
+        Reconstruct a ``_StackedDict`` (or subclass) from a pickle file.
+
+        Parameters
+        ----------
+        path : str or Path
+            Path to the pickle file.
+        verify : bool, optional
+            If ``True`` (default), verify the SHA-256 sidecar before loading.
+        **class_options : dict
+            Not used directly (the pickled object carries its own state),
+            but accepted for API symmetry with ``from_json``.
+
+        Returns
+        -------
+        _StackedDict
+            Reconstructed instance.
+
+        Raises
+        ------
+        StackedValueError
+            If ``verify=True`` and the digest mismatches or sidecar is absent.
+
+        Warns
+        -----
+        UserWarning
+            Pickle is unsafe with untrusted files.
+
+        See Also
+        --------
+        to_pickle : Serialize to a pickle file.
+        """
+        from .serialize import _pickle_load
+        return _pickle_load(path, verify=verify)
 
     @property
     def default_setup(self) -> list:
