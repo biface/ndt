@@ -76,6 +76,7 @@ def _reconstruct(cls: type, dictionary: dict, default_setup: dict) -> "_StackedD
     """
     return cls.from_dict(dictionary, default_setup=default_setup)
 
+
 """Internal functions"""
 
 
@@ -2155,7 +2156,9 @@ class _StackedDict(defaultdict):
         from_json : Reconstruct from a JSON file.
         """
         from pathlib import Path
+
         from .serialize import NestedDictionaryEncoder
+
         _indent = indent if indent is not None else self.indent
         with open(Path(path), "w", encoding="utf-8") as f:
             json.dump(self, f, cls=NestedDictionaryEncoder, indent=_indent or None)
@@ -2192,9 +2195,13 @@ class _StackedDict(defaultdict):
         to_json : Serialize to a JSON file.
         """
         from pathlib import Path
+
         from .serialize import _make_decoder_hook
+
         with open(Path(path), "r", encoding="utf-8") as f:
-            return json.load(f, object_pairs_hook=_make_decoder_hook(cls, class_options))
+            return json.load(
+                f, object_pairs_hook=_make_decoder_hook(cls, class_options)
+            )
 
     def to_pickle(
         self,
@@ -2223,6 +2230,7 @@ class _StackedDict(defaultdict):
         from_pickle : Reconstruct from a pickle file.
         """
         from .serialize import _pickle_dump
+
         _pickle_dump(self, path, protocol=protocol)
 
     @classmethod
@@ -2265,6 +2273,7 @@ class _StackedDict(defaultdict):
         to_pickle : Serialize to a pickle file.
         """
         from .serialize import _pickle_load
+
         return _pickle_load(path, verify=verify)
 
     @property

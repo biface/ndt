@@ -165,7 +165,7 @@ def _decode_key(encoded: str) -> Any:
 
     # Rule 2: frozenset — [frozenset{...}]
     if encoded.startswith("[frozenset{") and encoded.endswith("}]"):
-        inner = encoded[len("[frozenset{"):-len("}]")].strip()
+        inner = encoded[len("[frozenset{") : -len("}]")].strip()
         if not inner:
             return frozenset()
         # ast.literal_eval on a tuple expression is safe: only scalar literals
@@ -197,6 +197,7 @@ def _decode_key(encoded: str) -> Any:
 # ---------------------------------------------------------------------------
 # JSON encoder / decoder — #43
 # ---------------------------------------------------------------------------
+
 
 class NestedDictionaryEncoder(json.JSONEncoder):
     """
@@ -244,10 +245,7 @@ class NestedDictionaryEncoder(json.JSONEncoder):
         from .tools import _StackedDict
 
         if isinstance(obj, _StackedDict):
-            return {
-                _encode_key(k): self._encode_stacked(v)
-                for k, v in obj.items()
-            }
+            return {_encode_key(k): self._encode_stacked(v) for k, v in obj.items()}
         return obj
 
 
@@ -269,15 +267,18 @@ def _make_decoder_hook(cls: type, class_options: dict) -> Callable:
     Callable
         A hook suitable for ``json.load(..., object_pairs_hook=hook)``.
     """
+
     def hook(pairs: list) -> Any:
         decoded = {_decode_key(k): v for k, v in pairs}
         return cls.from_dict(decoded, **class_options)
+
     return hook
 
 
 # ---------------------------------------------------------------------------
 # Pickle helpers — #44
 # ---------------------------------------------------------------------------
+
 
 def _pickle_dump(
     nd: Any,

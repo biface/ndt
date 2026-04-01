@@ -31,7 +31,7 @@ Issues = "https://github.com/biface/ndt/issues"
 
 [tool.tox]
 minversion = "3.24.5"
-envlist = ["py310", "py311", "py312", "py313", "lint", "isort", "black", "fix", "coverage", "bandit", "local", "gh-ci"]
+envlist = ["py310", "py311", "py312", "lint", "isort", "black", "fix", "coverage", "bandit", "local", "gh-ci"]
 
 [tool.tox.testenv]
 setenv = { PYTHONPATH = "{toxinidir}/src:{toxinidir}/tests" }
@@ -102,6 +102,10 @@ max-line-length = 88
 ignore = ["E501"]
 extend-ignore = ["E203", "W503"]
 exclude = [".tox", ".git", "__pycache__", "build", "dist"]
+
+[tool.black]
+line-length = 88
+target-version = ["py310", "py311", "py312", "py313"]
 
 [tool.isort]
 profile = "black"
