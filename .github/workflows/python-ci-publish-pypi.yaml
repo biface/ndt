@@ -68,10 +68,10 @@ jobs:
         skip-existing: true
 
     - name: Verify PyPI publication
-      if: steps.build_info.outputs.exists_on_pypi == 'false'
+      if: steps.check_pypi.outputs.exists == 'false'
       run: |
-        VERSION="${{ steps.build_info.outputs.version }}"
-        PACKAGE_NAME="${{ steps.build_info.outputs.package_name }}"
+        VERSION="${{ steps.version_info.outputs.version }}"
+        PACKAGE_NAME="${{ steps.version_info.outputs.package_name }}"
         
         echo "Waiting for PyPI to propagate the package..."
         
@@ -96,12 +96,12 @@ jobs:
         echo "::warning::Package may not be fully propagated yet, but continuing..."
 
     - name: Add production comment
-      if: steps.build_info.outputs.exists_on_pypi == 'false'
+      if: steps.check_pypi.outputs.exists == 'false'
       uses: actions/github-script@v7
       with:
         script: |
-          const version = '${{ steps.build_info.outputs.version }}';
-          const packageName = '${{ steps.build_info.outputs.package_name }}';
+          const version = '${{ steps.version_info.outputs.version }}';
+          const packageName = '${{ steps.version_info.outputs.package_name }}';
           
           github.rest.repos.createCommitComment({
             owner: context.repo.owner,
@@ -124,6 +124,6 @@ jobs:
           })
 
     outputs:
-      version: ${{ steps.build_info.outputs.version }}
-      package_name: ${{ steps.build_info.outputs.package_name }}
-      published: ${{ steps.build_info.outputs.exists_on_pypi == 'false' }}
+      version: ${{ steps.version_info.outputs.version }}
+      package_name: ${{ steps.version_info.outputs.package_name }}
+      published: ${{ steps.check_pypi.outputs.exists == 'false' }}

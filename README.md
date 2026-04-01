@@ -3,7 +3,7 @@
 ![PyPI - License](https://img.shields.io/pypi/l/ndict-tools)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/ndict-tools)
 ![Read the Docs](https://img.shields.io/readthedocs/ndict-tools)
-![Test](https://github.com/biface/ndt/actions/workflows/python-ci.yaml/badge.svg?branch=master)
+![Test](https://github.com/biface/ndt/actions/workflows/python-ci-tests.yaml/badge.svg?branch=master)
 ![Codecov](https://img.shields.io/codecov/c/github/biface/ndt)
 ![GitHub Release](https://img.shields.io/github/v/release/biface/ndt)
 ![PyPI - Version](https://img.shields.io/pypi/v/ndict-tools)
