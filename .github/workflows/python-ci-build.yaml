@@ -41,8 +41,8 @@ jobs:
         from pathlib import Path
         from packaging import version as pkg_version
         
-        # Lire __version__ depuis __init__.py
-        init_files = list(Path('.').rglob('__init__.py'))
+        # Lire __version__ depuis __init__.py dans src/
+        init_files = list(Path('src').rglob('__init__.py'))
         init_version = None
         
         for init_file in init_files:
