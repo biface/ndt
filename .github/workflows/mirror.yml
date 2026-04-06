@@ -1,0 +1,33 @@
+name: Mirror to GitLab
+
+on:
+  push:
+    branches: ['**']   # all branches
+    tags: ['**']       # all tags (includes releases)
+  delete:              # also synchronise branch/tag deletions
+
+jobs:
+  mirror:
+    name: Push mirror
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0   # full history required
+
+      - name: Push mirror to GitLab
+        run: |
+          git remote add gitlab \
+            https://oauth2:${GITLAB_TOKEN}@gitlab.com/open-works/ndt.git
+
+          # --mirror also pushes refs/remotes/* which GitLab rejects.
+          # Push branches and tags explicitly instead.
+          # Use refs/remotes/origin/* as source — GitHub Actions checkout only
+          # creates local refs/heads/ for the current branch. All other branches
+          # are only available as remote tracking refs.
+          git push gitlab \
+            --prune \
+            "+refs/remotes/origin/*:refs/heads/*" \
+            "+refs/tags/*:refs/tags/*"
+        env:
+          GITLAB_TOKEN: ${{ secrets.GITLAB_MIRROR_TOKEN }}
