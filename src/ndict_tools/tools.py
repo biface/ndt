@@ -33,10 +33,8 @@ from typing import (
     Iterable,
     Iterator,
     Mapping,
-    Optional,
     Type,
     TypeVar,
-    Union,
 )
 
 from .exception import (
@@ -329,11 +327,11 @@ class _HKey:
     __slots__ = ("key", "children", "parent", "is_root")
 
     def __init__(
-        self, key: Any, parent: Optional["_HKey"] = None, is_root: bool = False
+        self, key: Any, parent: "_HKey | None" = None, is_root: bool = False
     ) -> None:
         self.key: Any = key
         self.children: tuple[_HKey, ...] = ()
-        self.parent: Optional[_HKey] = parent
+        self.parent: "_HKey | None" = parent
         self.is_root: bool = is_root
 
     @classmethod
@@ -456,7 +454,7 @@ class _HKey:
         self.children = self.children + tuple(new_children)
         return tuple(new_children)
 
-    def get_child(self, key: Any) -> Optional["_HKey"]:
+    def get_child(self, key: Any) -> "_HKey | None":
         """
         Get a child node by key.
 
@@ -546,7 +544,7 @@ class _HKey:
         ['a', 'b', 'c']
         """
         path: list[Any] = []
-        current: Optional[_HKey] = self
+        current: "_HKey | None" = self
 
         while current is not None and not current.is_root:
             path.append(current.key)
@@ -554,7 +552,7 @@ class _HKey:
 
         return list(reversed(path))
 
-    def find_by_path(self, path: list[Any]) -> Optional["_HKey"]:
+    def find_by_path(self, path: list[Any]) -> "_HKey | None":
         """
         Find a node by following a path from this node.
 
@@ -580,7 +578,7 @@ class _HKey:
         current: _HKey = self
 
         for key in path:
-            child: Optional[_HKey] = current.get_child(key)
+            child: "_HKey | None" = current.get_child(key)
             if child is None:
                 return None
             current = child
@@ -654,7 +652,7 @@ class _HKey:
             Depth level (0 for direct children of root)
         """
         depth: int = 0
-        current: Optional[_HKey] = self.parent
+        current: "_HKey | None" = self.parent
 
         while current is not None and not current.is_root:
             depth += 1
@@ -727,7 +725,7 @@ class _HKey:
 
     def _dfs_traverse(
         self,
-        visit: Optional[Callable[["_HKey"], None]] = None,
+        visit: "Callable[[_HKey], None] | None" = None,
         *,
         preorder: bool = True,
     ) -> Iterator["_HKey"]:
@@ -766,7 +764,7 @@ class _HKey:
         yield from traverse(self)
 
     def dfs_preorder(
-        self, visit: Optional[Callable[["_HKey"], None]] = None
+        self, visit: "Callable[[_HKey], None] | None" = None
     ) -> Iterator["_HKey"]:
         """
         Depth-First Search traversal in pre-order (node, then children).
@@ -803,7 +801,7 @@ class _HKey:
         yield from self._dfs_traverse(visit, preorder=True)
 
     def dfs_postorder(
-        self, visit: Optional[Callable[["_HKey"], None]] = None
+        self, visit: "Callable[[_HKey], None] | None" = None
     ) -> Iterator["_HKey"]:
         """
         Depth-First Search traversal in post-order (children, then node).
@@ -839,7 +837,7 @@ class _HKey:
         yield from self._dfs_traverse(visit, preorder=False)
 
     def bfs(
-        self, visit: Optional[Callable[["_HKey"], None]] = None
+        self, visit: "Callable[[_HKey], None] | None" = None
     ) -> Iterator["_HKey"]:
         """
         Breadth-First Search (level-order) traversal.
@@ -897,7 +895,7 @@ class _HKey:
                     seen.add(cid)
                     queue.append(child)
 
-    def dfs_find(self, predicate: Callable[["_HKey"], bool]) -> Optional["_HKey"]:
+    def dfs_find(self, predicate: Callable[["_HKey"], bool]) -> "_HKey | None":
         """
         Find first node matching predicate using DFS.
 
@@ -935,7 +933,7 @@ class _HKey:
                 return node
         return None
 
-    def bfs_find(self, predicate: Callable[["_HKey"], bool]) -> Optional["_HKey"]:
+    def bfs_find(self, predicate: Callable[["_HKey"], bool]) -> "_HKey | None":
         """
         Find first node matching predicate using BFS.
 
@@ -1002,7 +1000,7 @@ class _HKey:
 
     def find_by_key(
         self, key: Any, find_all: bool = False
-    ) -> Optional["_HKey"] | list["_HKey"]:
+    ) -> "_HKey | None | list[_HKey]":
         """
         Find node(s) with specific key value.
 
@@ -1316,7 +1314,7 @@ class _HKey:
     # Graph Theory & Structure Validation
     # ========================================================================
 
-    def has_cycles(self) -> tuple[bool, Optional[list["_HKey"]]]:
+    def has_cycles(self) -> "tuple[bool, list[_HKey] | None]":
         """
         Check if the tree contains cycles (should not in a proper tree).
 
@@ -1771,7 +1769,7 @@ class _HKey:
                 return False
         return True
 
-    def is_full_tree(self, n: Optional[int] = None) -> bool:
+    def is_full_tree(self, n: int | None = None) -> bool:
         """
         Check if this is a full tree (all nodes have 0 or n children).
 
@@ -2132,7 +2130,7 @@ class _StackedDict(defaultdict):
     # SERIALIZATION METHODS (JSON + PICKLE)
     # ========================================================================
 
-    def to_json(self, path: "str | Path", indent: Optional[int] = None) -> None:
+    def to_json(self, path: "str | Path", indent: int | None = None) -> None:
         """
         Serialize this dictionary to a JSON file.
 
@@ -2206,7 +2204,7 @@ class _StackedDict(defaultdict):
     def to_pickle(
         self,
         path: "str | Path",
-        protocol: Optional[int] = None,
+        protocol: int | None = None,
     ) -> None:
         """
         Serialize this dictionary to a pickle file with SHA-256 verification.
@@ -3037,7 +3035,7 @@ class _StackedDict(defaultdict):
 
         return self.__deepcopy__()
 
-    def pop(self, key: Union[Any, list[Any]], default=None) -> Any:
+    def pop(self, key: Any | list[Any], default=None) -> Any:
         """
         Remove and return value at key or hierarchical path.
 
@@ -3190,7 +3188,7 @@ class _StackedDict(defaultdict):
 
     def update(  # type: ignore[override]
         self,
-        __m: Union[Mapping[Any, Any], Iterable[tuple[Any, Any]], None] = None,
+        __m: Mapping[Any, Any] | Iterable[tuple[Any, Any]] | None = None,
         **kwargs,
     ) -> None:
         """
@@ -3985,9 +3983,9 @@ class _Paths:
     _StackedDict.paths : building paths for nested dictionaries.
     """
 
-    def __init__(self, stacked_dict: Optional[_StackedDict] = None):
+    def __init__(self, stacked_dict: _StackedDict | None = None):
         self._stacked_dict = stacked_dict
-        self._hkey: Optional[_HKey] = None  # Lazy initialization
+        self._hkey: _HKey | None = None  # Lazy initialization
 
     def _ensure_hkey(self) -> "_HKey":
         """
@@ -4340,9 +4338,9 @@ class _CPaths(_Paths):
     _Paths : Base class for path views
     """
 
-    def __init__(self, stacked_dict: Optional[_StackedDict] = None):
+    def __init__(self, stacked_dict: _StackedDict | None = None):
         super().__init__(stacked_dict)
-        self._structure: Optional[list[Any]] = None
+        self._structure: list[Any] | None = None
 
     def _ensure_structure(self) -> list[Any]:
         """
@@ -4423,7 +4421,7 @@ class _CPaths(_Paths):
 
     @structure.setter
     def structure(
-        self, value: Union[_StackedDict, _HKey, list[Any], dict[str, Any]]
+        self, value: _StackedDict | _HKey | list[Any] | dict[str, Any]
     ) -> None:
         """
         set or build the compact structure representation.
@@ -4576,7 +4574,7 @@ class _CPaths(_Paths):
         """
         all_paths = []
 
-        def expand_node(node: Any, prefix: Optional[list[Any]] = None) -> None:
+        def expand_node(node: Any, prefix: list[Any] | None = None) -> None:
             """
             Recursively expand a node.
 

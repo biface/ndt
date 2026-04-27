@@ -4,7 +4,7 @@ These exceptions extend the standard **Exception**, **KeyError** and **Attribute
 to provide more context and better error handling for nested dictionary operations.
 """
 
-from typing import Any, Optional
+from typing import Any
 
 
 class StackedDictionaryError(Exception):
@@ -17,9 +17,9 @@ class StackedDictionaryError(Exception):
 
     def __init__(
         self,
-        message: Optional[str] = None,
+        message: str | None = None,
         error_code: int = 0,
-        path: Optional[list[Any]] = None,
+        path: list[Any] | None = None,
     ) -> None:
         """
         Initialize a StackedDictionaryError.
@@ -56,9 +56,9 @@ class NestedDictionaryException(StackedDictionaryError):
 
     def __init__(
         self,
-        message: Optional[str] = None,
+        message: str | None = None,
         error_code: int = 0,
-        path: Optional[list[Any]] = None,
+        path: list[Any] | None = None,
     ) -> None:
         """
         Initialize a NestedDictionaryException.
@@ -83,9 +83,9 @@ class StackedKeyError(KeyError, StackedDictionaryError):
 
     def __init__(
         self,
-        message: Optional[str] = None,
-        key: Optional[Any] = None,
-        path: Optional[list[Any]] = None,
+        message: str | None = None,
+        key: Any | None = None,
+        path: list[Any] | None = None,
     ) -> None:
         """
         Initialize a StackedKeyError.
@@ -117,9 +117,9 @@ class StackedAttributeError(AttributeError, StackedDictionaryError):
 
     def __init__(
         self,
-        message: Optional[str] = None,
-        attribute: Optional[str] = None,
-        path: Optional[list[Any]] = None,
+        message: str | None = None,
+        attribute: str | None = None,
+        path: list[Any] | None = None,
     ) -> None:
         """
         Initialize a StackedAttributeError.
@@ -151,10 +151,10 @@ class StackedTypeError(TypeError, StackedDictionaryError):
 
     def __init__(
         self,
-        message: Optional[str] = None,
-        expected_type: Optional[type] = None,
-        actual_type: Optional[type] = None,
-        path: Optional[list[Any]] = None,
+        message: str | None = None,
+        expected_type: type | None = None,
+        actual_type: type | None = None,
+        path: list[Any] | None = None,
     ) -> None:
         """
         Initialize a StackedTypeError.
@@ -162,9 +162,9 @@ class StackedTypeError(TypeError, StackedDictionaryError):
         :param message: A message describing the error.
         :type message: str
         :param expected_type: The expected type for the operation.
-        :type expected_type: Optional[type]
+        :type expected_type: type | None
         :param actual_type: The actual type that was provided.
-        :type actual_type: Optional[type]
+        :type actual_type: type | None
         :param path: The path in the nested dictionary where the error occurred.
         :type path: list[Any]
         """
@@ -189,9 +189,9 @@ class StackedValueError(ValueError, StackedDictionaryError):
 
     def __init__(
         self,
-        message: Optional[str] = None,
-        value: Optional[Any] = None,
-        path: Optional[list[Any]] = None,
+        message: str | None = None,
+        value: Any | None = None,
+        path: list[Any] | None = None,
     ) -> None:
         """
         Initialize a StackedValueError.
@@ -222,7 +222,7 @@ class StackedIndexError(IndexError, StackedDictionaryError):
     """
 
     def __init__(
-        self, message: Optional[str] = None, path: Optional[list[Any]] = None
+        self, message: str | None = None, path: list[Any] | None = None
     ) -> None:
         """
         Initialize a StackedIndexError.

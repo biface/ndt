@@ -3,8 +3,6 @@ This module provides tools and class for creating nested dictionaries, since sta
 dictionaries.
 """
 
-import warnings
-
 from .tools import _CPaths, _Paths, _StackedDict
 
 """Classes section"""
@@ -377,49 +375,3 @@ class CompactPathsView(_CPaths):
         """
         return PathsView(self._stacked_dict)
 
-
-class DictPaths(_CPaths):
-    """
-    Class of compact nested paths.
-
-    .. deprecated:: 0.9.0
-        `DictPaths` is deprecated and will be removed in version 1.0.0.
-        Use :class:`CompactPathsView` instead.
-
-    Parameters
-    ----------
-    value : NestedDictionary or _StackedDict
-        The nested dictionary to create a compact view for
-
-    Notes
-    -----
-    **Migration guide:**
-
-    - Replace ``DictPaths(nd)`` with ``nd.compact_paths()``
-    - Or use ``CompactPathsView(nd)`` directly
-
-    Examples
-    --------
-    >>> # Old way (deprecated)
-    >>> dpaths = DictPaths(nd)  # doctest: +SKIP
-
-    >>> # New way (recommended)
-    >>> cpaths = nd.compact_paths()
-
-    >>> # Or directly
-    >>> cpaths = CompactPathsView(nd)
-
-    See Also
-    --------
-    CompactPathsView : The replacement class for DictPaths
-    NestedDictionary.compact_paths : Method to create a CompactPathsView
-    """
-
-    def __init__(self, value):
-        warnings.warn(
-            "DictPaths is deprecated since version 0.9.0 and will be removed in version 1.0.0. "
-            "Use CompactPathsView or NestedDictionary.compact_paths() instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        super().__init__(value)
