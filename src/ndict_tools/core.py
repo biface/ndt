@@ -374,4 +374,3 @@ class CompactPathsView(_CPaths):
         'PathsView'
         """
         return PathsView(self._stacked_dict)
-

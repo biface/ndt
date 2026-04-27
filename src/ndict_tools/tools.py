@@ -836,9 +836,7 @@ class _HKey:
         """
         yield from self._dfs_traverse(visit, preorder=False)
 
-    def bfs(
-        self, visit: "Callable[[_HKey], None] | None" = None
-    ) -> Iterator["_HKey"]:
+    def bfs(self, visit: "Callable[[_HKey], None] | None" = None) -> Iterator["_HKey"]:
         """
         Breadth-First Search (level-order) traversal.
 
