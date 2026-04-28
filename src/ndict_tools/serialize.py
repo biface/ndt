@@ -21,7 +21,7 @@ Design decisions
 import ast
 import hashlib
 import json
-import pickle
+import pickle  # nosec B403
 import warnings
 from pathlib import Path
 from typing import Any, Callable, Optional
@@ -380,4 +380,4 @@ def _pickle_load(
                 value=str(path),
             )
 
-    return pickle.loads(data)  # noqa: S301
+    return pickle.loads(data)  # nosec B301

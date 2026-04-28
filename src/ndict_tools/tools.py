@@ -21,7 +21,6 @@ designed to:
 """
 
 import json
-import pickle
 import warnings
 from collections import defaultdict, deque
 from pathlib import Path
