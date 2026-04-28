@@ -6,11 +6,8 @@ on:
     types:
       - completed
     branches:
-      - "updates/**"      # Toutes les branches de versions (updates/1.0.0, updates/1.1.0, etc.)
-      - "updates/code/**" # Compatibilité avec les branches actuelles
-      - "staging/**"      # Toutes les branches de staging (staging/1.0.x, staging/1.1.x, etc.)
-      - main
-      - master
+      - "staging/**"   # release candidates
+      - master         # production
 
 jobs:
   coverage:
@@ -25,7 +22,7 @@ jobs:
         ref: ${{ github.event.workflow_run.head_sha }}
 
     - name: Setup Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: "3.12"
 
@@ -38,7 +35,6 @@ jobs:
       run: tox -e gh-ci
 
     - name: Upload coverage reports to Codecov
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
       uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}

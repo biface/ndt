@@ -2,9 +2,9 @@ name: Python CI - Tests
 
 on:
   push:
-    branches: # Cela inclut toutes les branches
+    branches:
       - "**"
-  pull_request: # Optionnel, pour exécuter également sur les PR
+  pull_request:
     branches:
       - "**"
 
@@ -26,7 +26,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Setup Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -35,11 +35,5 @@ jobs:
         python -m pip install --upgrade pip
         pip install tox
 
-    - name: Run check online environment with tox
+    - name: Run check with tox
       run: tox -e gh-ci
-
-    - name: Upload coverage reports to Codecov
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-      uses: codecov/codecov-action@v5
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
