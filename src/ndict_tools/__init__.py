@@ -1,6 +1,5 @@
 from .core import (
     CompactPathsView,
-    DictPaths,
     NestedDictionary,
     PathsView,
     SmoothNestedDictionary,

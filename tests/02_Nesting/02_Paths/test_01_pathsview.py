@@ -286,7 +286,7 @@ class TestPathSmoothSD:
             smooth_c_nd[false_keys_type] = None
 
 
-class TestDictPathsStrictSD:
+class TestCompactPathsStrictSD:
 
     @pytest.mark.parametrize(
         "path",
