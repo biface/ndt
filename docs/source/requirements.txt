@@ -1,2 +1,7 @@
-sphinx_rtd_theme
-furo
+# Documentation build dependencies
+# Sphinx is pinned to 8.1.3 — the last version compatible with Python 3.10.
+# Upgrade to 8.2.x in v1.3.0 (Python 3.11 baseline).
+# Evaluate Sphinx 9.x in v1.4.0 (Python 3.12 baseline).
+sphinx==8.1.3
+furo==2025.12.19
+sphinx-multiversion-contrib==0.2.13
