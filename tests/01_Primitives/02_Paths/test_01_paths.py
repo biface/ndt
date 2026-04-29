@@ -373,13 +373,13 @@ class TestCompactPathsStrictSD:
         ],
     )
     def test_path(self, strict_c_sd, path):
-        assert path in strict_c_sd.dict_paths()
+        assert path in strict_c_sd.paths()
 
     def test_eq_path(self, strict_c_sd, smooth_c_sd):
-        assert strict_c_sd.dict_paths() == smooth_c_sd.dict_paths()
+        assert strict_c_sd.paths() == smooth_c_sd.paths()
 
     def test_neq_path(self, strict_c_sd, standard_strict_c_setup):
-        assert strict_c_sd.dict_paths() != _StackedDict(
+        assert strict_c_sd.paths() != _StackedDict(
             {}, default_setup=standard_strict_c_setup
         )
 

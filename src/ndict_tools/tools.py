@@ -1965,35 +1965,24 @@ class _StackedDict(defaultdict):
         settings = kwargs.pop("default_setup", None)
 
         if settings is None:
-            warnings.warn(
-                "indent and default parameters are obsolete since version 0.8.0"
-                "and will be remove in version 1.2.0. Use kwargs default_setup dictionary instead",
-                DeprecationWarning,
-                stacklevel=2,
+            raise StackedKeyError(
+                "Missing 'default_setup' argument. "
+                "Pass default_setup={'indent': <int>, 'default_factory': <class|None>}.",
+                key="default_setup",
             )
-            if "indent" not in kwargs:
-                raise StackedKeyError("Missing 'indent' arguments", key="indent")
-            else:
-                ind = kwargs.pop("indent")
 
-            if "default" not in kwargs:
-                default = None
-            else:
-                default = kwargs.pop("default")
-            setup = {("indent", ind), ("default_factory", default)}
-        else:
-            if not "indent" in settings.keys():
-                raise StackedKeyError(
-                    "Missing 'indent' argument in default settings", key="indent"
-                )
-            if not "default_factory" in settings.keys():
-                raise StackedKeyError(
-                    "Missing 'default_factory' argument in default settings",
-                    key="default_factory",
-                )
+        if "indent" not in settings:
+            raise StackedKeyError(
+                "Missing 'indent' argument in default settings", key="indent"
+            )
+        if "default_factory" not in settings:
+            raise StackedKeyError(
+                "Missing 'default_factory' argument in default settings",
+                key="default_factory",
+            )
 
-            for key, value in settings.items():
-                setup.add((key, value))
+        for key, value in settings.items():
+            setup.add((key, value))
 
         # Initializing instance
 
@@ -3496,26 +3485,6 @@ class _StackedDict(defaultdict):
 
         return __items_list
 
-    def dict_paths(self) -> "_Paths":
-        """
-        Get a view object for all hierarchical paths.
-
-        .. deprecated:: 0.9
-            This method is deprecated and will be removed in a future release.
-            Use :meth:`paths` instead.
-
-        Returns
-        -------
-        _Paths
-            View object providing access to all paths
-
-        See Also
-        --------
-        paths : Recommended replacement method
-        """
-
-        return _Paths(self)
-
     def paths(self) -> "_Paths":
         """
         Get a view object for all hierarchical paths in the dictionary.
@@ -3744,7 +3713,7 @@ class _StackedDict(defaultdict):
         leaves : Get all leaf values
         """
 
-        return max((len(path) for path in self.dict_paths()), default=0)
+        return max((len(path) for path in self.paths()), default=0)
 
     def size(self) -> int:
         """

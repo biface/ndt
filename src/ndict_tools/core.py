@@ -42,13 +42,10 @@ class NestedDictionary(_StackedDict):
 
     def __init__(self, *args, **kwargs):
 
-        indent = kwargs.pop("indent", 0)
-        strict = kwargs.pop("strict", False)
         default_setup = kwargs.pop("default_setup", None)
-        default_class = None if strict else NestedDictionary
 
         if not default_setup:
-            default_setup = {"indent": indent, "default_factory": default_class}
+            default_setup = {"indent": 0, "default_factory": NestedDictionary}
 
         super().__init__(
             *args,
