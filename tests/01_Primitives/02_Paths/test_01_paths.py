@@ -32,7 +32,8 @@ def test_path_init_empty():
     d_paths = _Paths()
     assert d_paths._stacked_dict is None
     assert d_paths._hkey is None
-    assert d_paths._ensure_hkey() is None
+    with pytest.raises(StackedKeyError):
+        d_paths._ensure_hkey()
 
 
 class TestPathStrictSD:

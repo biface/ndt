@@ -104,8 +104,7 @@ def _encode_key(key: Any) -> str:
         elements = ", ".join(repr(e) for e in key)
         return f"[frozenset{{{elements}}}]"
     raise StackedTypeError(
-        f"JSON key encoding is not supported for type {type(key).__name__}. "
-        f"Supported types: str, int, float, bool, tuple, frozenset.",
+        f"JSON key encoding is not supported for type {type(key).__name__}. Supported types: str, int, float, bool, tuple, frozenset.",
         expected_type=str,
         actual_type=type(key),
     )
@@ -218,27 +217,27 @@ class NestedDictionaryEncoder(json.JSONEncoder):
     '{"a": {"b": 1}}'
     """
 
-    def default(self, obj: Any) -> Any:
+    def default(self, o: Any) -> Any:  # type: ignore[override]
         # Lazy import to avoid circular dependency at module load time
         from .tools import _StackedDict
 
-        if isinstance(obj, _StackedDict):
-            return {_encode_key(k): v for k, v in obj.items()}
-        return super().default(obj)
+        if isinstance(o, _StackedDict):
+            return {_encode_key(k): v for k, v in o.items()}
+        return super().default(o)
 
-    def encode(self, obj: Any) -> str:
+    def encode(self, o: Any) -> str:  # type: ignore[override]
         from .tools import _StackedDict
 
-        if isinstance(obj, _StackedDict):
-            return super().encode({_encode_key(k): v for k, v in obj.items()})
-        return super().encode(obj)
+        if isinstance(o, _StackedDict):
+            return super().encode({_encode_key(k): v for k, v in o.items()})
+        return super().encode(o)
 
-    def iterencode(self, obj: Any, _one_shot: bool = False):
+    def iterencode(self, o: Any, _one_shot: bool = False):  # type: ignore[override]
         from .tools import _StackedDict
 
-        if isinstance(obj, _StackedDict):
-            obj = self._encode_stacked(obj)
-        return super().iterencode(obj, _one_shot)
+        if isinstance(o, _StackedDict):
+            o = self._encode_stacked(o)
+        return super().iterencode(o, _one_shot)
 
     def _encode_stacked(self, obj: Any) -> Any:
         """Recursively convert _StackedDict to plain dict with encoded keys."""
@@ -308,8 +307,7 @@ def _pickle_dump(
         with untrusted files.
     """
     warnings.warn(
-        "Pickle files are unsafe when loaded from untrusted sources. "
-        "Only unpickle files you created yourself or received from trusted sources.",
+        "Pickle files are unsafe when loaded from untrusted sources. Only unpickle files you created yourself or received from trusted sources.",
         UserWarning,
         stacklevel=3,
     )
@@ -366,17 +364,14 @@ def _pickle_load(
         sidecar = path.with_suffix(path.suffix + ".sha256")
         if not sidecar.exists():
             raise StackedValueError(
-                f"SHA-256 sidecar not found for '{path}'. "
-                "Use verify=False to skip integrity check.",
+                f"SHA-256 sidecar not found for '{path}'. Use verify=False to skip integrity check.",
                 value=str(path),
             )
         expected = sidecar.read_text(encoding="utf-8").strip()
         actual = hashlib.sha256(data).hexdigest()
         if actual != expected:
             raise StackedValueError(
-                f"SHA-256 digest mismatch for '{path}': "
-                f"expected {expected!r}, got {actual!r}. "
-                "The file may be corrupted or tampered with.",
+                f"SHA-256 digest mismatch for '{path}': expected {expected!r}, got {actual!r}. The file may be corrupted or tampered with.",
                 value=str(path),
             )
 

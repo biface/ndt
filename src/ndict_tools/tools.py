@@ -237,9 +237,7 @@ def from_dict(dictionary: dict, class_name: Type["T"], **class_options) -> T:
     """
 
     warnings.warn(
-        "from_dict() free function is deprecated since 1.1.0 and will be removed "
-        "in 1.5.0. Use ClassName.from_dict(dictionary, **class_options) instead. "
-        "Example: NestedDictionary.from_dict(dictionary, default_setup={...})",
+        "from_dict() free function is deprecated since 1.1.0 and will be removed in 1.5.0. Use ClassName.from_dict(dictionary, **class_options) instead. Example: NestedDictionary.from_dict(dictionary, default_setup={...})",
         DeprecationWarning,
         stacklevel=2,
     )
@@ -1494,8 +1492,7 @@ class _HKey:
             for child in node.children:
                 if child.parent != node:
                     issues.append(
-                        f"Inconsistent parent: child {child.key} has parent "
-                        f"{child.parent.key if child.parent else 'None'} but is child of {node.key}"
+                        f"Inconsistent parent: child {child.key} has parent {child.parent.key if child.parent else 'None'} but is child of {node.key}"
                     )
 
         return issues
@@ -1966,8 +1963,7 @@ class _StackedDict(defaultdict):
 
         if settings is None:
             raise StackedKeyError(
-                "Missing 'default_setup' argument. "
-                "Pass default_setup={'indent': <int>, 'default_factory': <class|None>}.",
+                "Missing 'default_setup' argument. Pass default_setup={'indent': <int>, 'default_factory': <class|None>}.",
                 key="default_setup",
             )
 
@@ -3954,17 +3950,27 @@ class _Paths:
         self._stacked_dict = stacked_dict
         self._hkey: _HKey | None = None  # Lazy initialization
 
-    def _ensure_hkey(self) -> "_HKey | None":
+    def _ensure_hkey(self) -> "_HKey":
         """
         Ensure _HKey tree is built (lazy initialization).
 
         Returns
         -------
-        _HKey or None
-            The built tree structure, or None if no dictionary is set
+        _HKey
+            The built tree structure
+
+        Raises
+        ------
+        StackedKeyError
+            If no dictionary is attached to this view
         """
         if self._stacked_dict is not None and self._hkey is None:
             self._hkey = _HKey.build_forest(self._stacked_dict)
+        if self._hkey is None:
+            raise StackedKeyError(
+                "Cannot build path tree: no dictionary attached.",
+                key="_hkey",
+            )
         return self._hkey
 
     def __iter__(self) -> Iterator[list[Any]]:
@@ -4309,17 +4315,27 @@ class _CPaths(_Paths):
         super().__init__(stacked_dict)
         self._structure: list[Any] | None = None
 
-    def _ensure_structure(self) -> "list[Any] | None":
+    def _ensure_structure(self) -> "list[Any]":
         """
         Ensure compact structure is built (lazy initialization).
 
         Returns
         -------
-        list[Any] or None
-            The compact structure, or None if no dictionary is set
+        list[Any]
+            The compact structure
+
+        Raises
+        ------
+        StackedKeyError
+            If no dictionary is attached to this view
         """
         if self._stacked_dict is not None and self._structure is None:
             self._structure = self._build_compact_structure()
+        if self._structure is None:
+            raise StackedKeyError(
+                "Cannot build compact structure: no dictionary attached.",
+                key="_structure",
+            )
         return self._structure
 
     @staticmethod
