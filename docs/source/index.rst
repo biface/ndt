@@ -7,28 +7,28 @@ representation, and coverage analysis — all absent from the standard
 :class:`dict` and :class:`collections.defaultdict`.
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Concepts
    :name: concepts-toc
 
    concepts/index
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Guide
    :name: guide-toc
 
    guide/index
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Changelog
    :name: changelog-toc
 
    changelog/index
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: API Reference
    :name: api-toc
 
