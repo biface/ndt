@@ -27,6 +27,7 @@ extensions = [
     "sphinx.ext.duration",
     "sphinx.ext.todo",
     "sphinx_multiversion",
+    "myst_parser",
 ]
 
 templates_path = ["_templates"]
@@ -80,4 +81,12 @@ html_sidebars = {
         "sidebar/scroll-end.html",
         "versioning.html",
     ]
+}
+
+# -- External links ----------------------------------------------------------
+# Defines :issue:`N` and :pr:`N` shorthand roles.
+extensions.append("sphinx.ext.extlinks")
+extlinks = {
+    "issue": ("https://github.com/biface/ndt/issues/%s", "issue #%s"),
+    "pr": ("https://github.com/biface/ndt/pull/%s", "PR #%s"),
 }
