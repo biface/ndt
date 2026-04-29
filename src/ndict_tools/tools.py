@@ -3149,6 +3149,7 @@ class _StackedDict(defaultdict):
             raise StackedIndexError("popitem(): _StackedDict is empty")
 
         # Initialize a stack to traverse the dictionary
+        path: list[Any] = []
         stack = [(self, [])]  # Each entry is (current_dict, current_path)
 
         while stack:
@@ -3953,14 +3954,14 @@ class _Paths:
         self._stacked_dict = stacked_dict
         self._hkey: _HKey | None = None  # Lazy initialization
 
-    def _ensure_hkey(self) -> "_HKey":
+    def _ensure_hkey(self) -> "_HKey | None":
         """
         Ensure _HKey tree is built (lazy initialization).
 
         Returns
         -------
-        _HKey
-            The built tree structure
+        _HKey or None
+            The built tree structure, or None if no dictionary is set
         """
         if self._stacked_dict is not None and self._hkey is None:
             self._hkey = _HKey.build_forest(self._stacked_dict)
@@ -4308,14 +4309,14 @@ class _CPaths(_Paths):
         super().__init__(stacked_dict)
         self._structure: list[Any] | None = None
 
-    def _ensure_structure(self) -> list[Any]:
+    def _ensure_structure(self) -> "list[Any] | None":
         """
         Ensure compact structure is built (lazy initialization).
 
         Returns
         -------
-        list[Any]
-            The compact structure
+        list[Any] or None
+            The compact structure, or None if no dictionary is set
         """
         if self._stacked_dict is not None and self._structure is None:
             self._structure = self._build_compact_structure()

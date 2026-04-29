@@ -24,7 +24,7 @@ import json
 import pickle  # nosec B403
 import warnings
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 from .exception import StackedTypeError, StackedValueError
 
@@ -283,7 +283,7 @@ def _make_decoder_hook(cls: type, class_options: dict) -> Callable:
 def _pickle_dump(
     nd: Any,
     path: "str | Path",
-    protocol: Optional[int] = None,
+    protocol: int | None = None,
 ) -> None:
     """
     Write a ``_StackedDict`` to a pickle file with a SHA-256 sidecar.
