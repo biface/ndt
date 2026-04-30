@@ -49,7 +49,9 @@ MAX_DEPTH = 100
 T = TypeVar("T", bound="_StackedDict")
 
 
-def _reconstruct(cls: type, dictionary: dict[Any, Any], default_setup: dict[str, Any]) -> "_StackedDict":
+def _reconstruct(
+    cls: type, dictionary: dict[Any, Any], default_setup: dict[str, Any]
+) -> "_StackedDict":
     """
     Module-level reconstruction helper for pickle.
 
@@ -131,7 +133,9 @@ def compare_dict(d1, d2) -> bool:
         return d1 == d2
 
 
-def unpack_items(dictionary: dict[Any, Any]) -> Generator[tuple[tuple[Any, ...], Any], None, None]:
+def unpack_items(
+    dictionary: dict[Any, Any],
+) -> Generator[tuple[tuple[Any, ...], Any], None, None]:
     """
     Recursively flatten a nested dictionary into (path, value) pairs.
 
@@ -4657,7 +4661,9 @@ class _CPaths(_Paths):
     # ========================================================================
 
     @staticmethod
-    def _compare_path_sets(paths1: list[list[Any]], paths2: list[list[Any]]) -> tuple[Any, ...]:
+    def _compare_path_sets(
+        paths1: list[list[Any]], paths2: list[list[Any]]
+    ) -> tuple[Any, ...]:
         """
         Compare two sets of paths and return statistics (private helper).
 

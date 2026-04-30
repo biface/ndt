@@ -73,7 +73,9 @@ class NestedDictionaryException(StackedDictionaryError):
         super().__init__(message, error_code, path)
 
 
-class StackedKeyError(KeyError, StackedDictionaryError):  # pyright: ignore[reportUnsafeMultipleInheritance]
+class StackedKeyError(
+    KeyError, StackedDictionaryError
+):  # pyright: ignore[reportUnsafeMultipleInheritance]
     """
     Exception raised when a key operation fails in a stacked dictionary.
 
@@ -107,7 +109,9 @@ class StackedKeyError(KeyError, StackedDictionaryError):  # pyright: ignore[repo
         KeyError.__init__(self, message)
 
 
-class StackedAttributeError(AttributeError, StackedDictionaryError):  # pyright: ignore[reportUnsafeMultipleInheritance]
+class StackedAttributeError(
+    AttributeError, StackedDictionaryError
+):  # pyright: ignore[reportUnsafeMultipleInheritance]
     """
     Exception raised when an attribute operation fails in a stacked dictionary.
 
@@ -141,7 +145,9 @@ class StackedAttributeError(AttributeError, StackedDictionaryError):  # pyright:
         AttributeError.__init__(self, message)
 
 
-class StackedTypeError(TypeError, StackedDictionaryError):  # pyright: ignore[reportUnsafeMultipleInheritance]
+class StackedTypeError(
+    TypeError, StackedDictionaryError
+):  # pyright: ignore[reportUnsafeMultipleInheritance]
     """
     Exception raised when a type error occurs in a stacked dictionary operation.
 
@@ -179,7 +185,9 @@ class StackedTypeError(TypeError, StackedDictionaryError):  # pyright: ignore[re
         TypeError.__init__(self, message)
 
 
-class StackedValueError(ValueError, StackedDictionaryError):  # pyright: ignore[reportUnsafeMultipleInheritance]
+class StackedValueError(
+    ValueError, StackedDictionaryError
+):  # pyright: ignore[reportUnsafeMultipleInheritance]
     """
     Exception raised when a value error occurs in a stacked dictionary operation.
 
@@ -213,7 +221,9 @@ class StackedValueError(ValueError, StackedDictionaryError):  # pyright: ignore[
         ValueError.__init__(self, message)
 
 
-class StackedIndexError(IndexError, StackedDictionaryError):  # pyright: ignore[reportUnsafeMultipleInheritance]
+class StackedIndexError(
+    IndexError, StackedDictionaryError
+):  # pyright: ignore[reportUnsafeMultipleInheritance]
     """
     Exception raised when an index error occurs in a stacked dictionary operation.
 
