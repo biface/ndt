@@ -49,7 +49,7 @@ MAX_DEPTH = 100
 T = TypeVar("T", bound="_StackedDict")
 
 
-def _reconstruct(cls: type, dictionary: dict, default_setup: dict) -> "_StackedDict":
+def _reconstruct(cls: type, dictionary: dict[Any, Any], default_setup: dict[str, Any]) -> "_StackedDict":
     """
     Module-level reconstruction helper for pickle.
 
@@ -131,7 +131,7 @@ def compare_dict(d1, d2) -> bool:
         return d1 == d2
 
 
-def unpack_items(dictionary: dict) -> Generator:
+def unpack_items(dictionary: dict[Any, Any]) -> Generator[tuple[tuple[Any, ...], Any], None, None]:
     """
     Recursively flatten a nested dictionary into (path, value) pairs.
 
@@ -180,7 +180,7 @@ def unpack_items(dictionary: dict) -> Generator:
             yield (key,), value
 
 
-def from_dict(dictionary: dict, class_name: Type["T"], **class_options) -> T:
+def from_dict(dictionary: dict[Any, Any], class_name: Type["T"], **class_options) -> T:
     """
     Recursively convert a standard dictionary to a _StackedDict or subclass.
 
@@ -332,7 +332,7 @@ class _HKey:
         self.is_root: bool = is_root
 
     @classmethod
-    def build_forest(cls, stacked_dict: dict) -> "_HKey":
+    def build_forest(cls, stacked_dict: dict[Any, Any]) -> "_HKey":
         """
         Build a forest of _HKey trees from a nested dictionary.
 
@@ -362,7 +362,7 @@ class _HKey:
         root._build_from_dict(stacked_dict)
         return root
 
-    def _build_from_dict(self, current_dict: dict) -> None:
+    def _build_from_dict(self, current_dict: dict[Any, Any]) -> None:
         """
         Recursively build tree structure from a dictionary.
 
@@ -875,7 +875,7 @@ class _HKey:
         dfs_preorder : Depth-first traversal
         iter_by_level : Get nodes grouped by level
         """
-        queue: deque = deque([self])
+        queue: deque[_HKey] = deque([self])
         seen: set[int] = {id(self)}
 
         while queue:
@@ -1538,7 +1538,7 @@ class _HKey:
         if not self.has_children():
             return True
 
-        queue: deque = deque([self])
+        queue: deque[_HKey] = deque([self])
         found_incomplete = False
 
         while queue:
@@ -1836,7 +1836,7 @@ class _HKey:
         return f"_HKey(key={self.key!r}, children={len(self.children)})"
 
 
-class _StackedDict(defaultdict):
+class _StackedDict(defaultdict[Any, Any]):
     """
     Internal base class for hierarchical nested dictionary structures.
 
@@ -1955,7 +1955,7 @@ class _StackedDict(defaultdict):
 
         self.indent: int = 0
         "indent is used to print the dictionary with json indentation"
-        self._default_setup: set = set()
+        self._default_setup: set[tuple[str, Any]] = set()
         "default_setup is ued to disseminate default parameters to stacked objects"
 
         # Manage init parameters
@@ -2023,7 +2023,7 @@ class _StackedDict(defaultdict):
     # ========================================================================
 
     @classmethod
-    def from_dict(cls, dictionary: dict, **class_options) -> "_StackedDict":
+    def from_dict(cls, dictionary: dict[Any, Any], **class_options) -> "_StackedDict":
         """
         Recursively convert a standard dictionary to a ``_StackedDict`` or subclass.
 
@@ -2087,7 +2087,7 @@ class _StackedDict(defaultdict):
     # PICKLE SUPPORT
     # ========================================================================
 
-    def __reduce__(self) -> tuple:
+    def __reduce__(self) -> tuple[Any, ...]:
         """
         Support pickle serialization.
 
@@ -2257,7 +2257,7 @@ class _StackedDict(defaultdict):
         return _pickle_load(path, verify=verify)
 
     @property
-    def default_setup(self) -> list:
+    def default_setup(self) -> list[tuple[str, Any]]:
         """
         Get configuration as an ordered list of (key, value) tuples.
 
@@ -2282,7 +2282,7 @@ class _StackedDict(defaultdict):
         priority = ["indent", "default_factory"]
         # Convert internal set of tuples to dict to deduplicate and access by key
         d = {k: v for (k, v) in self._default_setup}
-        ordered: list = []
+        ordered: list[tuple[str, Any]] = []
         for p in priority:
             if p in d:
                 ordered.append((p, d[p]))
@@ -2822,7 +2822,7 @@ class _StackedDict(defaultdict):
         else:
             return compare_dict(self.to_dict(), dict(other))
 
-    def unpacked_items(self) -> Generator:
+    def unpacked_items(self) -> Generator[tuple[tuple[Any, ...], Any], None, None]:
         """
         Generate all (path, value) pairs from nested structure.
 
@@ -2861,7 +2861,7 @@ class _StackedDict(defaultdict):
         for key, value in unpack_items(self):
             yield key, value
 
-    def unpacked_keys(self) -> Generator:
+    def unpacked_keys(self) -> Generator[tuple[Any, ...], None, None]:
         """
         Generate all hierarchical paths (keys) from nested structure.
 
@@ -2892,7 +2892,7 @@ class _StackedDict(defaultdict):
         for key, value in unpack_items(self):
             yield key
 
-    def unpacked_values(self) -> Generator:
+    def unpacked_values(self) -> Generator[Any, None, None]:
         """
         Generate all terminal values from nested structure.
 
@@ -2923,7 +2923,7 @@ class _StackedDict(defaultdict):
         for key, value in unpack_items(self):
             yield value
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[Any, Any]:
         """
         Convert to a standard nested dictionary.
 
@@ -3169,7 +3169,7 @@ class _StackedDict(defaultdict):
 
         return path, value
 
-    def update(  # type: ignore[override]
+    def update(  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         __m: Mapping[Any, Any] | Iterable[tuple[Any, Any]] | None = None,
         **kwargs,
@@ -3371,7 +3371,7 @@ class _StackedDict(defaultdict):
                         __occurrences += 1
         return __occurrences
 
-    def key_list(self, key: Any) -> list:
+    def key_list(self, key: Any) -> list[list[Any]]:
         """
         Get all hierarchical paths containing a specific key.
 
@@ -3424,7 +3424,7 @@ class _StackedDict(defaultdict):
 
         return __key_list
 
-    def items_list(self, key: Any) -> list:
+    def items_list(self, key: Any) -> list[Any]:
         """
         Get all values associated with paths containing a specific key.
 
@@ -3560,7 +3560,7 @@ class _StackedDict(defaultdict):
 
         return _CPaths(self)
 
-    def dfs(self, node=None, path=None) -> Generator[tuple[list, Any], None, None]:
+    def dfs(self, node=None, path=None) -> Generator[tuple[list[Any], Any], None, None]:
         """
         Depth-First Search traversal of the nested dictionary.
 
@@ -3748,7 +3748,7 @@ class _StackedDict(defaultdict):
 
         return sum(1 for _ in self.unpacked_items())
 
-    def leaves(self) -> list:
+    def leaves(self) -> list[Any]:
         """
         Extract all leaf (terminal) values from the nested structure.
 
@@ -4652,7 +4652,7 @@ class _CPaths(_Paths):
     # ========================================================================
 
     @staticmethod
-    def _compare_path_sets(paths1: list[list[Any]], paths2: list[list[Any]]) -> tuple:
+    def _compare_path_sets(paths1: list[list[Any]], paths2: list[list[Any]]) -> tuple[Any, ...]:
         """
         Compare two sets of paths and return statistics (private helper).
 

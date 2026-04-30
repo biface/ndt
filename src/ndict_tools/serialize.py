@@ -248,7 +248,7 @@ class NestedDictionaryEncoder(json.JSONEncoder):
         return obj
 
 
-def _make_decoder_hook(cls: type, class_options: dict) -> Callable:
+def _make_decoder_hook(cls: type, class_options: dict[str, Any]) -> Callable[..., Any]:
     """
     Return an ``object_pairs_hook`` that reconstructs a ``_StackedDict``
     (or subclass) from JSON key-value pairs.
@@ -267,7 +267,7 @@ def _make_decoder_hook(cls: type, class_options: dict) -> Callable:
         A hook suitable for ``json.load(..., object_pairs_hook=hook)``.
     """
 
-    def hook(pairs: list) -> Any:
+    def hook(pairs: list[tuple[Any, Any]]) -> Any:
         decoded = {_decode_key(k): v for k, v in pairs}
         return cls.from_dict(decoded, **class_options)
 

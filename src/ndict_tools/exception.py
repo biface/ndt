@@ -31,8 +31,8 @@ class StackedDictionaryError(Exception):
         :param path: The path in the nested dictionary where the error occurred.
         :type path: list[Any]
         """
-        self.error_code = error_code
-        self.path = path or []
+        self.error_code: int = error_code
+        self.path: list[Any] = path or []
 
         # Add path information to the message if available
         if path:
@@ -73,7 +73,7 @@ class NestedDictionaryException(StackedDictionaryError):
         super().__init__(message, error_code, path)
 
 
-class StackedKeyError(KeyError, StackedDictionaryError):
+class StackedKeyError(KeyError, StackedDictionaryError):  # pyright: ignore[reportUnsafeMultipleInheritance]
     """
     Exception raised when a key operation fails in a stacked dictionary.
 
@@ -97,7 +97,7 @@ class StackedKeyError(KeyError, StackedDictionaryError):
         :param path: The path in the nested dictionary where the error occurred.
         :type path: list[Any]
         """
-        self.key = key
+        self.key: Any = key
 
         # Add key information to the message if available
         if key is not None and message:
@@ -107,7 +107,7 @@ class StackedKeyError(KeyError, StackedDictionaryError):
         KeyError.__init__(self, message)
 
 
-class StackedAttributeError(AttributeError, StackedDictionaryError):
+class StackedAttributeError(AttributeError, StackedDictionaryError):  # pyright: ignore[reportUnsafeMultipleInheritance]
     """
     Exception raised when an attribute operation fails in a stacked dictionary.
 
@@ -131,7 +131,7 @@ class StackedAttributeError(AttributeError, StackedDictionaryError):
         :param path: The path in the nested dictionary where the error occurred.
         :type path: list[Any]
         """
-        self.attribute = attribute
+        self.attribute: str | None = attribute
 
         # Add attribute information to the message if available
         if attribute and message:
@@ -141,7 +141,7 @@ class StackedAttributeError(AttributeError, StackedDictionaryError):
         AttributeError.__init__(self, message)
 
 
-class StackedTypeError(TypeError, StackedDictionaryError):
+class StackedTypeError(TypeError, StackedDictionaryError):  # pyright: ignore[reportUnsafeMultipleInheritance]
     """
     Exception raised when a type error occurs in a stacked dictionary operation.
 
@@ -168,8 +168,8 @@ class StackedTypeError(TypeError, StackedDictionaryError):
         :param path: The path in the nested dictionary where the error occurred.
         :type path: list[Any]
         """
-        self.expected_type = expected_type
-        self.actual_type = actual_type
+        self.expected_type: type | None = expected_type
+        self.actual_type: type | None = actual_type
 
         # Add type information to the message if available (Python 3.9+ compatible)
         if expected_type and actual_type and message:
@@ -179,7 +179,7 @@ class StackedTypeError(TypeError, StackedDictionaryError):
         TypeError.__init__(self, message)
 
 
-class StackedValueError(ValueError, StackedDictionaryError):
+class StackedValueError(ValueError, StackedDictionaryError):  # pyright: ignore[reportUnsafeMultipleInheritance]
     """
     Exception raised when a value error occurs in a stacked dictionary operation.
 
@@ -203,7 +203,7 @@ class StackedValueError(ValueError, StackedDictionaryError):
         :param path: The path in the nested dictionary where the error occurred.
         :type path: list[Any]
         """
-        self.value = value
+        self.value: Any = value
 
         # Add value information to the message if available
         if value is not None and message:
@@ -213,7 +213,7 @@ class StackedValueError(ValueError, StackedDictionaryError):
         ValueError.__init__(self, message)
 
 
-class StackedIndexError(IndexError, StackedDictionaryError):
+class StackedIndexError(IndexError, StackedDictionaryError):  # pyright: ignore[reportUnsafeMultipleInheritance]
     """
     Exception raised when an index error occurs in a stacked dictionary operation.
 
