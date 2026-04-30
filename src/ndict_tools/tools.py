@@ -2116,8 +2116,11 @@ class _StackedDict(defaultdict[Any, Any]):
         """
         Serialize this dictionary to a JSON file.
 
-        Non-string keys are encoded using the strategy defined in DD-021.
-        File I/O is delegated to ``json.dump``.
+        Non-string keys are encoded as type-tagged strings of the form
+        ``__type__:value`` (e.g., integer key ``42`` → ``"__int__:42"``,
+        tuple key ``(1, 2)`` → ``"__tuple__:(1, 2)"``). Round-trips are
+        lossless for supported types: ``str``, ``int``, ``float``, ``bool``,
+        flat ``tuple``, flat ``frozenset``. File I/O is delegated to ``json.dump``.
 
         Parameters
         ----------
@@ -2148,8 +2151,10 @@ class _StackedDict(defaultdict[Any, Any]):
         """
         Reconstruct a ``_StackedDict`` (or subclass) from a JSON file.
 
-        Encoded non-string keys are decoded back to their original Python
-        types using the strategy defined in DD-021.
+        Non-string keys stored as ``__type__:value`` tagged strings are
+        decoded back to their original Python types. Round-trips are lossless
+        for supported types: ``str``, ``int``, ``float``, ``bool``, flat
+        ``tuple``, flat ``frozenset``.
 
         Parameters
         ----------

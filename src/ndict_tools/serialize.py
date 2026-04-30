@@ -7,15 +7,23 @@ used by the serialization methods on ``_StackedDict`` (``to_json``, ``from_json`
 
 Contents
 --------
-- ``_encode_key`` / ``_decode_key`` : JSON key encoding per DD-021
+- ``_encode_key`` / ``_decode_key`` : JSON key encoding via type-tagged string prefix
 - ``NestedDictionaryEncoder``       : ``json.JSONEncoder`` subclass
 - ``_make_decoder_hook``            : factory for ``object_pairs_hook``
 - ``_pickle_dump`` / ``_pickle_load``: pickle helpers with SHA-256 verification
 
 Design decisions
 ----------------
-- DD-021 : JSON key encoding strategy
-- DD-022 : Serialization API placement
+- **JSON key encoding** (design decision `#87 <https://github.com/biface/ndt/issues/87>`_):
+  JSON mandates string keys; Python supports arbitrary hashable keys. Non-string keys
+  are encoded as ``__type__:value`` tagged strings (e.g., ``__int__:42``,
+  ``__tuple__:(1, 2)``). Decoding uses ``ast.literal_eval`` for safe reconstruction of
+  ``tuple`` and ``frozenset`` values. Known limitation: string keys that already start
+  with a ``__type__:`` prefix are indistinguishable from encoded keys.
+- **API placement** (design decision `#94 <https://github.com/biface/ndt/issues/94>`_):
+  Serialization methods (``to_json``, ``from_json``, ``to_pickle``, ``from_pickle``)
+  are defined on ``_StackedDict`` and delegate to the private helpers below via lazy
+  imports. This creates an accepted import cycle between ``tools.py`` and this module.
 """
 
 import ast
@@ -29,7 +37,7 @@ from typing import Any, Callable
 from .exception import StackedTypeError, StackedValueError
 
 # ---------------------------------------------------------------------------
-# Key encoding / decoding — DD-021
+# Key encoding / decoding
 # ---------------------------------------------------------------------------
 
 #: Supported key types for JSON encoding.
@@ -41,8 +49,12 @@ def _encode_key(key: Any) -> str:
     Encode a ``_StackedDict`` key to a JSON-safe string.
 
     JSON mandates string keys. This function maps any supported hashable
-    Python key to a unique, reversible string representation following the
-    convention defined in DD-021.
+    Python key to a unique, reversible string using a type-tagged prefix of
+    the form ``__type__:value`` (e.g., integer ``42`` → ``"__int__:42"``,
+    tuple ``(1, 2)`` → ``"__tuple__:(1, 2)"``). Plain string keys are passed
+    through unchanged. Known limitation: a string key that already starts with
+    a recognised prefix (e.g. ``"__int__:42"``) is indistinguishable from an
+    encoded integer key after a round-trip.
 
     Parameters
     ----------
@@ -114,7 +126,15 @@ def _decode_key(encoded: str) -> Any:
     """
     Decode an encoded JSON key back to its original Python type.
 
-    Applies the five sequential decoding rules defined in DD-021.
+    Applies five sequential decoding rules in priority order:
+
+    1. ``__bool__:`` prefix → ``bool`` (checked before ``int`` to avoid misclassification).
+    2. ``__int__:`` prefix → ``int``.
+    3. ``__float__:`` prefix → ``float``.
+    4. ``__frozenset__:`` prefix → ``frozenset`` (via ``ast.literal_eval``).
+    5. ``__tuple__:`` prefix → ``tuple`` (via ``ast.literal_eval``).
+    6. No recognised prefix → plain ``str`` (identity).
+
     No ``eval()`` is used. ``ast.literal_eval()`` is used only for flat
     tuples of Python scalars, which are valid Python literals by definition.
 
