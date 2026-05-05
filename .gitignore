@@ -55,9 +55,9 @@ pip-delete-this-directory.txt
 
 # Unit test / coverage reports 
 htmlcov/ 
-.tox/ 
+.tox/
 .coverage 
-.coverage.* 
+.coverage.*
 .cache 
 .pytest_cache/ 
 nosetests.xml 
@@ -84,10 +84,13 @@ celerybeat-schedule.*
 .env 
 .venv 
 env/ 
-venv/ 
+venv/
+.venv/
 ENV/ 
 env.bak/ 
-venv.bak/ 
+venv.bak/
+.venv.bak/
+uv.lock
 
 # mkdocs documentation 
 /site 

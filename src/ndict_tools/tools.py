@@ -116,7 +116,7 @@ def compare_dict(d1, d2) -> bool:
     - Dictionary key sets must match exactly
     - Recursively handles nested structures of arbitrary depth
     """
-    if type(d1) != type(d2):
+    if type(d1) is not type(d2):
         return False
     if isinstance(d1, dict):
         if set(d1.keys()) != set(d2.keys()):
@@ -1951,8 +1951,8 @@ class _StackedDict(defaultdict[Any, Any]):
         - All configuration is propagated to nested instances
         """
 
-        ind: int = 0
-        default = None
+        # ind: int = 0
+        # default = None
         setup = set()
 
         # Initialize instance attributes

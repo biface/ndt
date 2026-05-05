@@ -92,8 +92,7 @@ template: |
   <!-- Verify before publishing the release -->
   | Gate | Command | Status |
   |------|---------|--------|
-  | Tests | `tox -e gh-ci` | <!-- ✅ / ❌ --> |
-  | Type checking | `mypy --strict src/` | <!-- ✅ / ❌ --> |
+  | Tests | `bash .tox-config/scripts/test.sh` | <!-- ✅ / ❌ --> |
   | Static analysis | `basedpyright src/` | <!-- ✅ / ❌ --> |
   | Coverage | `pytest --cov` ≥ 80 % | <!-- ✅ / ❌ --> |
   | Formatting | `black --check --target-version py310 src/` | <!-- ✅ / ❌ --> |
