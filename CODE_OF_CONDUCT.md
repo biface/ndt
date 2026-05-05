@@ -1,5 +1,7 @@
 # Code of Conduct
 
+**[Version française disponible](CODE_DE_CONDUITE.md)**
+
 ## Scope
 
 This code of conduct applies to anyone who participates in the **ndict-tools** project

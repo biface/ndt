@@ -1,5 +1,7 @@
 # Code de Conduite
 
+**[English version available](CODE_OF_CONDUCT.md)**
+
 ## Portée
 
 Ce code de conduite s'applique à toute personne qui participe au projet **ndict-tools** ou
