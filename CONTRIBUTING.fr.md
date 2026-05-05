@@ -1,10 +1,12 @@
-# Contribuer à NDT
+# Contribuer à ndict-tools
 
 **[English version available](CONTRIBUTING.md)**
 
-Merci de votre intérêt pour contribuer au projet NDT !
+Merci de votre intérêt pour contribuer au projet ndict-tools !
 
-## Devenir Contributeur
+---
+
+## Devenir contributeur
 
 Pour devenir contributeur officiel :
 
@@ -15,60 +17,172 @@ Pour devenir contributeur officiel :
    - Adresse email
    - Ce qui vous motive à contribuer à ce projet
 
-Les mainteneurs examineront votre candidature et vous contacteront pour discuter des prochaines étapes.
+Les mainteneurs examineront votre candidature et vous contacteront pour discuter des
+prochaines étapes.
 
-## Processus de Développement
+---
 
-Ce projet suit une **méthodologie de livraison contrôlée de logiciels** avec des workflows automatisés. La méthodologie complète est documentée en détail ici :
+## Prérequis
 
-**📖 [Controlled Delivery Software - Documentation Complète](https://gitlab.com/biface/biface/-/wikis/controlled-delivery-software)** *(en anglais)*
+- Python 3.10 (version de référence)
+- [uv](https://docs.astral.sh/uv/) installé sur le système
+- Git
 
-### Vue d'Ensemble de la Structure des Branches
+---
 
-| Type de Branche | Pattern | Objectif | Exemple |
-|-----------------|---------|----------|---------|
-| **Production** | `main` | Versions stables publiées sur PyPI | `main` |
-| **Développement Version** | `updates/X.Y.0` | Développement par version | `updates/1.0.0` |
-| **Pré-production** | `staging/X.Y.x` | Tests avant publication | `staging/1.0.x` |
-| **Feature** | `feature/*` | Nouvelles fonctionnalités | `feature/add-validation` |
-| **Hotfix** | `hotfix/*` | Corrections urgentes | `hotfix/security-fix` |
+## Mise en place de l'environnement de développement
 
-### Stratégie de Versionnage
+### 1. Cloner le dépôt
 
-Nous utilisons un **système de versions mineures pair/impair** :
-
-- **Versions impaires** (1.1.x, 1.3.x) : Expérimentales, publiées sur TestPyPI uniquement
-- **Versions paires** (1.0.x, 1.2.x) : Stables, publiées sur PyPI officiel
-
-**Exemple de flux :**
-```
-Développement feature → updates/1.1.0 → staging/1.1.x → TestPyPI (expérimental)
-                                                       → Validation
-Stabilisation → updates/1.2.0 → staging/1.2.x → TestPyPI → main → PyPI (stable)
+```bash
+git clone https://github.com/biface/ndt.git
+cd ndt
 ```
 
-## Workflows Automatisés
+### 2. Créer l'environnement virtuel
 
-Ce projet utilise 6 workflows GitHub Actions automatisés. La documentation technique complète est disponible ici :
+```bash
+uv venv --python 3.10
+source .venv/bin/activate       # Linux / macOS
+# .venv\Scripts\activate        # Windows
+```
 
-**📖 [Documentation des Pipelines d'Automation](https://github.com/biface/biface/blob/main/automation/pipelines.md)**
+### 3. Installer les dépendances de développement
 
-### Vue d'Ensemble des Workflows
+```bash
+uv sync --extra dev --extra docs
+```
 
-| Workflow | Déclencheur | Branches | Action |
-|----------|-------------|----------|--------|
-| **1. Tests** | Push, PR | Toutes les branches | Exécute les tests sur Python 3.9-3.12 |
-| **2. Coverage** | Après Tests | `updates/*`, `staging/*`, `main` | Calcule la couverture de code |
-| **3. Build** | Après Coverage | `staging/*`, `main` | Compile le package (.whl, .tar.gz) |
-| **4. TestPyPI** | Après Build | `staging/*`, `main` | Publie sur test.pypi.org |
-| **5. PyPI** | Après TestPyPI | `main` uniquement | Publie sur pypi.org (production) |
-| **6. Release** | Après PyPI | `main` uniquement | Crée le tag Git et la GitHub Release |
+### 4. Installer tox et tox-uv
 
-**Exécution des workflows par branche :**
+```bash
+uv pip install tox tox-uv
+```
 
-| Type de Branche | Tests | Coverage | Build | TestPyPI | PyPI | Release |
-|-----------------|-------|----------|-------|----------|------|---------|
-| `feature/*` | ✅ | - | - | - | - | - |
-| `updates/*` | ✅ | ✅ | - | - | - | - |
-| `staging/*` | ✅ | ✅ | ✅ | ✅ | - | - |
-| `main` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+### 5. Vérifier l'installation
+
+```bash
+tox --version
+python -c "import sys; print(sys.version, sys.prefix)"
+```
+
+---
+
+## Configuration de PyCharm
+
+Après la création de `.venv/` avec uv, PyCharm doit être pointé vers le nouvel
+interpréteur :
+
+`Settings` → `Project: ndt` → `Python Interpreter`
+→ `Add Interpreter` → `Add Local Interpreter` → `Existing`
+→ sélectionner `.venv/bin/python`
+
+> **Note :** si vous utilisiez précédemment `venv/` (l'ancien environnement pip),
+> PyCharm peut encore le référencer. Vérifiez toujours le chemin de l'interpréteur
+> après avoir recréé l'environnement.
+
+---
+
+## Stratégie de branches
+
+| Type de branche | Pattern | Objectif | Exemple |
+|---|---|---|---|
+| Production | `master` | Versions stables publiées sur PyPI | `master` |
+| Développement de version | `update/X.Y.Z` | Développement pour une version | `update/1.2.0` |
+| Pré-production | `staging/X.Y.Z` | Tests avant publication | `staging/1.2.0` |
+| Fonctionnalité | `feature/*` | Nouvelles fonctionnalités | `feature/add-validation` |
+
+```
+feature/*  ──PR──▶  update/X.Y.Z  ──PR──▶  staging/X.Y.Z  ──PR──▶  master
+```
+
+- Le travail s'effectue sur les branches `update/X.Y.Z`.
+- `staging/X.Y.Z` est créée depuis `master` au moment de la release.
+- Les commits directs sur `master` ne sont pas autorisés.
+
+---
+
+## Environnements tox
+
+### Développement local
+
+| Commande | Usage |
+|---|---|
+| `tox -e format` | Formatage automatique (black + isort) |
+| `tox -e check` | Vérification rapide (sans correction) |
+| `tox -e basedpyright` | Vérification de types uniquement |
+| `tox -e flake8` | Analyse statique uniquement |
+| `tox -e bandit` | Analyse de sécurité uniquement |
+| `tox -e py310` | Tests sur Python 3.10 |
+| `tox -e coverage` | Génération du rapport de couverture |
+| `tox -e pre-push` | Workflow complet avant push |
+| `tox -e local` | Alias de `pre-push` |
+
+### Environnements CI (GitHub Actions uniquement — ne pas exécuter en local)
+
+| Environnement | Usage |
+|---|---|
+| `ci-quality` | Contrôle qualité (format + lint + types + sécurité) |
+| `ci-tests` | Exécution de la matrice de tests (Python 3.10–3.14) |
+
+> **Important :** `ci-quality` et `ci-tests` sont conçus pour GitHub Actions.
+> Utilisez `tox -e pre-push` ou `tox -e check` pour les vérifications locales.
+
+---
+
+## Vue d'ensemble de la chaîne CI
+
+| Événement | Workflow déclenché | Résultat |
+|---|---|---|
+| Push sur n'importe quelle branche | Python CI - Quality | Contrôles qualité |
+| Quality réussie | Python CI - Tests | Tests multi-versions (3.10–3.14) |
+| Tests réussis (staging/**, master) | Python CI - Coverage | Upload Codecov |
+| Push tag `vX.Y.Zrc1` | Python CI - Build → Publish TestPyPI | RC sur TestPyPI |
+| Push tag `vX.Y.Z` | Python CI - Build → Publish PyPI | Release finale sur PyPI |
+
+> La chaîne `workflow_run` complète (Quality → Tests → Coverage) ne fonctionne
+> qu'une fois les fichiers de workflow présents sur `master`.
+
+---
+
+## Workflow avant l'ouverture d'une PR
+
+Toujours exécuter le workflow local complet avant de pousser :
+
+```bash
+tox -e pre-push
+```
+
+Cela exécute dans l'ordre :
+
+1. Formatage automatique (black + isort)
+2. Vérification de types (basedpyright)
+3. Analyse statique (flake8)
+4. Analyse de sécurité (bandit)
+5. Tests multi-versions séquentiels (`.tox-config/scripts/test.sh`)
+6. Rapport de couverture (`.tox-config/scripts/coverage.sh`)
+
+---
+
+## Conventions de commit
+
+- Langue : **anglais**
+- Style : verbe impératif, minuscules (`fix`, `add`, `remove`, `update`)
+- Format : `<type>: <description courte>`
+- Fermer les issues avec `Closes #N` dans le corps du commit
+- Regrouper les modifications liées dans un seul commit atomique
+
+**Types :** `feat`, `fix`, `chore`, `docs`, `test`, `ci`, `refactor`
+
+---
+
+## Décisions de conception
+
+Tout choix architectural non trivial doit être documenté dans `DESIGN_DECISIONS.md`
+**avant** le début de l'implémentation. Utiliser le format d'identifiant DD-NNN.
+
+---
+
+## Objectif de couverture
+
+80–90 % de couverture de lignes (imposé par `.codecov.yml`).
