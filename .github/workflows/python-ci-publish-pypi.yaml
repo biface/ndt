@@ -2,130 +2,123 @@ name: Python CI - Publish PyPI
 
 on:
   workflow_run:
-    workflows: ["Python CI - Publish TestPyPI"]
+    workflows: ["Python CI - Build"]
     types:
       - completed
-    branches:
-      - main         # Production uniquement
-      - master       # Production (alias)
 
 jobs:
-  check-and-publish-pypi:
-    name: Check version and publish to PyPI (Production)
+  publish-pypi:
+    name: Publish final release to PyPI
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # Run only if build succeeded and the tag is a final release (no 'rc')
+    if: |
+      github.event.workflow_run.conclusion == 'success' &&
+      !contains(github.event.workflow_run.head_branch, 'rc')
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         ref: ${{ github.event.workflow_run.head_sha }}
 
     - name: Setup Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: "3.12"
 
-    - name: Get version info
-      id: version_info
+    - name: Extract version from tag
+      id: version
       run: |
-        pip install tomli
-        VERSION=$(python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['version'])")
-        PACKAGE_NAME=$(python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['name'])")
-        
+        TAG="${{ github.event.workflow_run.head_branch }}"
+        VERSION="${TAG#v}"
+        echo "tag=$TAG" >> $GITHUB_OUTPUT
         echo "version=$VERSION" >> $GITHUB_OUTPUT
-        echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+        echo "Tag: $TAG — Version: $VERSION"
 
     - name: Check if version exists on PyPI
-      id: check_pypi
+      id: check
       run: |
-        VERSION="${{ steps.version_info.outputs.version }}"
-        PACKAGE_NAME="${{ steps.version_info.outputs.package_name }}"
-        
-        echo "Checking if $PACKAGE_NAME==$VERSION exists on PyPI..."
-        
-        if curl -s "https://pypi.org/pypi/$PACKAGE_NAME/json" | grep -q "\"$VERSION\""; then
+        pip install tomli
+        VERSION="${{ steps.version.outputs.version }}"
+        PACKAGE=$(python -c "import tomli; print(tomli.load(open('pyproject.toml','rb'))['project']['name'])")
+
+        echo "package=$PACKAGE" >> $GITHUB_OUTPUT
+
+        if curl -sf "https://pypi.org/pypi/$PACKAGE/$VERSION/json" > /dev/null; then
           echo "exists=true" >> $GITHUB_OUTPUT
-          echo "✅ Version $VERSION already exists on PyPI - skipping publication"
+          echo "✅ $PACKAGE==$VERSION already on PyPI — skipping"
         else
           echo "exists=false" >> $GITHUB_OUTPUT
-          echo "📦 Version $VERSION does not exist on PyPI - will publish"
+          echo "📦 $PACKAGE==$VERSION not on PyPI — will publish"
         fi
 
     - name: Download build artifacts
-      if: steps.check_pypi.outputs.exists == 'false'
-      uses: dawidd6/action-download-artifact@v6
+      if: steps.check.outputs.exists == 'false'
+      uses: actions/download-artifact@v4
       with:
-        workflow: python-ci-build.yaml
-        workflow_conclusion: success
         name: python-package-distributions
         path: dist/
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        run-id: ${{ github.event.workflow_run.id }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Publish to PyPI
-      if: steps.check_pypi.outputs.exists == 'false'
+      if: steps.check.outputs.exists == 'false'
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         password: ${{ secrets.PYPI_API_TOKEN }}
         skip-existing: true
 
-    - name: Verify PyPI publication
-      if: steps.build_info.outputs.exists_on_pypi == 'false'
+    - name: Verify PyPI availability
+      if: steps.check.outputs.exists == 'false'
       run: |
-        VERSION="${{ steps.build_info.outputs.version }}"
-        PACKAGE_NAME="${{ steps.build_info.outputs.package_name }}"
-        
-        echo "Waiting for PyPI to propagate the package..."
-        
-        MAX_ATTEMPTS=20
-        ATTEMPT=0
-        
-        while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
-          ATTEMPT=$((ATTEMPT + 1))
-          echo "Attempt $ATTEMPT/$MAX_ATTEMPTS: Checking if package is available on PyPI..."
-          
-          if curl -s "https://pypi.org/pypi/$PACKAGE_NAME/$VERSION/json" | grep -q "\"$VERSION\""; then
-            echo "✓ Package $PACKAGE_NAME==$VERSION is now available on PyPI"
+        VERSION="${{ steps.version.outputs.version }}"
+        PACKAGE="${{ steps.check.outputs.package }}"
+        MAX=20
+        for i in $(seq 1 $MAX); do
+          echo "Attempt $i/$MAX..."
+          if curl -sf "https://pypi.org/pypi/$PACKAGE/$VERSION/json" > /dev/null; then
+            echo "✅ $PACKAGE==$VERSION available on PyPI"
             exit 0
           fi
-          
-          if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
-            echo "Package not yet available, waiting 15 seconds..."
-            sleep 15
-          fi
+          sleep 15
         done
-        
-        echo "::warning::Package may not be fully propagated yet, but continuing..."
+        echo "::error::Package did not become available after $MAX attempts"
+        exit 1
 
-    - name: Add production comment
-      if: steps.build_info.outputs.exists_on_pypi == 'false'
-      uses: actions/github-script@v7
+    - name: Get release draft
+      id: draft
+      if: steps.check.outputs.exists == 'false'
+      run: |
+        DRAFT=$(gh api repos/${{ github.repository }}/releases \
+          --jq '[.[] | select(.draft == true)] | first')
+        NAME=$(echo "$DRAFT" | jq -r '.name // ""')
+        BODY=$(echo "$DRAFT" | jq -r '.body // ""')
+        echo "name=$NAME" >> $GITHUB_OUTPUT
+        echo "body<<EOF" >> $GITHUB_OUTPUT
+        echo "$BODY" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Create GitHub release
+      if: steps.check.outputs.exists == 'false'
+      uses: softprops/action-gh-release@v3
       with:
-        script: |
-          const version = '${{ steps.build_info.outputs.version }}';
-          const packageName = '${{ steps.build_info.outputs.package_name }}';
-          
-          github.rest.repos.createCommitComment({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            commit_sha: context.sha,
-            body: `## 🚀 Package published to PyPI (Production)
-            
-            **Version:** ${version}
-            **Package:** ${packageName}
-            **PyPI:** https://pypi.org/project/${packageName}/${version}/
-            
-            ✅ Successfully published to production PyPI
-            
-            **Installation:**
-            \`\`\`bash
-            pip install ${packageName}==${version}
-            \`\`\`
-            
-            ⏳ Git tag and GitHub Release will be created in the next workflow...`
-          })
+        tag_name: ${{ steps.version.outputs.tag }}
+        name: ${{ steps.draft.outputs.name }}
+        prerelease: false
+        files: dist/*
+        body: |
+          ${{ steps.draft.outputs.body }}
 
-    outputs:
-      version: ${{ steps.build_info.outputs.version }}
-      package_name: ${{ steps.build_info.outputs.package_name }}
-      published: ${{ steps.build_info.outputs.exists_on_pypi == 'false' }}
+          ---
+
+          🚀 **Published to PyPI**
+
+          ```bash
+          pip install ${{ steps.check.outputs.package }}==${{ steps.version.outputs.version }}
+          ```
+
+          **PyPI:** https://pypi.org/project/${{ steps.check.outputs.package }}/${{ steps.version.outputs.version }}/
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
