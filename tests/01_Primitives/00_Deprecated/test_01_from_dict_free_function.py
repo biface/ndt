@@ -1,7 +1,7 @@
 import re
+from collections import defaultdict
 
 import pytest
-from collections import defaultdict
 
 from ndict_tools import (
     NestedDictionary,

@@ -17,7 +17,9 @@ class TestFromDict:
     )
     def test_from_dict(self, function_system_config, default_setup, keys):
         with pytest.warns(DeprecationWarning, match="1.5.0"):
-            d = from_dict(function_system_config, _StackedDict, default_setup=default_setup)
+            d = from_dict(
+                function_system_config, _StackedDict, default_setup=default_setup
+            )
         for key in keys:
             d = d[key]
         assert isinstance(d, _StackedDict)

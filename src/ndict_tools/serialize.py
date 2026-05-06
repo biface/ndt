@@ -7,29 +7,37 @@ used by the serialization methods on ``_StackedDict`` (``to_json``, ``from_json`
 
 Contents
 --------
-- ``_encode_key`` / ``_decode_key`` : JSON key encoding per DD-021
+- ``_encode_key`` / ``_decode_key`` : JSON key encoding via type-tagged string prefix
 - ``NestedDictionaryEncoder``       : ``json.JSONEncoder`` subclass
 - ``_make_decoder_hook``            : factory for ``object_pairs_hook``
 - ``_pickle_dump`` / ``_pickle_load``: pickle helpers with SHA-256 verification
 
 Design decisions
 ----------------
-- DD-021 : JSON key encoding strategy
-- DD-022 : Serialization API placement
+- **JSON key encoding** (design decision `#87 <https://github.com/biface/ndt/issues/87>`_):
+  JSON mandates string keys; Python supports arbitrary hashable keys. Non-string keys
+  are encoded as ``__type__:value`` tagged strings (e.g., ``__int__:42``,
+  ``__tuple__:(1, 2)``). Decoding uses ``ast.literal_eval`` for safe reconstruction of
+  ``tuple`` and ``frozenset`` values. Known limitation: string keys that already start
+  with a ``__type__:`` prefix are indistinguishable from encoded keys.
+- **API placement** (design decision `#94 <https://github.com/biface/ndt/issues/94>`_):
+  Serialization methods (``to_json``, ``from_json``, ``to_pickle``, ``from_pickle``)
+  are defined on ``_StackedDict`` and delegate to the private helpers below via lazy
+  imports. This creates an accepted import cycle between ``tools.py`` and this module.
 """
 
 import ast
 import hashlib
 import json
-import pickle
+import pickle  # nosec B403
 import warnings
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 from .exception import StackedTypeError, StackedValueError
 
 # ---------------------------------------------------------------------------
-# Key encoding / decoding — DD-021
+# Key encoding / decoding
 # ---------------------------------------------------------------------------
 
 #: Supported key types for JSON encoding.
@@ -41,8 +49,12 @@ def _encode_key(key: Any) -> str:
     Encode a ``_StackedDict`` key to a JSON-safe string.
 
     JSON mandates string keys. This function maps any supported hashable
-    Python key to a unique, reversible string representation following the
-    convention defined in DD-021.
+    Python key to a unique, reversible string using a type-tagged prefix of
+    the form ``__type__:value`` (e.g., integer ``42`` → ``"__int__:42"``,
+    tuple ``(1, 2)`` → ``"__tuple__:(1, 2)"``). Plain string keys are passed
+    through unchanged. Known limitation: a string key that already starts with
+    a recognised prefix (e.g. ``"__int__:42"``) is indistinguishable from an
+    encoded integer key after a round-trip.
 
     Parameters
     ----------
@@ -104,8 +116,7 @@ def _encode_key(key: Any) -> str:
         elements = ", ".join(repr(e) for e in key)
         return f"[frozenset{{{elements}}}]"
     raise StackedTypeError(
-        f"JSON key encoding is not supported for type {type(key).__name__}. "
-        f"Supported types: str, int, float, bool, tuple, frozenset.",
+        f"JSON key encoding is not supported for type {type(key).__name__}. Supported types: str, int, float, bool, tuple, frozenset.",
         expected_type=str,
         actual_type=type(key),
     )
@@ -115,7 +126,15 @@ def _decode_key(encoded: str) -> Any:
     """
     Decode an encoded JSON key back to its original Python type.
 
-    Applies the five sequential decoding rules defined in DD-021.
+    Applies five sequential decoding rules in priority order:
+
+    1. ``__bool__:`` prefix → ``bool`` (checked before ``int`` to avoid misclassification).
+    2. ``__int__:`` prefix → ``int``.
+    3. ``__float__:`` prefix → ``float``.
+    4. ``__frozenset__:`` prefix → ``frozenset`` (via ``ast.literal_eval``).
+    5. ``__tuple__:`` prefix → ``tuple`` (via ``ast.literal_eval``).
+    6. No recognised prefix → plain ``str`` (identity).
+
     No ``eval()`` is used. ``ast.literal_eval()`` is used only for flat
     tuples of Python scalars, which are valid Python literals by definition.
 
@@ -218,27 +237,27 @@ class NestedDictionaryEncoder(json.JSONEncoder):
     '{"a": {"b": 1}}'
     """
 
-    def default(self, obj: Any) -> Any:
+    def default(self, o: Any) -> Any:  # type: ignore[override]
         # Lazy import to avoid circular dependency at module load time
         from .tools import _StackedDict
 
-        if isinstance(obj, _StackedDict):
-            return {_encode_key(k): v for k, v in obj.items()}
-        return super().default(obj)
+        if isinstance(o, _StackedDict):
+            return {_encode_key(k): v for k, v in o.items()}
+        return super().default(o)
 
-    def encode(self, obj: Any) -> str:
+    def encode(self, o: Any) -> str:  # type: ignore[override]
         from .tools import _StackedDict
 
-        if isinstance(obj, _StackedDict):
-            return super().encode({_encode_key(k): v for k, v in obj.items()})
-        return super().encode(obj)
+        if isinstance(o, _StackedDict):
+            return super().encode({_encode_key(k): v for k, v in o.items()})
+        return super().encode(o)
 
-    def iterencode(self, obj: Any, _one_shot: bool = False):
+    def iterencode(self, o: Any, _one_shot: bool = False):  # type: ignore[override]
         from .tools import _StackedDict
 
-        if isinstance(obj, _StackedDict):
-            obj = self._encode_stacked(obj)
-        return super().iterencode(obj, _one_shot)
+        if isinstance(o, _StackedDict):
+            o = self._encode_stacked(o)
+        return super().iterencode(o, _one_shot)
 
     def _encode_stacked(self, obj: Any) -> Any:
         """Recursively convert _StackedDict to plain dict with encoded keys."""
@@ -249,7 +268,7 @@ class NestedDictionaryEncoder(json.JSONEncoder):
         return obj
 
 
-def _make_decoder_hook(cls: type, class_options: dict) -> Callable:
+def _make_decoder_hook(cls: type, class_options: dict[str, Any]) -> Callable[..., Any]:
     """
     Return an ``object_pairs_hook`` that reconstructs a ``_StackedDict``
     (or subclass) from JSON key-value pairs.
@@ -268,7 +287,7 @@ def _make_decoder_hook(cls: type, class_options: dict) -> Callable:
         A hook suitable for ``json.load(..., object_pairs_hook=hook)``.
     """
 
-    def hook(pairs: list) -> Any:
+    def hook(pairs: list[tuple[Any, Any]]) -> Any:
         decoded = {_decode_key(k): v for k, v in pairs}
         return cls.from_dict(decoded, **class_options)
 
@@ -283,7 +302,7 @@ def _make_decoder_hook(cls: type, class_options: dict) -> Callable:
 def _pickle_dump(
     nd: Any,
     path: "str | Path",
-    protocol: Optional[int] = None,
+    protocol: int | None = None,
 ) -> None:
     """
     Write a ``_StackedDict`` to a pickle file with a SHA-256 sidecar.
@@ -308,8 +327,7 @@ def _pickle_dump(
         with untrusted files.
     """
     warnings.warn(
-        "Pickle files are unsafe when loaded from untrusted sources. "
-        "Only unpickle files you created yourself or received from trusted sources.",
+        "Pickle files are unsafe when loaded from untrusted sources. Only unpickle files you created yourself or received from trusted sources.",
         UserWarning,
         stacklevel=3,
     )
@@ -366,18 +384,15 @@ def _pickle_load(
         sidecar = path.with_suffix(path.suffix + ".sha256")
         if not sidecar.exists():
             raise StackedValueError(
-                f"SHA-256 sidecar not found for '{path}'. "
-                "Use verify=False to skip integrity check.",
+                f"SHA-256 sidecar not found for '{path}'. Use verify=False to skip integrity check.",
                 value=str(path),
             )
         expected = sidecar.read_text(encoding="utf-8").strip()
         actual = hashlib.sha256(data).hexdigest()
         if actual != expected:
             raise StackedValueError(
-                f"SHA-256 digest mismatch for '{path}': "
-                f"expected {expected!r}, got {actual!r}. "
-                "The file may be corrupted or tampered with.",
+                f"SHA-256 digest mismatch for '{path}': expected {expected!r}, got {actual!r}. The file may be corrupted or tampered with.",
                 value=str(path),
             )
 
-    return pickle.loads(data)  # noqa: S301
+    return pickle.loads(data)  # nosec B301

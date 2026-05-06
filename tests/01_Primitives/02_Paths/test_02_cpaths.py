@@ -9,6 +9,7 @@ import re
 import pytest
 
 import ndict_tools
+from ndict_tools.exception import StackedKeyError
 from ndict_tools.tools import _CPaths, _HKey, _StackedDict
 
 
@@ -18,9 +19,10 @@ def test_init_empty():
     assert c_paths._stacked_dict is None
     assert c_paths._hkey is None
     assert c_paths._structure is None
-    assert c_paths._ensure_hkey() is None
-    assert c_paths._ensure_hkey() is None
-    assert c_paths.structure is None
+    with pytest.raises(StackedKeyError):
+        c_paths._ensure_hkey()
+    with pytest.raises(StackedKeyError):
+        _ = c_paths.structure
 
 
 class TestCPathsInit:

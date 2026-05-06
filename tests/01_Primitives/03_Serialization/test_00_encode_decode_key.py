@@ -19,10 +19,10 @@ import pytest
 from ndict_tools.exception import StackedTypeError
 from ndict_tools.serialize import _decode_key, _encode_key
 
-
 # ---------------------------------------------------------------------------
 # Helper
 # ---------------------------------------------------------------------------
+
 
 def round_trip(key):
     """Encode then decode a key and return the result."""
@@ -33,33 +33,40 @@ def round_trip(key):
 # String keys — pass-through and escape
 # ---------------------------------------------------------------------------
 
+
 class TestEncodeDecodeString:
 
-    @pytest.mark.parametrize("key", [
-        "hello",
-        "world",
-        "",
-        "with spaces",
-        "with | pipe",
-        "with unicode: é à ü",
-        "0",
-        "True",
-        "False",
-        "3.14",
-    ])
+    @pytest.mark.parametrize(
+        "key",
+        [
+            "hello",
+            "world",
+            "",
+            "with spaces",
+            "with | pipe",
+            "with unicode: é à ü",
+            "0",
+            "True",
+            "False",
+            "3.14",
+        ],
+    )
     def test_plain_string_passthrough(self, key):
         """Plain strings are returned unchanged."""
         assert _encode_key(key) == key
         assert _decode_key(key) == key
 
-    @pytest.mark.parametrize("key", [
-        "[42]",
-        "[hello]",
-        "[(1, 2)]",
-        "[frozenset{1, 2}]",
-        "[True]",
-        "[]",
-    ])
+    @pytest.mark.parametrize(
+        "key",
+        [
+            "[42]",
+            "[hello]",
+            "[(1, 2)]",
+            "[frozenset{1, 2}]",
+            "[True]",
+            "[]",
+        ],
+    )
     def test_string_starting_with_bracket_escaped(self, key):
         """String keys starting with '[' are escaped with '\\['."""
         encoded = _encode_key(key)
@@ -75,6 +82,7 @@ class TestEncodeDecodeString:
 # ---------------------------------------------------------------------------
 # Integer keys
 # ---------------------------------------------------------------------------
+
 
 class TestEncodeDecodeInt:
 
@@ -97,6 +105,7 @@ class TestEncodeDecodeInt:
 # ---------------------------------------------------------------------------
 # Float keys
 # ---------------------------------------------------------------------------
+
 
 class TestEncodeDecodeFloat:
 
@@ -133,6 +142,7 @@ class TestEncodeDecodeFloat:
 # Bool keys
 # ---------------------------------------------------------------------------
 
+
 class TestEncodeDecodeBool:
 
     @pytest.mark.parametrize("key", [True, False])
@@ -164,21 +174,25 @@ class TestEncodeDecodeBool:
 # Tuple keys (flat)
 # ---------------------------------------------------------------------------
 
+
 class TestEncodeDecodeTuple:
 
-    @pytest.mark.parametrize("key", [
-        (1, 2),
-        (1, 2, 3),
-        ("a", "b"),
-        (1, "a", True),
-        (1.0, "2", 3),
-        (True, "a"),
-        ("env", "production"),
-        ("env", "dev"),
-        ("metrics", "cpu"),
-        ("logs", "level"),
-        ("security", "encryption"),
-    ])
+    @pytest.mark.parametrize(
+        "key",
+        [
+            (1, 2),
+            (1, 2, 3),
+            ("a", "b"),
+            (1, "a", True),
+            (1.0, "2", 3),
+            (True, "a"),
+            ("env", "production"),
+            ("env", "dev"),
+            ("metrics", "cpu"),
+            ("logs", "level"),
+            ("security", "encryption"),
+        ],
+    )
     def test_tuple_round_trip(self, key):
         assert round_trip(key) == key
         assert isinstance(round_trip(key), tuple)
@@ -202,14 +216,18 @@ class TestEncodeDecodeTuple:
 # Frozenset keys (flat)
 # ---------------------------------------------------------------------------
 
+
 class TestEncodeDecodeFrozenset:
 
-    @pytest.mark.parametrize("key", [
-        frozenset({1, 2}),
-        frozenset({"a", 1}),
-        frozenset({"cache", "redis"}),
-        frozenset({True, 42}),
-    ])
+    @pytest.mark.parametrize(
+        "key",
+        [
+            frozenset({1, 2}),
+            frozenset({"a", 1}),
+            frozenset({"cache", "redis"}),
+            frozenset({True, 42}),
+        ],
+    )
     def test_frozenset_round_trip(self, key):
         result = round_trip(key)
         assert result == key
@@ -242,25 +260,34 @@ class TestEncodeDecodeFrozenset:
 # Keys from _SYSTEM_CONFIG (real-world fixture)
 # ---------------------------------------------------------------------------
 
+
 class TestRealWorldKeys:
     """
     Verify encoding/decoding on all key types present in _SYSTEM_CONFIG.
     These are the exact keys used in integration tests.
     """
 
-    @pytest.mark.parametrize("key", [
-        ("env", "production"),
-        ("env", "dev"),
-        ("metrics", "cpu"),
-        ("logs", "level"),
-        ("security", "encryption"),
-        frozenset(["cache", "redis"]),
-        1, 2, 42, 54, 12, 34,
-        "monitoring",
-        "global_settings",
-        "database",
-        "api",
-    ])
+    @pytest.mark.parametrize(
+        "key",
+        [
+            ("env", "production"),
+            ("env", "dev"),
+            ("metrics", "cpu"),
+            ("logs", "level"),
+            ("security", "encryption"),
+            frozenset(["cache", "redis"]),
+            1,
+            2,
+            42,
+            54,
+            12,
+            34,
+            "monitoring",
+            "global_settings",
+            "database",
+            "api",
+        ],
+    )
     def test_system_config_keys_round_trip(self, key):
         assert round_trip(key) == key
 
@@ -269,15 +296,19 @@ class TestRealWorldKeys:
 # Unsupported types → StackedTypeError
 # ---------------------------------------------------------------------------
 
+
 class TestUnsupportedTypes:
 
-    @pytest.mark.parametrize("key", [
-        [1, 2],          # list — not hashable
-        {"a": 1},        # dict — not hashable
-        object(),        # generic object
-        bytes(b"hello"), # bytes — post-1.2.0
-        complex(1, 2),   # complex — post-1.2.0
-    ])
+    @pytest.mark.parametrize(
+        "key",
+        [
+            [1, 2],  # list — not hashable
+            {"a": 1},  # dict — not hashable
+            object(),  # generic object
+            bytes(b"hello"),  # bytes — post-1.2.0
+            complex(1, 2),  # complex — post-1.2.0
+        ],
+    )
     def test_unsupported_type_raises(self, key):
         with pytest.raises((StackedTypeError, TypeError)):
             _encode_key(key)
@@ -286,6 +317,7 @@ class TestUnsupportedTypes:
 # ---------------------------------------------------------------------------
 # Decoding rules order
 # ---------------------------------------------------------------------------
+
 
 class TestDecodingRulesOrder:
     """Verify that the 5 decoding rules are applied in the correct order."""

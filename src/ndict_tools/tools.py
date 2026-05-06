@@ -21,7 +21,6 @@ designed to:
 """
 
 import json
-import pickle
 import warnings
 from collections import defaultdict, deque
 from pathlib import Path
@@ -33,10 +32,8 @@ from typing import (
     Iterable,
     Iterator,
     Mapping,
-    Optional,
     Type,
     TypeVar,
-    Union,
 )
 
 from .exception import (
@@ -52,7 +49,9 @@ MAX_DEPTH = 100
 T = TypeVar("T", bound="_StackedDict")
 
 
-def _reconstruct(cls: type, dictionary: dict, default_setup: dict) -> "_StackedDict":
+def _reconstruct(
+    cls: type, dictionary: dict[Any, Any], default_setup: dict[str, Any]
+) -> "_StackedDict":
     """
     Module-level reconstruction helper for pickle.
 
@@ -117,7 +116,7 @@ def compare_dict(d1, d2) -> bool:
     - Dictionary key sets must match exactly
     - Recursively handles nested structures of arbitrary depth
     """
-    if type(d1) != type(d2):
+    if type(d1) is not type(d2):
         return False
     if isinstance(d1, dict):
         if set(d1.keys()) != set(d2.keys()):
@@ -134,7 +133,9 @@ def compare_dict(d1, d2) -> bool:
         return d1 == d2
 
 
-def unpack_items(dictionary: dict) -> Generator:
+def unpack_items(
+    dictionary: dict[Any, Any],
+) -> Generator[tuple[tuple[Any, ...], Any], None, None]:
     """
     Recursively flatten a nested dictionary into (path, value) pairs.
 
@@ -183,7 +184,7 @@ def unpack_items(dictionary: dict) -> Generator:
             yield (key,), value
 
 
-def from_dict(dictionary: dict, class_name: Type["T"], **class_options) -> T:
+def from_dict(dictionary: dict[Any, Any], class_name: Type["T"], **class_options) -> T:
     """
     Recursively convert a standard dictionary to a _StackedDict or subclass.
 
@@ -240,9 +241,7 @@ def from_dict(dictionary: dict, class_name: Type["T"], **class_options) -> T:
     """
 
     warnings.warn(
-        "from_dict() free function is deprecated since 1.1.0 and will be removed "
-        "in 1.5.0. Use ClassName.from_dict(dictionary, **class_options) instead. "
-        "Example: NestedDictionary.from_dict(dictionary, default_setup={...})",
+        "from_dict() free function is deprecated since 1.1.0 and will be removed in 1.5.0. Use ClassName.from_dict(dictionary, **class_options) instead. Example: NestedDictionary.from_dict(dictionary, default_setup={...})",
         DeprecationWarning,
         stacklevel=2,
     )
@@ -329,15 +328,15 @@ class _HKey:
     __slots__ = ("key", "children", "parent", "is_root")
 
     def __init__(
-        self, key: Any, parent: Optional["_HKey"] = None, is_root: bool = False
+        self, key: Any, parent: "_HKey | None" = None, is_root: bool = False
     ) -> None:
         self.key: Any = key
         self.children: tuple[_HKey, ...] = ()
-        self.parent: Optional[_HKey] = parent
+        self.parent: "_HKey | None" = parent
         self.is_root: bool = is_root
 
     @classmethod
-    def build_forest(cls, stacked_dict: dict) -> "_HKey":
+    def build_forest(cls, stacked_dict: dict[Any, Any]) -> "_HKey":
         """
         Build a forest of _HKey trees from a nested dictionary.
 
@@ -367,7 +366,7 @@ class _HKey:
         root._build_from_dict(stacked_dict)
         return root
 
-    def _build_from_dict(self, current_dict: dict) -> None:
+    def _build_from_dict(self, current_dict: dict[Any, Any]) -> None:
         """
         Recursively build tree structure from a dictionary.
 
@@ -456,7 +455,7 @@ class _HKey:
         self.children = self.children + tuple(new_children)
         return tuple(new_children)
 
-    def get_child(self, key: Any) -> Optional["_HKey"]:
+    def get_child(self, key: Any) -> "_HKey | None":
         """
         Get a child node by key.
 
@@ -546,7 +545,7 @@ class _HKey:
         ['a', 'b', 'c']
         """
         path: list[Any] = []
-        current: Optional[_HKey] = self
+        current: "_HKey | None" = self
 
         while current is not None and not current.is_root:
             path.append(current.key)
@@ -554,7 +553,7 @@ class _HKey:
 
         return list(reversed(path))
 
-    def find_by_path(self, path: list[Any]) -> Optional["_HKey"]:
+    def find_by_path(self, path: list[Any]) -> "_HKey | None":
         """
         Find a node by following a path from this node.
 
@@ -580,7 +579,7 @@ class _HKey:
         current: _HKey = self
 
         for key in path:
-            child: Optional[_HKey] = current.get_child(key)
+            child: "_HKey | None" = current.get_child(key)
             if child is None:
                 return None
             current = child
@@ -654,7 +653,7 @@ class _HKey:
             Depth level (0 for direct children of root)
         """
         depth: int = 0
-        current: Optional[_HKey] = self.parent
+        current: "_HKey | None" = self.parent
 
         while current is not None and not current.is_root:
             depth += 1
@@ -727,7 +726,7 @@ class _HKey:
 
     def _dfs_traverse(
         self,
-        visit: Optional[Callable[["_HKey"], None]] = None,
+        visit: "Callable[[_HKey], None] | None" = None,
         *,
         preorder: bool = True,
     ) -> Iterator["_HKey"]:
@@ -766,7 +765,7 @@ class _HKey:
         yield from traverse(self)
 
     def dfs_preorder(
-        self, visit: Optional[Callable[["_HKey"], None]] = None
+        self, visit: "Callable[[_HKey], None] | None" = None
     ) -> Iterator["_HKey"]:
         """
         Depth-First Search traversal in pre-order (node, then children).
@@ -803,7 +802,7 @@ class _HKey:
         yield from self._dfs_traverse(visit, preorder=True)
 
     def dfs_postorder(
-        self, visit: Optional[Callable[["_HKey"], None]] = None
+        self, visit: "Callable[[_HKey], None] | None" = None
     ) -> Iterator["_HKey"]:
         """
         Depth-First Search traversal in post-order (children, then node).
@@ -838,9 +837,7 @@ class _HKey:
         """
         yield from self._dfs_traverse(visit, preorder=False)
 
-    def bfs(
-        self, visit: Optional[Callable[["_HKey"], None]] = None
-    ) -> Iterator["_HKey"]:
+    def bfs(self, visit: "Callable[[_HKey], None] | None" = None) -> Iterator["_HKey"]:
         """
         Breadth-First Search (level-order) traversal.
 
@@ -882,7 +879,7 @@ class _HKey:
         dfs_preorder : Depth-first traversal
         iter_by_level : Get nodes grouped by level
         """
-        queue: deque = deque([self])
+        queue: deque[_HKey] = deque([self])
         seen: set[int] = {id(self)}
 
         while queue:
@@ -897,7 +894,7 @@ class _HKey:
                     seen.add(cid)
                     queue.append(child)
 
-    def dfs_find(self, predicate: Callable[["_HKey"], bool]) -> Optional["_HKey"]:
+    def dfs_find(self, predicate: Callable[["_HKey"], bool]) -> "_HKey | None":
         """
         Find first node matching predicate using DFS.
 
@@ -935,7 +932,7 @@ class _HKey:
                 return node
         return None
 
-    def bfs_find(self, predicate: Callable[["_HKey"], bool]) -> Optional["_HKey"]:
+    def bfs_find(self, predicate: Callable[["_HKey"], bool]) -> "_HKey | None":
         """
         Find first node matching predicate using BFS.
 
@@ -1002,7 +999,7 @@ class _HKey:
 
     def find_by_key(
         self, key: Any, find_all: bool = False
-    ) -> Optional["_HKey"] | list["_HKey"]:
+    ) -> "_HKey | None | list[_HKey]":
         """
         Find node(s) with specific key value.
 
@@ -1316,7 +1313,7 @@ class _HKey:
     # Graph Theory & Structure Validation
     # ========================================================================
 
-    def has_cycles(self) -> tuple[bool, Optional[list["_HKey"]]]:
+    def has_cycles(self) -> "tuple[bool, list[_HKey] | None]":
         """
         Check if the tree contains cycles (should not in a proper tree).
 
@@ -1499,8 +1496,7 @@ class _HKey:
             for child in node.children:
                 if child.parent != node:
                     issues.append(
-                        f"Inconsistent parent: child {child.key} has parent "
-                        f"{child.parent.key if child.parent else 'None'} but is child of {node.key}"
+                        f"Inconsistent parent: child {child.key} has parent {child.parent.key if child.parent else 'None'} but is child of {node.key}"
                     )
 
         return issues
@@ -1546,7 +1542,7 @@ class _HKey:
         if not self.has_children():
             return True
 
-        queue: deque = deque([self])
+        queue: deque[_HKey] = deque([self])
         found_incomplete = False
 
         while queue:
@@ -1771,7 +1767,7 @@ class _HKey:
                 return False
         return True
 
-    def is_full_tree(self, n: Optional[int] = None) -> bool:
+    def is_full_tree(self, n: int | None = None) -> bool:
         """
         Check if this is a full tree (all nodes have 0 or n children).
 
@@ -1844,7 +1840,7 @@ class _HKey:
         return f"_HKey(key={self.key!r}, children={len(self.children)})"
 
 
-class _StackedDict(defaultdict):
+class _StackedDict(defaultdict[Any, Any]):
     """
     Internal base class for hierarchical nested dictionary structures.
 
@@ -1955,50 +1951,38 @@ class _StackedDict(defaultdict):
         - All configuration is propagated to nested instances
         """
 
-        ind: int = 0
-        default = None
+        # ind: int = 0
+        # default = None
         setup = set()
 
         # Initialize instance attributes
 
         self.indent: int = 0
         "indent is used to print the dictionary with json indentation"
-        self._default_setup: set = set()
+        self._default_setup: set[tuple[str, Any]] = set()
         "default_setup is ued to disseminate default parameters to stacked objects"
 
         # Manage init parameters
         settings = kwargs.pop("default_setup", None)
 
         if settings is None:
-            warnings.warn(
-                "indent and default parameters are obsolete since version 0.8.0"
-                "and will be remove in version 1.2.0. Use kwargs default_setup dictionary instead",
-                DeprecationWarning,
-                stacklevel=2,
+            raise StackedKeyError(
+                "Missing 'default_setup' argument. Pass default_setup={'indent': <int>, 'default_factory': <class|None>}.",
+                key="default_setup",
             )
-            if "indent" not in kwargs:
-                raise StackedKeyError("Missing 'indent' arguments", key="indent")
-            else:
-                ind = kwargs.pop("indent")
 
-            if "default" not in kwargs:
-                default = None
-            else:
-                default = kwargs.pop("default")
-            setup = {("indent", ind), ("default_factory", default)}
-        else:
-            if not "indent" in settings.keys():
-                raise StackedKeyError(
-                    "Missing 'indent' argument in default settings", key="indent"
-                )
-            if not "default_factory" in settings.keys():
-                raise StackedKeyError(
-                    "Missing 'default_factory' argument in default settings",
-                    key="default_factory",
-                )
+        if "indent" not in settings:
+            raise StackedKeyError(
+                "Missing 'indent' argument in default settings", key="indent"
+            )
+        if "default_factory" not in settings:
+            raise StackedKeyError(
+                "Missing 'default_factory' argument in default settings",
+                key="default_factory",
+            )
 
-            for key, value in settings.items():
-                setup.add((key, value))
+        for key, value in settings.items():
+            setup.add((key, value))
 
         # Initializing instance
 
@@ -2043,7 +2027,7 @@ class _StackedDict(defaultdict):
     # ========================================================================
 
     @classmethod
-    def from_dict(cls, dictionary: dict, **class_options) -> "_StackedDict":
+    def from_dict(cls, dictionary: dict[Any, Any], **class_options) -> "_StackedDict":
         """
         Recursively convert a standard dictionary to a ``_StackedDict`` or subclass.
 
@@ -2107,7 +2091,7 @@ class _StackedDict(defaultdict):
     # PICKLE SUPPORT
     # ========================================================================
 
-    def __reduce__(self) -> tuple:
+    def __reduce__(self) -> tuple[Any, ...]:
         """
         Support pickle serialization.
 
@@ -2132,12 +2116,15 @@ class _StackedDict(defaultdict):
     # SERIALIZATION METHODS (JSON + PICKLE)
     # ========================================================================
 
-    def to_json(self, path: "str | Path", indent: Optional[int] = None) -> None:
+    def to_json(self, path: "str | Path", indent: int | None = None) -> None:
         """
         Serialize this dictionary to a JSON file.
 
-        Non-string keys are encoded using the strategy defined in DD-021.
-        File I/O is delegated to ``json.dump``.
+        Non-string keys are encoded as type-tagged strings of the form
+        ``__type__:value`` (e.g., integer key ``42`` → ``"__int__:42"``,
+        tuple key ``(1, 2)`` → ``"__tuple__:(1, 2)"``). Round-trips are
+        lossless for supported types: ``str``, ``int``, ``float``, ``bool``,
+        flat ``tuple``, flat ``frozenset``. File I/O is delegated to ``json.dump``.
 
         Parameters
         ----------
@@ -2168,8 +2155,10 @@ class _StackedDict(defaultdict):
         """
         Reconstruct a ``_StackedDict`` (or subclass) from a JSON file.
 
-        Encoded non-string keys are decoded back to their original Python
-        types using the strategy defined in DD-021.
+        Non-string keys stored as ``__type__:value`` tagged strings are
+        decoded back to their original Python types. Round-trips are lossless
+        for supported types: ``str``, ``int``, ``float``, ``bool``, flat
+        ``tuple``, flat ``frozenset``.
 
         Parameters
         ----------
@@ -2206,7 +2195,7 @@ class _StackedDict(defaultdict):
     def to_pickle(
         self,
         path: "str | Path",
-        protocol: Optional[int] = None,
+        protocol: int | None = None,
     ) -> None:
         """
         Serialize this dictionary to a pickle file with SHA-256 verification.
@@ -2277,7 +2266,7 @@ class _StackedDict(defaultdict):
         return _pickle_load(path, verify=verify)
 
     @property
-    def default_setup(self) -> list:
+    def default_setup(self) -> list[tuple[str, Any]]:
         """
         Get configuration as an ordered list of (key, value) tuples.
 
@@ -2302,7 +2291,7 @@ class _StackedDict(defaultdict):
         priority = ["indent", "default_factory"]
         # Convert internal set of tuples to dict to deduplicate and access by key
         d = {k: v for (k, v) in self._default_setup}
-        ordered: list = []
+        ordered: list[tuple[str, Any]] = []
         for p in priority:
             if p in d:
                 ordered.append((p, d[p]))
@@ -2842,7 +2831,7 @@ class _StackedDict(defaultdict):
         else:
             return compare_dict(self.to_dict(), dict(other))
 
-    def unpacked_items(self) -> Generator:
+    def unpacked_items(self) -> Generator[tuple[tuple[Any, ...], Any], None, None]:
         """
         Generate all (path, value) pairs from nested structure.
 
@@ -2881,7 +2870,7 @@ class _StackedDict(defaultdict):
         for key, value in unpack_items(self):
             yield key, value
 
-    def unpacked_keys(self) -> Generator:
+    def unpacked_keys(self) -> Generator[tuple[Any, ...], None, None]:
         """
         Generate all hierarchical paths (keys) from nested structure.
 
@@ -2912,7 +2901,7 @@ class _StackedDict(defaultdict):
         for key, value in unpack_items(self):
             yield key
 
-    def unpacked_values(self) -> Generator:
+    def unpacked_values(self) -> Generator[Any, None, None]:
         """
         Generate all terminal values from nested structure.
 
@@ -2943,7 +2932,7 @@ class _StackedDict(defaultdict):
         for key, value in unpack_items(self):
             yield value
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[Any, Any]:
         """
         Convert to a standard nested dictionary.
 
@@ -3037,7 +3026,7 @@ class _StackedDict(defaultdict):
 
         return self.__deepcopy__()
 
-    def pop(self, key: Union[Any, list[Any]], default=None) -> Any:
+    def pop(self, key: Any | list[Any], default=None) -> Any:
         """
         Remove and return value at key or hierarchical path.
 
@@ -3165,6 +3154,7 @@ class _StackedDict(defaultdict):
             raise StackedIndexError("popitem(): _StackedDict is empty")
 
         # Initialize a stack to traverse the dictionary
+        path: list[Any] = []
         stack = [(self, [])]  # Each entry is (current_dict, current_path)
 
         while stack:
@@ -3188,9 +3178,9 @@ class _StackedDict(defaultdict):
 
         return path, value
 
-    def update(  # type: ignore[override]
+    def update(  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
-        __m: Union[Mapping[Any, Any], Iterable[tuple[Any, Any]], None] = None,
+        __m: Mapping[Any, Any] | Iterable[tuple[Any, Any]] | None = None,
         **kwargs,
     ) -> None:
         """
@@ -3390,7 +3380,7 @@ class _StackedDict(defaultdict):
                         __occurrences += 1
         return __occurrences
 
-    def key_list(self, key: Any) -> list:
+    def key_list(self, key: Any) -> list[list[Any]]:
         """
         Get all hierarchical paths containing a specific key.
 
@@ -3443,7 +3433,7 @@ class _StackedDict(defaultdict):
 
         return __key_list
 
-    def items_list(self, key: Any) -> list:
+    def items_list(self, key: Any) -> list[Any]:
         """
         Get all values associated with paths containing a specific key.
 
@@ -3500,26 +3490,6 @@ class _StackedDict(defaultdict):
             )
 
         return __items_list
-
-    def dict_paths(self) -> "_Paths":
-        """
-        Get a view object for all hierarchical paths.
-
-        .. deprecated:: 0.9
-            This method is deprecated and will be removed in a future release.
-            Use :meth:`paths` instead.
-
-        Returns
-        -------
-        _Paths
-            View object providing access to all paths
-
-        See Also
-        --------
-        paths : Recommended replacement method
-        """
-
-        return _Paths(self)
 
     def paths(self) -> "_Paths":
         """
@@ -3599,7 +3569,7 @@ class _StackedDict(defaultdict):
 
         return _CPaths(self)
 
-    def dfs(self, node=None, path=None) -> Generator[tuple[list, Any], None, None]:
+    def dfs(self, node=None, path=None) -> Generator[tuple[list[Any], Any], None, None]:
         """
         Depth-First Search traversal of the nested dictionary.
 
@@ -3749,7 +3719,7 @@ class _StackedDict(defaultdict):
         leaves : Get all leaf values
         """
 
-        return max((len(path) for path in self.dict_paths()), default=0)
+        return max((len(path) for path in self.paths()), default=0)
 
     def size(self) -> int:
         """
@@ -3787,7 +3757,7 @@ class _StackedDict(defaultdict):
 
         return sum(1 for _ in self.unpacked_items())
 
-    def leaves(self) -> list:
+    def leaves(self) -> list[Any]:
         """
         Extract all leaf (terminal) values from the nested structure.
 
@@ -3985,9 +3955,9 @@ class _Paths:
     _StackedDict.paths : building paths for nested dictionaries.
     """
 
-    def __init__(self, stacked_dict: Optional[_StackedDict] = None):
+    def __init__(self, stacked_dict: _StackedDict | None = None):
         self._stacked_dict = stacked_dict
-        self._hkey: Optional[_HKey] = None  # Lazy initialization
+        self._hkey: _HKey | None = None  # Lazy initialization
 
     def _ensure_hkey(self) -> "_HKey":
         """
@@ -3997,9 +3967,19 @@ class _Paths:
         -------
         _HKey
             The built tree structure
+
+        Raises
+        ------
+        StackedKeyError
+            If no dictionary is attached to this view
         """
         if self._stacked_dict is not None and self._hkey is None:
             self._hkey = _HKey.build_forest(self._stacked_dict)
+        if self._hkey is None:
+            raise StackedKeyError(
+                "Cannot build path tree: no dictionary attached.",
+                key="_hkey",
+            )
         return self._hkey
 
     def __iter__(self) -> Iterator[list[Any]]:
@@ -4340,11 +4320,11 @@ class _CPaths(_Paths):
     _Paths : Base class for path views
     """
 
-    def __init__(self, stacked_dict: Optional[_StackedDict] = None):
+    def __init__(self, stacked_dict: _StackedDict | None = None):
         super().__init__(stacked_dict)
-        self._structure: Optional[list[Any]] = None
+        self._structure: list[Any] | None = None
 
-    def _ensure_structure(self) -> list[Any]:
+    def _ensure_structure(self) -> "list[Any]":
         """
         Ensure compact structure is built (lazy initialization).
 
@@ -4352,9 +4332,19 @@ class _CPaths(_Paths):
         -------
         list[Any]
             The compact structure
+
+        Raises
+        ------
+        StackedKeyError
+            If no dictionary is attached to this view
         """
         if self._stacked_dict is not None and self._structure is None:
             self._structure = self._build_compact_structure()
+        if self._structure is None:
+            raise StackedKeyError(
+                "Cannot build compact structure: no dictionary attached.",
+                key="_structure",
+            )
         return self._structure
 
     @staticmethod
@@ -4423,7 +4413,7 @@ class _CPaths(_Paths):
 
     @structure.setter
     def structure(
-        self, value: Union[_StackedDict, _HKey, list[Any], dict[str, Any]]
+        self, value: _StackedDict | _HKey | list[Any] | dict[str, Any]
     ) -> None:
         """
         set or build the compact structure representation.
@@ -4576,7 +4566,7 @@ class _CPaths(_Paths):
         """
         all_paths = []
 
-        def expand_node(node: Any, prefix: Optional[list[Any]] = None) -> None:
+        def expand_node(node: Any, prefix: list[Any] | None = None) -> None:
             """
             Recursively expand a node.
 
@@ -4671,7 +4661,9 @@ class _CPaths(_Paths):
     # ========================================================================
 
     @staticmethod
-    def _compare_path_sets(paths1: list[list[Any]], paths2: list[list[Any]]) -> tuple:
+    def _compare_path_sets(
+        paths1: list[list[Any]], paths2: list[list[Any]]
+    ) -> tuple[Any, ...]:
         """
         Compare two sets of paths and return statistics (private helper).
 
