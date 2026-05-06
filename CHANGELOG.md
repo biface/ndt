@@ -7,7 +7,63 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.1.0] — 2026-04-05
+## [1.2.0] — Persistence (Serialize) — 2026-05-06
+
+### Added
+
+- `.tox-config/` — fragmented requirements by role (`base`, `format`, `linter`,
+  `security`, `type-check`, `full`) with dedicated scripts `test.sh` and
+  `coverage.sh` for sequential multi-version execution (DD-025).
+- `pyproject.toml` — `[project.optional-dependencies]` groups `dev` and `docs`
+  enabling `uv sync --extra dev --extra docs` for environment bootstrap.
+- `PUBLISHING.md` — bilingual (FR/EN) publication procedure covering the full
+  RC → TestPyPI → PyPI chain.
+- `CONTRIBUTING.md` / `CONTRIBUTING.fr.md` — bilingual contributor guide:
+  uv setup, PyCharm configuration, tox environments, CI chain, branch strategy.
+- `README.fr.md` — French README split from the original bilingual file.
+- `CODE_OF_CONDUCT.md` / `CODE_DE_CONDUITE.md` — aligned to ndict-tools.
+
+### Changed
+
+- **Build tooling:** virtualenv + pip replaced by
+  [uv](https://docs.astral.sh/uv/) for virtual environment management,
+  dependency installation, and CI. `tox-uv` adopted as tox provisioner
+  (DD-024). Closes #109.
+- **Type checking:** mypy replaced by basedpyright as the sole type checker.
+  `pyrightconfig.json` is the single source of configuration (DD-026).
+- **`tox.ini`** rewritten: new environments `ci-quality`, `ci-tests`,
+  `pre-push`, `basedpyright`, `black-check`, `isort-check`, `format`,
+  `check`, `coverage`. `local` kept as alias for `pre-push`. `gh-ci`
+  and `lint` environments removed.
+- **GitHub Actions** — all workflows updated:
+  - `actions/checkout@v4` → `actions/checkout@v6` across all workflows.
+  - `python-ci-quality.yaml` introduced as the new quality gate (replaces
+    the quality section of the former `gh-ci` tox env).
+  - `python-ci-tests.yaml` now triggers via `workflow_run` after Quality;
+    Python 3.14 runs with `continue-on-error: true`.
+  - `python-ci-coverage.yaml` updated to use `tox -e coverage`.
+  - Publication chain remains tag-based (`v*.*.*` and `v*.*.*rc*`).
+- **Dependencies** updated: pytest 9.0.3 validated (unpinned). Closes #110,
+  Closes #121.
+- `[tool.isort]` in `pyproject.toml`: `known_first_party` corrected from
+  `src` to `ndict_tools`.
+- `[tool.tox.*]` sections removed from `pyproject.toml` (now solely in
+  `tox.ini`).
+
+### Fixed
+
+- `tools.py:119` — E721: type comparison replaced by identity check
+  (`type(d1) != type(d2)` → `type(d1) is not type(d2)`).
+- `tools.py:1954–1955` — F841: unused local variables `ind` and `default`
+  removed.
+
+### Deprecated
+
+- Flake8 violations in the test suite (`E711`, `E712`, `E731`, `F401`,
+  `F541`, `F811`, `F841`) are suppressed via `per-file-ignores` and
+  scheduled for cleanup in v1.3.0.
+
+## [1.1.0] — JSON Bridge (Encoder) — 2026-04-05
 
 ### Added
 
@@ -67,9 +123,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   (issue #81, milestone v1.5.0).
 
   Calling the free function now emits a `DeprecationWarning` with an
-  explicit removal notice. Migrate to the classmethod:
+  explicit removal notice. Migrate to the `classmethod`:
 
-  ```python
+  ```python, ignore
   # Before (deprecated since 1.1.0, removed in 1.5.0)
   from ndict_tools.tools import from_dict
   nd = from_dict(data, NestedDictionary, default_setup={...})
@@ -82,7 +138,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.0] — 2026-01-31
+## [1.0.0] — Path Manager (Compass) — 2026-01-31
 
 First stable release.
 
@@ -97,7 +153,7 @@ First stable release.
 - Public API: `NestedDictionary`, `StrictNestedDictionary`,
   `SmoothNestedDictionary`, `PathsView`, `CompactPathsView`.
 - Custom exception hierarchy: `StackedDictionaryError` and six
-  specialisations (`StackedKeyError`, `StackedTypeError`,
+  specializations (`StackedKeyError`, `StackedTypeError`,
   `StackedValueError`, `StackedAttributeError`, `StackedIndexError`,
   `NestedDictionaryException`).
 - Published on PyPI. CI on GitHub Actions and GitLab CI. Coverage reported
