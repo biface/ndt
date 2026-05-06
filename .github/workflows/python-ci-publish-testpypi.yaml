@@ -39,7 +39,7 @@ jobs:
       id: check
       run: |
         VERSION="${{ steps.version.outputs.version }}"
-        PACKAGE=$(python -c "import tomli; print(tomli.load(open('pyproject.toml','rb'))['project']['name'])")
+        PACKAGE=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['name'])")
         pip install tomli
 
         echo "package=$PACKAGE" >> $GITHUB_OUTPUT
