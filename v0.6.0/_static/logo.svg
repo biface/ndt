@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="ndict-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e40af;stop-opacity:1" />
+    </linearGradient>
+    
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- Hexagonal badge (common element) -->
+  <polygon points="150,20 250,75 250,185 150,240 50,185 50,75" 
+           fill="url(#ndict-bg)" 
+           stroke="#2563eb" 
+           stroke-width="4"
+           filter="url(#shadow)"/>
+  
+  <!-- Inner hexagon border -->
+  <polygon points="150,35 235,82.5 235,177.5 150,225 65,177.5 65,82.5" 
+           fill="none" 
+           stroke="#60a5fa" 
+           stroke-width="2"
+           opacity="0.5"/>
+  
+  <!-- Nested braces symbol -->
+  <g transform="translate(150, 130)">
+    <text x="-55" y="0" font-family="monospace" font-size="60" font-weight="bold" fill="#ffffff" opacity="0.9">{</text>
+    <text x="-20" y="5" font-family="monospace" font-size="45" font-weight="bold" fill="#ffffff" opacity="1">{</text>
+    <text x="5" y="5" font-family="monospace" font-size="45" font-weight="bold" fill="#ffffff" opacity="1">}</text>
+    <text x="35" y="0" font-family="monospace" font-size="60" font-weight="bold" fill="#ffffff" opacity="0.9">}</text>
+  </g>
+  
+  <!-- Project name -->
+  <text x="150" y="210" 
+        font-family="'Courier New', monospace" 
+        font-size="24" 
+        font-weight="bold" 
+        fill="#ffffff" 
+        text-anchor="middle">ndict</text>
+  
+  <!-- Tools badge (common element) -->
+  <rect x="110" y="250" width="80" height="30" rx="15" fill="#1e40af" stroke="#60a5fa" stroke-width="2"/>
+  <text x="150" y="270" 
+        font-family="Arial, sans-serif" 
+        font-size="14" 
+        font-weight="bold" 
+        fill="#ffffff" 
+        text-anchor="middle">tools</text>
+</svg>
