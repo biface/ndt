@@ -15,7 +15,7 @@ from .exception import (
     StackedValueError,
 )
 
-__version__ = "1.2.0rc2"
+__version__ = "1.2.0"
 __author__ = "biface"
 
 __all__ = [
