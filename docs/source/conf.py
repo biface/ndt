@@ -52,7 +52,7 @@ language = "en"
 # -- sphinx-multiversion configuration ---------------------------------------
 # Build one doc set per release tag and keep the master branch as dev.
 smv_tag_whitelist = r"^v\d+\.\d+\.\d+$"
-smv_branch_whitelist = r"^master$"
+smv_branch_whitelist = r"^$"  # no branches — tags only
 smv_remote_whitelist = r"^origin$"
 smv_released_pattern = r"^refs/tags/v\d+\.\d+\.\d+$"
 smv_outputdir_format = "{ref.name}"

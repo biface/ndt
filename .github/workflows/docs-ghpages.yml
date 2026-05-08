@@ -32,16 +32,16 @@ jobs:
       - name: Build docs with sphinx-multiversion
         run: sphinx-multiversion docs/source docs/build/html
 
-      - name: Add redirect from root to master
+      - name: Add redirect from root to latest
         run: |
           cat > docs/build/html/index.html << 'HTML'
           <!DOCTYPE html>
           <html>
             <head>
-              <meta http-equiv="refresh" content="0; url=master/" />
+              <meta http-equiv="refresh" content="0; url=v1.2.0/" />
             </head>
             <body>
-              <p>Redirecting to <a href="master/">master</a>…</p>
+              <p>Redirecting to <a href="v1.2.0/">v1.2.0</a>…</p>
             </body>
           </html>
           HTML
