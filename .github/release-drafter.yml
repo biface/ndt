@@ -9,7 +9,7 @@
 # =============================================================================
 
 # name-template is intentionally omitted — release names are set manually
-# in the GitHub draft UI (e.g. "Patch Manager (Compass)" for v1.2.0).
+# in the GitHub draft UI (e.g. "Persistence (Serialize)" for v1.2.0).
 tag-template: "v$RESOLVED_VERSION"
 
 # Version resolution from labels
@@ -20,6 +20,7 @@ version-resolver:
   minor:
     labels:
       - "type: feat"
+      - "type: feature"
       - "type: deprecation"
   patch:
     labels:
@@ -40,6 +41,7 @@ categories:
   - title: "✨ New Features"
     labels:
       - "type: feat"
+      - "type: feature"
 
   - title: "🐛 Bug Fixes"
     labels:

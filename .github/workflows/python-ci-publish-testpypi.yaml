@@ -31,16 +31,17 @@ jobs:
       run: |
         TAG="${{ github.event.workflow_run.head_branch }}"
         VERSION="${TAG#v}"
+        FINAL_VERSION=$(echo "$VERSION" | sed 's/rc[0-9]*$//')
         echo "tag=$TAG" >> $GITHUB_OUTPUT
         echo "version=$VERSION" >> $GITHUB_OUTPUT
-        echo "Tag: $TAG — Version: $VERSION"
+        echo "final_version=$FINAL_VERSION" >> $GITHUB_OUTPUT
+        echo "Tag: $TAG — Version: $VERSION — Final: $FINAL_VERSION"
 
     - name: Check if version exists on TestPyPI
       id: check
       run: |
         VERSION="${{ steps.version.outputs.version }}"
         PACKAGE=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['name'])")
-        pip install tomli
 
         echo "package=$PACKAGE" >> $GITHUB_OUTPUT
 
@@ -86,34 +87,15 @@ jobs:
         echo "::error::Package did not become available after $MAX attempts"
         exit 1
 
-    - name: Get release draft
-      id: draft
-      if: steps.check.outputs.exists == 'false'
-      run: |
-        DRAFT=$(gh api repos/${{ github.repository }}/releases \
-          --jq '[.[] | select(.draft == true)] | first')
-        NAME=$(echo "$DRAFT" | jq -r '.name // ""')
-        BODY=$(echo "$DRAFT" | jq -r '.body // ""')
-        echo "name=$NAME" >> $GITHUB_OUTPUT
-        echo "body<<EOF" >> $GITHUB_OUTPUT
-        echo "$BODY" >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
     - name: Create GitHub pre-release
       if: steps.check.outputs.exists == 'false'
       uses: softprops/action-gh-release@v3
       with:
         tag_name: ${{ steps.version.outputs.tag }}
-        name: ${{ steps.draft.outputs.name }}
+        name: "RC — ${{ steps.version.outputs.tag }}"
         prerelease: true
         files: dist/*
         body: |
-          ${{ steps.draft.outputs.body }}
-
-          ---
-
           📦 **Published to TestPyPI**
 
           ```bash
@@ -122,6 +104,6 @@ jobs:
                       ${{ steps.check.outputs.package }}==${{ steps.version.outputs.version }}
           ```
 
-          If validation passes, create tag `v${{ steps.version.outputs.version }}` (without `rc`) to publish to PyPI.
+          If validation passes, create tag `v${{ steps.version.outputs.final_version }}` to publish to PyPI.
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

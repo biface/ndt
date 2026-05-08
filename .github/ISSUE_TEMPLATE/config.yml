@@ -2,15 +2,15 @@ blank_issues_enabled: true
 
 contact_links:
   - name: "💬 General question or idea"
-    url: https://github.com/biface/REPO/discussions
+    url: https://github.com/biface/ndt/discussions
     about: >
       For usage questions, informal proposals, or experience reports —
       please use Discussions rather than opening an issue.
 
   - name: "📖 API Documentation"
-    url: https://REPO.readthedocs.io
+    url: https://ndict-tools.readthedocs.io
     about: "Check the full documentation on ReadTheDocs before opening an issue."
 
   - name: "📦 PyPI"
-    url: https://pypi.org/project/PACKAGE/
+    url: https://pypi.org/project/ndict-tools/
     about: "Published versions and release history."
