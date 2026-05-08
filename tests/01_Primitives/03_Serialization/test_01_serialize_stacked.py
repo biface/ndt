@@ -9,6 +9,7 @@ Structure:
 - TestPickleSerializationStackedDict: pickle round-trip, SHA-256, tamper detection
 - TestNativePickle                  : __reduce__ via stdlib pickle.dumps/loads
 """
+
 import pickle
 from copy import deepcopy
 from pathlib import Path
@@ -18,10 +19,10 @@ import pytest
 from ndict_tools.exception import StackedValueError
 from ndict_tools.tools import _StackedDict
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def make_strict(data: dict) -> _StackedDict:
     return _StackedDict.from_dict(
@@ -38,6 +39,7 @@ def make_smooth(data: dict) -> _StackedDict:
 # ---------------------------------------------------------------------------
 # JSON — _StackedDict
 # ---------------------------------------------------------------------------
+
 
 class TestJsonSerializationStackedDict:
 
@@ -74,14 +76,19 @@ class TestJsonSerializationStackedDict:
 
     # --- Non-string keys ---
 
-    @pytest.mark.parametrize("key", [
-        ("env", "production"),
-        ("env", "dev"),
-        frozenset(["cache", "redis"]),
-        "monitoring",
-        "global_settings",
-    ])
-    def test_top_level_keys_preserved(self, function_system_config, tmp_function_file, key):
+    @pytest.mark.parametrize(
+        "key",
+        [
+            ("env", "production"),
+            ("env", "dev"),
+            frozenset(["cache", "redis"]),
+            "monitoring",
+            "global_settings",
+        ],
+    )
+    def test_top_level_keys_preserved(
+        self, function_system_config, tmp_function_file, key
+    ):
         """All top-level keys from _SYSTEM_CONFIG survive JSON round-trip."""
         sd = make_strict(function_system_config)
         path = tmp_function_file / "sd_keys.json"
@@ -104,7 +111,9 @@ class TestJsonSerializationStackedDict:
         assert 1 in env_prod["database"]["replicas"]
         assert 2 in env_prod["database"]["replicas"]
 
-    def test_nested_tuple_keys_preserved(self, function_system_config, tmp_function_file):
+    def test_nested_tuple_keys_preserved(
+        self, function_system_config, tmp_function_file
+    ):
         """Tuple keys nested at multiple levels survive JSON round-trip."""
         sd = make_strict(function_system_config)
         path = tmp_function_file / "sd_tuple_keys.json"
@@ -165,7 +174,9 @@ class TestJsonSerializationStackedDict:
 
     # --- from_json uses cls ---
 
-    def test_from_json_returns_stackeddict(self, function_system_config, tmp_function_file):
+    def test_from_json_returns_stackeddict(
+        self, function_system_config, tmp_function_file
+    ):
         """from_json returns an instance of _StackedDict (or calling class)."""
         sd = make_strict(function_system_config)
         path = tmp_function_file / "sd.json"
@@ -179,6 +190,7 @@ class TestJsonSerializationStackedDict:
 # ---------------------------------------------------------------------------
 # Pickle — _StackedDict
 # ---------------------------------------------------------------------------
+
 
 class TestPickleSerializationStackedDict:
 
@@ -340,6 +352,7 @@ class TestPickleSerializationStackedDict:
 # Native pickle via __reduce__
 # ---------------------------------------------------------------------------
 
+
 class TestNativePickle:
     """
     Verify __reduce__ works correctly with stdlib pickle.dumps/pickle.loads.
@@ -367,7 +380,9 @@ class TestNativePickle:
         restored = pickle.loads(pickle.dumps(sd))  # noqa: S301
         assert restored.default_factory is None
 
-    def test_native_pickle_preserves_default_factory_class(self, function_system_config):
+    def test_native_pickle_preserves_default_factory_class(
+        self, function_system_config
+    ):
         """__reduce__ preserves default_factory=_StackedDict."""
         sd = make_smooth(function_system_config)
         restored = pickle.loads(pickle.dumps(sd))  # noqa: S301

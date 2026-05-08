@@ -23,11 +23,12 @@ def perfect_binary_tree():
     """
     Create a perfect binary tree for testing.
 
-    Structure:
+    Structure::
+
            A
-         /   \
+         /   \\
         B     C
-       / \   / \
+       / \\   / \\
       D   E F   G
 
     All leaves at same depth, all internal nodes have 2 children.
@@ -232,11 +233,12 @@ def almost_perfect_tree():
     """
     Create an almost perfect tree (one node missing from perfect).
 
-    Structure:
+    Structure::
+
            A
-         /   \
+         /   \\
         B     C
-       / \   /
+       / \\   /
       D   E F
     """
     root = _HKey("A", is_root=True)
@@ -254,13 +256,14 @@ def cycle_tree():
     """
     Create an almost perfect tree (one node missing from perfect).
 
-    Structure:
+    Structure::
+
            A
-         /   \
+         /   \\
         B     C
-       / \   /
+       / \\   /
       D   E F
-         /   \
+         /   \\
         C     B
     """
     root = _HKey("A", is_root=True)

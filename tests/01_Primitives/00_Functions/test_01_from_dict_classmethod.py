@@ -10,6 +10,7 @@ Covers:
 - DeprecationWarning emitted by the free function
 - Round-trip: from_dict(to_dict()) produces a structurally equal dict
 """
+
 import re
 
 import pytest
@@ -22,16 +23,21 @@ from ndict_tools import (
 from ndict_tools.exception import StackedKeyError
 from ndict_tools.tools import _StackedDict, from_dict
 
-
 # ---------------------------------------------------------------------------
 # Classmethod — basic construction
 # ---------------------------------------------------------------------------
+
 
 class TestFromDictClassmethod:
 
     @pytest.mark.parametrize(
         "cls",
-        [_StackedDict, NestedDictionary, StrictNestedDictionary, SmoothNestedDictionary],
+        [
+            _StackedDict,
+            NestedDictionary,
+            StrictNestedDictionary,
+            SmoothNestedDictionary,
+        ],
     )
     def test_returns_correct_type(self, cls, function_system_config):
         """from_dict classmethod returns an instance of the calling class."""
@@ -43,7 +49,12 @@ class TestFromDictClassmethod:
 
     @pytest.mark.parametrize(
         "cls",
-        [_StackedDict, NestedDictionary, StrictNestedDictionary, SmoothNestedDictionary],
+        [
+            _StackedDict,
+            NestedDictionary,
+            StrictNestedDictionary,
+            SmoothNestedDictionary,
+        ],
     )
     def test_nested_dicts_have_correct_type(self, cls, function_system_config):
         """Nested dicts are converted to the same cls, not the base class."""
@@ -62,7 +73,9 @@ class TestFromDictClassmethod:
             ({"indent": 2, "default_factory": _StackedDict}, ["monitoring"]),
         ],
     )
-    def test_default_setup_propagated(self, function_system_config, default_setup, keys):
+    def test_default_setup_propagated(
+        self, function_system_config, default_setup, keys
+    ):
         """_default_setup is propagated to all nested instances."""
         result = _StackedDict.from_dict(
             function_system_config,
@@ -136,6 +149,7 @@ class TestFromDictClassmethod:
 # ---------------------------------------------------------------------------
 # Free function deprecation
 # ---------------------------------------------------------------------------
+
 
 class TestFromDictFreeFunction:
 

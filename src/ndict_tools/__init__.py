@@ -1,6 +1,5 @@
 from .core import (
     CompactPathsView,
-    DictPaths,
     NestedDictionary,
     PathsView,
     SmoothNestedDictionary,
@@ -16,7 +15,7 @@ from .exception import (
     StackedValueError,
 )
 
-__version__ = "1.1.0"
+__version__ = "1.2.0rc2"
 __author__ = "biface"
 
 __all__ = [

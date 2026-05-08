@@ -32,7 +32,8 @@ def test_path_init_empty():
     d_paths = PathsView()
     assert d_paths._stacked_dict is None
     assert d_paths._hkey is None
-    assert d_paths._ensure_hkey() is None
+    with pytest.raises(StackedKeyError):
+        d_paths._ensure_hkey()
 
 
 class TestPathStrictSD:
@@ -286,7 +287,7 @@ class TestPathSmoothSD:
             smooth_c_nd[false_keys_type] = None
 
 
-class TestDictPathsStrictSD:
+class TestCompactPathsStrictSD:
 
     @pytest.mark.parametrize(
         "path",
@@ -373,13 +374,13 @@ class TestDictPathsStrictSD:
         ],
     )
     def test_path(self, strict_c_nd, path):
-        assert path in strict_c_nd.dict_paths()
+        assert path in strict_c_nd.paths()
 
     def test_eq_path(self, strict_c_nd, smooth_c_nd):
-        assert strict_c_nd.dict_paths() == smooth_c_nd.dict_paths()
+        assert strict_c_nd.paths() == smooth_c_nd.paths()
 
     def test_neq_path(self, strict_c_nd, nested_strict_c_setup):
-        assert strict_c_nd.dict_paths() != NestedDictionary(
+        assert strict_c_nd.paths() != NestedDictionary(
             {}, default_setup=nested_strict_c_setup
         )
 
