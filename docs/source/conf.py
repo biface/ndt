@@ -57,6 +57,7 @@ smv_remote_whitelist = r"^origin$"
 smv_released_pattern = r"^refs/tags/v\d+\.\d+\.\d+$"
 smv_outputdir_format = "{ref.name}"
 smv_prefer_remote_refs = False
+smv_symver_pattern = r"^v(\d+\.\d+)\.\d+$"
 
 # -- Options for HTML output -------------------------------------------------
 html_theme = "furo"
