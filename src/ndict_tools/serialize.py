@@ -31,8 +31,9 @@ import hashlib
 import json
 import pickle  # nosec B403
 import warnings
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from .exception import StackedTypeError, StackedValueError
 
@@ -237,7 +238,7 @@ class NestedDictionaryEncoder(json.JSONEncoder):
     '{"a": {"b": 1}}'
     """
 
-    def default(self, o: Any) -> Any:  # type: ignore[override]
+    def default(self, o: Any) -> Any:
         # Lazy import to avoid circular dependency at module load time
         from .tools import _StackedDict
 
@@ -245,14 +246,14 @@ class NestedDictionaryEncoder(json.JSONEncoder):
             return {_encode_key(k): v for k, v in o.items()}
         return super().default(o)
 
-    def encode(self, o: Any) -> str:  # type: ignore[override]
+    def encode(self, o: Any) -> str:
         from .tools import _StackedDict
 
         if isinstance(o, _StackedDict):
             return super().encode({_encode_key(k): v for k, v in o.items()})
         return super().encode(o)
 
-    def iterencode(self, o: Any, _one_shot: bool = False):  # type: ignore[override]
+    def iterencode(self, o: Any, _one_shot: bool = False):
         from .tools import _StackedDict
 
         if isinstance(o, _StackedDict):
@@ -301,7 +302,7 @@ def _make_decoder_hook(cls: type, class_options: dict[str, Any]) -> Callable[...
 
 def _pickle_dump(
     nd: Any,
-    path: "str | Path",
+    path: str | Path,
     protocol: int | None = None,
 ) -> None:
     """
@@ -339,7 +340,7 @@ def _pickle_dump(
 
 
 def _pickle_load(
-    path: "str | Path",
+    path: str | Path,
     verify: bool = True,
 ) -> Any:
     """
@@ -372,8 +373,10 @@ def _pickle_load(
         with untrusted files.
     """
     warnings.warn(
-        "Pickle files are unsafe when loaded from untrusted sources. "
-        "Only unpickle files you created yourself or received from trusted sources.",
+        (
+            "Pickle files are unsafe when loaded from untrusted sources. "
+            "Only unpickle files you created yourself or received from trusted sources."
+        ),
         UserWarning,
         stacklevel=3,
     )

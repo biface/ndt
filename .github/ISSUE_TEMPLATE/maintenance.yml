@@ -43,7 +43,7 @@ body:
       description: "Objective conditions to close this issue."
       placeholder: |
         - [ ] `pytest --tb=short` passes
-        - [ ] `tox -e ci-quality`: 0 errors (mypy, flake8, isort, bandit)
+        - [ ] `tox -e ci-quality`: 0 errors (basedpyright, flake8, black, isort, bandit)
         - [ ] Coverage ≥ threshold defined in `tox.ini`
         - [ ] `CHANGELOG.md` updated if necessary
         - [ ] `requirements*.txt` or `pyproject.toml` committed if a dependency was updated

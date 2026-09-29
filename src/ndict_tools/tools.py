@@ -24,18 +24,10 @@ import copy
 import json
 import warnings
 from collections import defaultdict, deque
+from collections.abc import Callable, Generator, Iterable, Iterator, Mapping
 from pathlib import Path
 from textwrap import indent
-from typing import (
-    Any,
-    Callable,
-    Generator,
-    Iterable,
-    Iterator,
-    Mapping,
-    Type,
-    TypeVar,
-)
+from typing import Any, TypeVar
 
 from .exception import (
     StackedAttributeError,
@@ -185,7 +177,7 @@ def unpack_items(
             yield (key,), value
 
 
-def from_dict(dictionary: dict[Any, Any], class_name: Type["T"], **class_options) -> T:
+def from_dict(dictionary: dict[Any, Any], class_name: type[T], **class_options) -> T:
     """
     Recursively convert a standard dictionary to a _StackedDict or subclass.
 
@@ -198,7 +190,7 @@ def from_dict(dictionary: dict[Any, Any], class_name: Type["T"], **class_options
     ----------
     dictionary : dict
         The dictionary to transform (may be nested)
-    class_name : Type[T]
+    class_name : type[T]
         The _StackedDict class (or subclass) to instantiate.
         Must be a subclass of _StackedDict.
     **class_options : dict
@@ -2117,7 +2109,7 @@ class _StackedDict(defaultdict[Any, Any]):
     # SERIALIZATION METHODS (JSON + PICKLE)
     # ========================================================================
 
-    def to_json(self, path: "str | Path", indent: int | None = None) -> None:
+    def to_json(self, path: str | Path, indent: int | None = None) -> None:
         """
         Serialize this dictionary to a JSON file.
 
@@ -2143,8 +2135,6 @@ class _StackedDict(defaultdict[Any, Any]):
         --------
         from_json : Reconstruct from a JSON file.
         """
-        from pathlib import Path
-
         from .serialize import NestedDictionaryEncoder
 
         _indent = indent if indent is not None else self.indent
@@ -2152,7 +2142,7 @@ class _StackedDict(defaultdict[Any, Any]):
             json.dump(self, f, cls=NestedDictionaryEncoder, indent=_indent or None)
 
     @classmethod
-    def from_json(cls, path: "str | Path", **class_options) -> "_StackedDict":
+    def from_json(cls, path: str | Path, **class_options) -> "_StackedDict":
         """
         Reconstruct a ``_StackedDict`` (or subclass) from a JSON file.
 
@@ -2184,8 +2174,6 @@ class _StackedDict(defaultdict[Any, Any]):
         --------
         to_json : Serialize to a JSON file.
         """
-        from pathlib import Path
-
         from .serialize import _make_decoder_hook
 
         with open(Path(path), "r", encoding="utf-8") as f:
@@ -2195,7 +2183,7 @@ class _StackedDict(defaultdict[Any, Any]):
 
     def to_pickle(
         self,
-        path: "str | Path",
+        path: str | Path,
         protocol: int | None = None,
     ) -> None:
         """
@@ -2226,7 +2214,7 @@ class _StackedDict(defaultdict[Any, Any]):
     @classmethod
     def from_pickle(
         cls,
-        path: "str | Path",
+        path: str | Path,
         verify: bool = True,
         **class_options,
     ) -> "_StackedDict":
@@ -3173,7 +3161,8 @@ class _StackedDict(defaultdict[Any, Any]):
 
         # Initialize a stack to traverse the dictionary
         path: list[Any] = []
-        stack = [(self, [])]  # Each entry is (current_dict, current_path)
+        # Each entry is (current_dict, current_path)
+        stack: list[tuple[Any, list[Any]]] = [(self, [])]
 
         while stack:
             current, path = stack.pop()  # Get the current dictionary and path
@@ -3196,7 +3185,7 @@ class _StackedDict(defaultdict[Any, Any]):
 
         return path, value
 
-    def update(  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+    def update(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         __m: Mapping[Any, Any] | Iterable[tuple[Any, Any]] | None = None,
         **kwargs,
