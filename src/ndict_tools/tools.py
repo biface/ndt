@@ -20,6 +20,7 @@ designed to:
 
 """
 
+import copy
 import json
 import warnings
 from collections import defaultdict, deque
@@ -2408,32 +2409,44 @@ class _StackedDict(defaultdict[Any, Any]):
             new[key] = value
         return new
 
-    def __deepcopy__(self) -> "_StackedDict":
+    def __deepcopy__(self, memo: dict[int, object] | None = None) -> "_StackedDict":
         """
         Create a deep copy of the _StackedDict.
 
-        Creates a completely independent copy where all nested structures
-        are recursively duplicated. Changes to the copy will not affect
-        the original.
+        Implements the ``copy.deepcopy`` protocol. Every key and value is
+        copied recursively, including mutable leaf values such as lists, so
+        changes to the copy never affect the original.
+
+        Parameters
+        ----------
+        memo : dict[int, object] or None, optional
+            Mapping from ``id()`` of already copied objects to their copies,
+            maintained by the ``copy`` module. Pass it through unchanged when
+            calling this method from another ``__deepcopy__``. ``None`` starts
+            a new copy operation.
 
         Returns
         -------
         _StackedDict
-            Complete independent copy
+            Independent copy of the same class, with the same configuration
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd2 = sd.__deepcopy__()
-        >>> sd2['a']['b'] = 2
+        >>> import copy
+        >>> sd = _StackedDict({'a': {'b': [1]}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> sd2 = copy.deepcopy(sd)
+        >>> sd2['a']['b'].append(2)
         >>> sd['a']['b']
-        1
+        [1]
 
         Notes
         -----
-        - Uses to_dict() → from_dict() pipeline for copying
-        - Preserves class type (works with subclasses)
-        - All configuration is transferred to the copy
+        - The new instance is registered in ``memo`` before its content is
+          copied. An object reachable through several paths is therefore
+          copied once and stays shared in the copy, and a dictionary that
+          contains itself does not cause infinite recursion.
+        - The class and ``default_setup`` of the original are preserved, so
+          subclasses and the three public variants copy to their own type.
 
         See Also
         --------
@@ -2441,9 +2454,13 @@ class _StackedDict(defaultdict[Any, Any]):
         deepcopy : Public method wrapper
         """
 
-        return self.__class__.from_dict(
-            self.to_dict(), default_setup=dict(self.default_setup)
-        )
+        if memo is None:
+            memo = {}
+        new = self.__class__(default_setup=dict(self.default_setup))
+        memo[id(self)] = new
+        for key, value in self.items():
+            new[copy.deepcopy(key, memo)] = copy.deepcopy(value, memo)
+        return new
 
     def __setitem__(self, key, value) -> None:
         """
@@ -3003,7 +3020,8 @@ class _StackedDict(defaultdict[Any, Any]):
         Create a deep copy of the _StackedDict.
 
         Creates a completely independent copy where all nested structures
-        are recursively duplicated.
+        and mutable leaf values are recursively duplicated. Equivalent to
+        ``copy.deepcopy(self)``.
 
         Returns
         -------
@@ -3024,7 +3042,7 @@ class _StackedDict(defaultdict[Any, Any]):
         copy : Shallow copy alternative
         """
 
-        return self.__deepcopy__()
+        return copy.deepcopy(self)
 
     def pop(self, key: Any | list[Any], default=None) -> Any:
         """

@@ -25,6 +25,17 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   black commands no longer pass `--target-version` and read it from
   `[tool.black]` in `pyproject.toml`.
 
+### Fixed
+
+- **`copy.deepcopy()`** raised `TypeError` on every nested dictionary:
+  `__deepcopy__` did not accept the `memo` argument passed by the `copy`
+  module. It now implements the protocol, so shared sub-structures stay
+  shared in the copy and a dictionary that contains itself no longer
+  raises `RecursionError`. Closes #127.
+- **`deepcopy()`** shared mutable leaf values (lists, sets, custom objects)
+  with the original, because the copy was rebuilt through
+  `to_dict()` / `from_dict()`. Every value is now deep-copied.
+
 ---
 
 ## [1.2.0] — Persistence (Serialize) — 2026-05-06

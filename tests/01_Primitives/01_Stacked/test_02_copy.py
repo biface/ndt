@@ -53,3 +53,23 @@ def test_deepcopy_dict_change(dict_name, path, value, request):
     assert dict_copy == dict_source
     dict_source[path] = value
     assert dict_copy[path] != value
+
+
+@pytest.mark.parametrize("dict_name", ["strict_f_sd", "smooth_f_sd"])
+def test_deepcopy_protocol(dict_name, request):
+    """copy.deepcopy() goes through __deepcopy__(memo) (regression #127)."""
+    dict_source = request.getfixturevalue(dict_name)
+    dict_copy = deepcopy(dict_source)
+    assert dict_copy == dict_source
+    assert type(dict_copy) is type(dict_source)
+    assert dict_copy.default_setup == dict_source.default_setup
+
+
+@pytest.mark.parametrize("dict_name", ["strict_f_sd", "smooth_f_sd"])
+def test_deepcopy_mutable_leaf(dict_name, request):
+    """Mutable leaf values are copied, not shared (regression #127)."""
+    dict_source = request.getfixturevalue(dict_name)
+    dict_source[["copy_test", "items"]] = [1, 2]
+    for dict_copy in (dict_source.deepcopy(), deepcopy(dict_source)):
+        dict_copy[["copy_test", "items"]].append(3)
+        assert dict_source[["copy_test", "items"]] == [1, 2]
