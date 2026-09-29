@@ -7,6 +7,26 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.3.0] — Unreleased
+
+### Changed
+
+- **Python 3.11 is the minimum version.** Python 3.10 support is dropped
+  (`requires-python = ">=3.11"`). Closes #74.
+- **CI matrix:** Python 3.11, 3.12, 3.13 and 3.14 are required; 3.14 is added
+  to the classifiers. Python 3.15 (pre-release) and free-threaded 3.14t run as
+  best effort; the 3.14t job only checks that the package runs without the
+  GIL and makes no thread-safety claim.
+- **Development baseline:** `.python-version` pins 3.11 (`uv python pin 3.11`);
+  `pyrightconfig.json` checks against Python 3.11; black targets py311.
+- **pytest configuration:** `DeprecationWarning` is raised as an error, so
+  deprecated calls surface before a later Python version removes them.
+- **`tox.ini`:** `py310` environment removed; `py315` and `py314t` added;
+  black commands no longer pass `--target-version` and read it from
+  `[tool.black]` in `pyproject.toml`.
+
+---
+
 ## [1.2.0] — Persistence (Serialize) — 2026-05-06
 
 ### Added

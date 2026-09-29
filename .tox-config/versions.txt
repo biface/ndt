@@ -6,13 +6,13 @@
 # 2. La version utilisée pour générer le rapport de couverture
 #
 # Format :
-# - Une version par ligne (ex: py310, py311, pypy39)
+# - Une version par ligne (ex: py311, py312, pypy311)
 # - Les lignes vides et commençant par # sont ignorées
 # - La ligne "coverage:" définit la version pour le rapport de couverture
 #
 # Exemples de versions supportées :
-# - py39, py310, py311, py312, py313
-# - pypy39, pypy310
+# - py311, py312, py313, py314
+# - pypy311
 #
 # Modification :
 # Pour ajouter/retirer des versions, éditez simplement ce fichier
@@ -21,12 +21,11 @@
 # ================================================
 
 # Versions Python à tester (ordre d'exécution)
-py310
 py311
-#py312
+#py312   (run by coverage.sh, see coverage-version.txt)
 py313
 py314
 
-# Exemples pour le futur :
+# Best effort (not in the blocking sequence; run manually):
 # py315
-# pypy310
+# py314t
