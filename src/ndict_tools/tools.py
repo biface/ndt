@@ -29,6 +29,7 @@ from pathlib import Path
 from textwrap import indent
 from typing import Any, TypeVar
 
+from ._compat import override
 from .exception import (
     StackedAttributeError,
     StackedIndexError,
@@ -1827,6 +1828,7 @@ class _HKey:
         """Iterate over children."""
         return iter(self.children)
 
+    @override
     def __repr__(self) -> str:
         if self.is_root:
             return f"_HKey(ROOT, children={len(self.children)})"
@@ -2084,6 +2086,7 @@ class _StackedDict(defaultdict[Any, Any]):
     # PICKLE SUPPORT
     # ========================================================================
 
+    @override
     def __reduce__(self) -> tuple[Any, ...]:
         """
         Support pickle serialization.
@@ -2314,6 +2317,7 @@ class _StackedDict(defaultdict[Any, Any]):
             items = value
         self._default_setup = set(items)
 
+    @override
     def __str__(self, padding=0) -> str:
         """ "
         Convert to JSON-like formatted string representation.
@@ -2364,6 +2368,7 @@ class _StackedDict(defaultdict[Any, Any]):
 
         return d_str
 
+    @override
     def __copy__(self) -> "_StackedDict":
         """
         Create a shallow copy of the _StackedDict.
@@ -2450,6 +2455,7 @@ class _StackedDict(defaultdict[Any, Any]):
             new[copy.deepcopy(key, memo)] = copy.deepcopy(value, memo)
         return new
 
+    @override
     def __setitem__(self, key, value) -> None:
         """
         set item with support for hierarchical keys.
@@ -2519,6 +2525,7 @@ class _StackedDict(defaultdict[Any, Any]):
             # Flat keys are handled as usual
             super().__setitem__(key, value)
 
+    @override
     def __getitem__(self, key):
         """
         Get item with support for hierarchical keys.
@@ -2585,6 +2592,7 @@ class _StackedDict(defaultdict[Any, Any]):
         # else:
         return super().__getitem__(key)
 
+    @override
     def __delitem__(self, key):
         """
         Delete item with support for hierarchical keys and cleanup.
@@ -2635,6 +2643,7 @@ class _StackedDict(defaultdict[Any, Any]):
         else:  # Autres types traités comme des clés simples
             super().__delitem__(key)
 
+    @override
     def __eq__(self, other):
         """
         Override __eq__ to compare two dictionaries, this function an isomorphism to dictionaries set
@@ -2683,6 +2692,7 @@ class _StackedDict(defaultdict[Any, Any]):
         else:
             return compare_dict(self.to_dict(), dict(other))
 
+    @override
     def __ne__(self, other):
         """
         Check inequality (negation of __eq__).
@@ -2979,6 +2989,7 @@ class _StackedDict(defaultdict[Any, Any]):
                 unpacked_dict[key] = self[key]
         return unpacked_dict
 
+    @override
     def copy(self) -> "_StackedDict":
         """
         Create a shallow copy of the _StackedDict.
@@ -3032,6 +3043,7 @@ class _StackedDict(defaultdict[Any, Any]):
 
         return copy.deepcopy(self)
 
+    @override
     def pop(self, key: Any | list[Any], default=None) -> Any:
         """
         Remove and return value at key or hierarchical path.
@@ -3113,6 +3125,7 @@ class _StackedDict(defaultdict[Any, Any]):
             # Handle flat keys
             return super().pop(key, default)
 
+    @override
     def popitem(self):
         """
         Remove and return the last item as (path, value) pair.
@@ -3185,6 +3198,7 @@ class _StackedDict(defaultdict[Any, Any]):
 
         return path, value
 
+    @override
     def update(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         __m: Mapping[Any, Any] | Iterable[tuple[Any, Any]] | None = None,
@@ -4055,6 +4069,7 @@ class _Paths:
         hkey = self._ensure_hkey()
         return hkey.find_by_path(path) is not None
 
+    @override
     def __eq__(self, other: Any) -> bool:
         """
         Compare two DictPaths for set-wise equality (order-independent).
@@ -4084,6 +4099,7 @@ class _Paths:
         except TypeError:
             return NotImplemented
 
+    @override
     def __ne__(self, other: Any) -> bool:
         """
         Check inequality between DictPaths objects.
@@ -4103,6 +4119,7 @@ class _Paths:
             return NotImplemented
         return not result
 
+    @override
     def __repr__(self) -> str:
         """
         Return string representation.
@@ -4629,6 +4646,7 @@ class _CPaths(_Paths):
         """
         return self.expand_structure(self.structure)
 
+    @override
     def __repr__(self) -> str:
         """
         Return technical representation with compact structure.
@@ -4646,6 +4664,7 @@ class _CPaths(_Paths):
         """
         return f"{self.__class__.__name__}({self.structure})"
 
+    @override
     def __str__(self) -> str:
         """
         Return readable string representation.

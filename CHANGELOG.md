@@ -24,6 +24,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **`tox.ini`:** `py310` environment removed; `py315` and `py314t` added;
   black commands no longer pass `--target-version` and read it from
   `[tool.black]` in `pyproject.toml`.
+- **`@override` (PEP 698)** on the 24 methods that override a base class
+  method, through a private `_compat.py` shim: `typing.override` on Python
+  3.12+, a local decorator that sets `__override__` on 3.11. No runtime
+  dependency is added; `typing_extensions` is used by the type checker only.
+  The shim is removed in 1.4.0. Closes #103.
 
 ### Fixed
 

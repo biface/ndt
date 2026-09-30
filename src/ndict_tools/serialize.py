@@ -35,6 +35,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from ._compat import override
 from .exception import StackedTypeError, StackedValueError
 
 # ---------------------------------------------------------------------------
@@ -238,6 +239,7 @@ class NestedDictionaryEncoder(json.JSONEncoder):
     '{"a": {"b": 1}}'
     """
 
+    @override
     def default(self, o: Any) -> Any:
         # Lazy import to avoid circular dependency at module load time
         from .tools import _StackedDict
@@ -246,6 +248,7 @@ class NestedDictionaryEncoder(json.JSONEncoder):
             return {_encode_key(k): v for k, v in o.items()}
         return super().default(o)
 
+    @override
     def encode(self, o: Any) -> str:
         from .tools import _StackedDict
 
@@ -253,6 +256,7 @@ class NestedDictionaryEncoder(json.JSONEncoder):
             return super().encode({_encode_key(k): v for k, v in o.items()})
         return super().encode(o)
 
+    @override
     def iterencode(self, o: Any, _one_shot: bool = False):
         from .tools import _StackedDict
 
