@@ -1503,122 +1503,172 @@ class _HKey:
 
         return issues
 
-    def is_complete_tree(self) -> bool:
+    @staticmethod
+    def _check_arity(n: int, minimum: int, method: str) -> None:
         """
-        Check if this is a complete tree.
+        Validate the arity argument of a tree predicate.
 
-        A complete tree is a tree where all levels are fully filled except
-        possibly the last level, which is filled from left to right.
+        Parameters
+        ----------
+        n : int
+            Requested arity.
+        minimum : int
+            Smallest meaningful arity for the predicate.
+        method : str
+            Name of the calling predicate, used in the error message.
+
+        Raises
+        ------
+        StackedValueError
+            If ``n`` is below ``minimum``.
+        """
+        if n < minimum:
+            raise StackedValueError(
+                f"{method}() requires an arity n >= {minimum}", value=n
+            )
+
+    def is_complete_tree(self, n: int = 2) -> bool:
+        """
+        Check if this is a complete n-ary tree (binary by default).
+
+        A complete tree has every level filled except possibly the last, whose
+        nodes are as far left as possible. In BFS order, once a node has fewer
+        than ``n`` children, no later node may have children. A node with more
+        than ``n`` children makes the tree not n-ary, hence not complete.
+
+        Nodes created with ``is_root=True`` are not checked: the root is the
+        virtual container whose children are the top-level keys, so the number
+        of top-level keys is free.
+
+        Parameters
+        ----------
+        n : int, optional
+            Arity of the tree, at least 2 (default: 2). Below 2 every tree would
+            be trivially complete.
 
         Returns
         -------
         bool
-            True if tree is complete
+            True if the tree is complete for arity ``n``.
+
+        Raises
+        ------
+        StackedValueError
+            If ``n`` is below 2.
 
         Examples
         --------
-        >>> # Complete tree: all levels filled
-        >>> root = _HKey('a')
-        >>> root.add_child('b')
-        >>> root.add_child('c')
-        >>> root.is_complete_tree()
-        True
-
-        >>> # Incomplete: last level not filled left-to-right
+        >>> # Complete: the last level is filled from the left
         >>> root = _HKey('a')
         >>> b = root.add_child('b')
         >>> c = root.add_child('c')
-        >>> c.add_child('d')  # Only right child has children
+        >>> d = b.add_child('d')
+        >>> root.is_complete_tree()
+        True
+
+        >>> # Not complete: 'b' has no children while 'c', to its right, has one
+        >>> root = _HKey('a')
+        >>> b = root.add_child('b')
+        >>> c = root.add_child('c')
+        >>> d = c.add_child('d')
         >>> root.is_complete_tree()
         False
 
         Notes
         -----
-        This uses BFS to check level-by-level filling.
+        Terminology follows English usage. French *arbre complet* corresponds to
+        English *perfect tree* (see ``is_perfect_tree``).
 
         See Also
         --------
-        is_perfect_tree : Check if perfectly balanced
-        is_balanced : Check if height-balanced
+        is_perfect_tree : Every level filled
+        is_full_tree : Every internal node has exactly n children
+        is_balanced : Height-balanced check
         """
-        if not self.has_children():
-            return True
+        self._check_arity(n, 2, "is_complete_tree")
 
         queue: deque[_HKey] = deque([self])
         found_incomplete = False
 
         while queue:
             node = queue.popleft()
-
-            for child in node.children:
-                if found_incomplete:
-                    # After finding a node that's not full, no nodes should have children
-                    if child.has_children():
-                        return False
-                queue.append(child)
-
-            # If this node doesn't have maximum children, mark as incomplete
-            if not node.is_root and len(node.children) < 2:
-                found_incomplete = True
+            if not node.is_root:
+                count = len(node.children)
+                if count > n:
+                    return False
+                if found_incomplete and count:
+                    # A node after the first incomplete one must be a leaf
+                    return False
+                if count < n:
+                    found_incomplete = True
+            queue.extend(node.children)
 
         return True
 
-    def is_perfect_tree(self) -> bool:
+    def is_perfect_tree(self, n: int = 2) -> bool:
         """
-        Check if this is a perfect tree (all leaves at same depth, all internal nodes have 2 children).
+        Check if this is a perfect n-ary tree (binary by default).
 
-        A perfect tree is both complete and full:
+        A perfect tree has every level filled: all leaves are at the same depth
+        and every internal node has exactly ``n`` children.
 
-        * All leaves are at the same depth
-        * All internal nodes have exactly 2 children
+        Nodes created with ``is_root=True`` are not checked for arity: the root
+        is the virtual container whose children are the top-level keys.
+
+        Parameters
+        ----------
+        n : int, optional
+            Arity of the tree, at least 2 (default: 2). Below 2 every chain
+            would be trivially perfect.
 
         Returns
         -------
         bool
-            True if tree is perfect
+            True if the tree is perfect for arity ``n``.
+
+        Raises
+        ------
+        StackedValueError
+            If ``n`` is below 2.
 
         Examples
         --------
-        >>> # Perfect tree with 2 children per node
         >>> root = _HKey('a')
         >>> b = root.add_child('b')
         >>> c = root.add_child('c')
-        >>> b.add_child('d')
-        >>> b.add_child('e')
-        >>> c.add_child('f')
-        >>> c.add_child('g')
+        >>> d = b.add_child('d')
+        >>> e = b.add_child('e')
+        >>> f = c.add_child('f')
+        >>> g = c.add_child('g')
         >>> root.is_perfect_tree()
         True
+        >>> root.is_perfect_tree(n=3)
+        False
 
         Notes
         -----
-        This assumes binary tree structure. For n-ary trees, this checks
-        if all internal nodes have the same number of children and all
-        leaves are at the same depth.
+        Terminology follows English usage: a perfect tree is what French calls
+        an *arbre complet*.
 
         See Also
         --------
-        is_complete_tree : Less strict completeness check
+        is_complete_tree : Last level may be partially filled
+        is_full_tree : Every internal node has exactly n children
         is_balanced : Height-balanced check
         """
+        self._check_arity(n, 2, "is_perfect_tree")
+
         leaves = list(self.iter_leaves())
-        if not leaves:
-            return True
+        if leaves:
+            first_leaf_depth = leaves[0].get_depth()
+            if not all(leaf.get_depth() == first_leaf_depth for leaf in leaves):
+                return False
 
-        # All leaves should be at the same depth
-        first_leaf_depth = leaves[0].get_depth()
-        if not all(leaf.get_depth() == first_leaf_depth for leaf in leaves):
-            return False
-
-        # All internal nodes should have the same number of children
-        internal_nodes = [
-            n for n in self.dfs_preorder() if n.has_children() and not n.is_root
-        ]
-        if not internal_nodes:
-            return True
-
-        first_children_count = len(internal_nodes[0].children)
-        return all(len(n.children) == first_children_count for n in internal_nodes)
+        return all(
+            len(node.children) == n
+            for node in self.dfs_preorder()
+            if node.has_children() and not node.is_root
+        )
 
     def is_balanced(self, threshold: int = 1) -> bool:
         """
@@ -1769,53 +1819,57 @@ class _HKey:
                 return False
         return True
 
-    def is_full_tree(self, n: int | None = None) -> bool:
+    def is_full_tree(self, n: int = 2) -> bool:
         """
-        Check if this is a full tree (all nodes have 0 or n children).
+        Check if this is a full n-ary tree (binary by default).
 
-        A full tree (also called proper or plane tree) has all internal nodes
-        with the same number of children.
+        A full tree (also called proper tree) has every internal node with
+        exactly ``n`` children; leaves may be at different depths. With
+        ``n=1`` the question is whether the tree is a chain.
+
+        Nodes created with ``is_root=True`` are not checked: the root is the
+        virtual container whose children are the top-level keys.
 
         Parameters
         ----------
-        n : Optional[int], optional
-            Expected number of children for internal nodes. If None, uses the
-            number from the first internal node found.
+        n : int, optional
+            Expected number of children of every internal node, at least 1
+            (default: 2).
 
         Returns
         -------
         bool
-            True if tree is full
+            True if every internal node has exactly ``n`` children.
+
+        Raises
+        ------
+        StackedValueError
+            If ``n`` is below 1.
 
         Examples
         --------
-        >>> # Full binary tree (0 or 2 children)
         >>> root = _HKey('a')
         >>> b = root.add_child('b')
         >>> c = root.add_child('c')
-        >>> b.add_child('d')
-        >>> b.add_child('e')
-        >>> root.is_full_tree(n=2)
+        >>> d = b.add_child('d')
+        >>> e = b.add_child('e')
+        >>> root.is_full_tree()
         True
+        >>> root.is_full_tree(n=3)
+        False
 
         See Also
         --------
         is_binary_tree : Check if binary
         is_perfect_tree : Check if perfect
         """
-        internal_nodes = [
-            node
+        self._check_arity(n, 1, "is_full_tree")
+
+        return all(
+            len(node.children) == n
             for node in self.dfs_preorder()
             if node.has_children() and not node.is_root
-        ]
-
-        if not internal_nodes:
-            return True
-
-        if n is None:
-            n = len(internal_nodes[0].children)
-
-        return all(len(node.children) == n for node in internal_nodes)
+        )
 
     def __len__(self) -> int:
         """Return the number of direct children."""

@@ -77,6 +77,15 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   accepts several sources, the getter returns the normalized form). Each
   setter carries a justified, rule-specific suppression, so the rule stays
   active for other properties. Closes #106.
+- **`_HKey` tree predicates take an arity `n`, binary by default.**
+  `is_complete_tree(n=2)`, `is_perfect_tree(n=2)` and `is_full_tree(n=2)`.
+  `is_complete_tree` no longer hard-codes arity 2, and `is_perfect_tree` and
+  `is_full_tree` no longer infer it from the first internal node: a ternary
+  tree needs `n=3`. `is_full_tree(n=None)` is no longer accepted. An `n` below
+  the minimum (2 for complete and perfect, 1 for full) raises
+  `StackedValueError`; a node with more than `n` children makes the predicate
+  return `False`. Nodes created with `is_root=True` are still not checked.
+  Terminology follows English usage (French *complet* is English *perfect*).
 - **Docstrings** of `NestedDictionary`, `StrictNestedDictionary` and
   `SmoothNestedDictionary` describe the current parameters. The `indent` and
   `strict` keyword settings were removed in 1.2.0 (#114); keyword arguments
@@ -97,6 +106,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   the configuration like the constructor, applies it and propagates it to
   every nested level; shared sub-structures and self-references are handled.
   On a strict or smooth dictionary, `default_factory` stays forced.
+- **`_HKey.is_complete_tree()`** returned `True` for incomplete trees, including
+  the example of its own docstring: after the first node with missing children,
+  it checked the grandchildren instead of rejecting any later node that has
+  children. Closes #135.
 - **`CompactPathsView.structure` setter** raised `StackedKeyError` when given
   a plain `dict`, although the docstring lists it as accepted: the dict was
   wrapped without a `default_setup`. It is now wrapped with

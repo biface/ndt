@@ -587,19 +587,13 @@ class TestGraphStructure:
         assert is_complete, "Complete tree fixture should be complete"
 
     def test_is_complete_tree_incomplete(self, incomplete_binary_tree):
-        """Test on incomplete tree (last level not filled left-to-right)."""
-        is_complete = incomplete_binary_tree.is_complete_tree()
-        # Left child has no children, right child has children
-        # Note: The current implementation may consider this complete
-        # depending on the specific definition used (level-filling vs left-to-right filling)
-        # This test verifies the implementation's behavior
-        # Typically, this should NOT be complete in the strict sense
+        """Left child is a leaf while the right child has children (#135)."""
+        assert not incomplete_binary_tree.is_complete_tree()
 
     def test_is_complete_tree_linear(self, linear_chain_tree):
-        """Test completeness on linear chain."""
-        is_complete = linear_chain_tree.is_complete_tree()
-        # Linear chain is technically complete (each level has 1 node)
-        assert is_complete, "Linear chain should be complete"
+        """A chain is judged as a binary tree by default: not complete (#135)."""
+        assert not linear_chain_tree.is_complete_tree()
+        assert linear_chain_tree.is_full_tree(n=1), "A chain is a full unary tree"
 
     # ========================================================================
     # PERFECT TREE TESTS
@@ -871,13 +865,9 @@ class TestGraphStructure:
 
         Full tree: all internal nodes have same number of children (n).
         """
-        is_full_auto = full_ternary_tree.is_full_tree(n=None)
-        is_full_3 = full_ternary_tree.is_full_tree(n=3)
-        is_full_2 = full_ternary_tree.is_full_tree(n=2)
-
-        # Should be full with n=3 (or auto-detected)
-        # Should not be full with n=2
-        assert not is_full_2, "Ternary tree should not be full with n=2"
+        assert not full_ternary_tree.is_full_tree(), "Binary by default"
+        assert full_ternary_tree.is_full_tree(n=3), "Ternary tree is full with n=3"
+        assert not full_ternary_tree.is_full_tree(n=2)
 
     def test_is_full_tree_binary(self, perfect_binary_tree):
         """
@@ -885,24 +875,15 @@ class TestGraphStructure:
 
         Perfect binary tree is also a full binary tree.
         """
-        is_full_auto = perfect_binary_tree.is_full_tree(n=None)
-        is_full_2 = perfect_binary_tree.is_full_tree(n=2)
+        assert perfect_binary_tree.is_full_tree(), "Binary by default"
+        assert perfect_binary_tree.is_full_tree(n=2)
 
-        # Perfect binary tree should be full with n=2
-        assert is_full_2, "Perfect binary tree should be full with n=2"
-
-    @pytest.mark.parametrize("n", [None, 2, 3, 4])
+    @pytest.mark.parametrize("n", [1, 2, 3, 4])
     def test_is_full_tree_parameterized(self, balanced_tree, n):
         """
-        Test full tree detection with different n values.
-
-        Checks if tree is full for various branching factors.
+        Internal nodes of balanced_tree have 2, 1 and 2 children: never full.
         """
-        is_full = balanced_tree.is_full_tree(n=n)
-
-        # Result depends on actual tree structure and n value
-        # This test ensures no crashes and returns boolean
-        assert isinstance(is_full, bool), "Should return boolean"
+        assert balanced_tree.is_full_tree(n=n) is False
 
 
 # ============================================================================
