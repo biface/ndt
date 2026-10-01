@@ -1861,10 +1861,12 @@ class _StackedDict(defaultdict[Any, Any]):
 
     Parameters
     ----------
-    *args : iterable, optional
+    *args : Mapping or iterable of (key, value) pairs, optional
         Dictionaries or iterables to initialize from
-    **kwargs : dict, optional
-        Either initialization data OR configuration via 'default_setup'
+    default_setup : Mapping[str, Any]
+        Configuration (keyword-only), see ``__init__``
+    **kwargs : Any, optional
+        Initialization data
 
     Attributes
     ----------
@@ -1905,7 +1907,12 @@ class _StackedDict(defaultdict[Any, Any]):
     _HKey : Internal tree structure for path operations
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+        self,
+        *args: Mapping[Any, Any] | Iterable[tuple[Any, Any]],
+        default_setup: Mapping[str, Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
         """
         Initialize a new _StackedDict with configuration and optional data.
 
@@ -1915,12 +1922,14 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Parameters
         ----------
-        *args : iterable
+        *args : Mapping or iterable of (key, value) pairs
             Dictionaries, _StackedDict instances, or iterables of (key, value) pairs
-        **kwargs : dict
-            Either:
-            - 'default_setup': dict with 'indent' and 'default_factory' keys
-            - Direct key-value pairs to initialize (requires default_setup in kwargs)
+        default_setup : Mapping[str, Any]
+            Configuration with at least 'indent' and 'default_factory' keys.
+            Keyword-only. The mapping is copied, never modified; subclasses
+            complete it through ``_normalize_setup``.
+        **kwargs : Any
+            Direct key-value pairs to initialize
 
         Raises
         ------
@@ -1946,52 +1955,15 @@ class _StackedDict(defaultdict[Any, Any]):
         - All configuration is propagated to nested instances
         """
 
-        # ind: int = 0
-        # default = None
-        setup = set()
-
         # Initialize instance attributes
 
         self.indent: int = 0
         "indent is used to print the dictionary with json indentation"
         self._default_setup: set[tuple[str, Any]] = set()
-        "default_setup is ued to disseminate default parameters to stacked objects"
-
-        # Manage init parameters
-        settings = kwargs.pop("default_setup", None)
-
-        if settings is None:
-            raise StackedKeyError(
-                "Missing 'default_setup' argument. Pass default_setup={'indent': <int>, 'default_factory': <class|None>}.",
-                key="default_setup",
-            )
-
-        if "indent" not in settings:
-            raise StackedKeyError(
-                "Missing 'indent' argument in default settings", key="indent"
-            )
-        if "default_factory" not in settings:
-            raise StackedKeyError(
-                "Missing 'default_factory' argument in default settings",
-                key="default_factory",
-            )
-
-        for key, value in settings.items():
-            setup.add((key, value))
-
-        # Initializing instance
+        "default_setup is used to disseminate default parameters to stacked objects"
 
         super().__init__()
-        self._default_setup = setup
-        for key, value in self._default_setup:
-            if hasattr(self, key):
-                self.__setattr__(key, value)
-            else:
-                # You cannot initialize undefined attributes
-                raise StackedAttributeError(
-                    f"The key {key} is not an attribute of the {self.__class__} class.",
-                    attribute=key,
-                )
+        self._apply_setup(type(self)._normalize_setup(default_setup))
 
         # Update dictionary
 
@@ -2257,6 +2229,107 @@ class _StackedDict(defaultdict[Any, Any]):
 
         return _pickle_load(path, verify=verify)
 
+    # ========================================================================
+    # CONFIGURATION (default_setup)
+    # ========================================================================
+
+    @classmethod
+    def _normalize_setup(
+        cls, setup: Mapping[str, Any] | Iterable[tuple[str, Any]] | None
+    ) -> dict[str, Any]:
+        """
+        Build the configuration an instance of ``cls`` will use.
+
+        Returns a new dict and never modifies ``setup``. The base class only
+        checks that the required keys are present. Subclasses override this
+        hook to supply defaults or to force the values that define them (for
+        instance the ``default_factory`` of a strict or smooth variant), then
+        delegate to ``super()``.
+
+        Parameters
+        ----------
+        setup : Mapping[str, Any] or iterable of (str, Any) pairs, or None
+            Requested configuration.
+
+        Returns
+        -------
+        dict[str, Any]
+            Configuration to apply.
+
+        Raises
+        ------
+        StackedKeyError
+            If ``setup`` is None, or if 'indent' or 'default_factory' is missing.
+        """
+        if setup is None:
+            raise StackedKeyError(
+                "Missing 'default_setup' argument. Pass default_setup={'indent': <int>, 'default_factory': <class|None>}.",
+                key="default_setup",
+            )
+        normalized = dict(setup)
+        if "indent" not in normalized:
+            raise StackedKeyError(
+                "Missing 'indent' argument in default settings", key="indent"
+            )
+        if "default_factory" not in normalized:
+            raise StackedKeyError(
+                "Missing 'default_factory' argument in default settings",
+                key="default_factory",
+            )
+        return normalized
+
+    def _apply_setup(self, setup: Mapping[str, Any]) -> None:
+        """
+        Apply a normalized configuration to this instance only.
+
+        Every key is checked before any attribute is changed, so an invalid
+        configuration leaves the instance untouched.
+
+        Parameters
+        ----------
+        setup : Mapping[str, Any]
+            Configuration returned by ``_normalize_setup``.
+
+        Raises
+        ------
+        StackedAttributeError
+            If a key is not an attribute of the instance.
+        """
+        for key in setup:
+            if not hasattr(self, key):
+                # You cannot initialize undefined attributes
+                raise StackedAttributeError(
+                    f"The key {key} is not an attribute of the {self.__class__} class.",
+                    attribute=key,
+                )
+        for key, value in setup.items():
+            setattr(self, key, value)
+        self._default_setup = set(setup.items())
+
+    def _propagate_setup(self, setup: Mapping[str, Any], visited: set[int]) -> None:
+        """
+        Apply a configuration to this instance and to every nested level.
+
+        Each level normalizes the configuration through its own class, so a
+        nested strict or smooth dictionary keeps its ``default_factory``.
+        Levels already visited are skipped, which handles shared
+        sub-structures and self-references.
+
+        Parameters
+        ----------
+        setup : Mapping[str, Any]
+            Configuration to propagate.
+        visited : set[int]
+            ``id()`` of the instances already configured.
+        """
+        if id(self) in visited:
+            return
+        visited.add(id(self))
+        self._apply_setup(type(self)._normalize_setup(setup))
+        for value in self.values():
+            if isinstance(value, _StackedDict):
+                value._propagate_setup(setup, visited)
+
     @property
     def default_setup(self) -> list[tuple[str, Any]]:
         """
@@ -2295,27 +2368,37 @@ class _StackedDict(defaultdict[Any, Any]):
         return ordered
 
     @default_setup.setter
-    def default_setup(self, value) -> None:
+    def default_setup(
+        self, value: Mapping[str, Any] | Iterable[tuple[str, Any]]
+    ) -> None:
         """
-        Update configuration from dict, list, or set of tuples.
+        Replace the configuration and propagate it to every nested level.
+
+        The new configuration is validated and normalized as in ``__init__``,
+        then applied to this instance and to all nested ``_StackedDict``
+        levels, which keeps the invariant that all levels share the same
+        configuration. Each level normalizes it through its own class.
 
         Parameters
         ----------
-        value : dict, list of tuple, or set of tuple
-            New configuration to apply
+        value : Mapping[str, Any] or iterable of (str, Any) pairs
+            New configuration to apply. It is not modified.
+
+        Raises
+        ------
+        StackedKeyError
+            If 'indent' or 'default_factory' is missing.
+        StackedAttributeError
+            If a key is not an attribute of the instance.
 
         Examples
         --------
-        >>> sd = _StackedDict(default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.default_setup = {'indent': 4, 'default_factory': int}
-        >>> sd.indent
-        4
+        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> sd.default_setup = {'indent': 4, 'default_factory': None}
+        >>> sd.indent, sd['a'].indent
+        (4, 4)
         """
-        if isinstance(value, dict):
-            items = value.items()
-        else:
-            items = value
-        self._default_setup = set(items)
+        self._propagate_setup(type(self)._normalize_setup(value), set())
 
     @override
     def __str__(self, padding=0) -> str:
@@ -3210,6 +3293,8 @@ class _StackedDict(defaultdict[Any, Any]):
         Merges the provided mapping, iterable of key-value pairs, or keyword
         arguments into this _StackedDict, converting regular dicts to _StackedDict
         instances recursively while preserving existing _StackedDict values.
+        Inserted _StackedDict values keep their identity and receive this
+        instance's configuration through the ``default_setup`` setter.
 
         Parameters
         ----------
@@ -3276,8 +3361,7 @@ class _StackedDict(defaultdict[Any, Any]):
             # Process the mapping
             for key, value in __m.items():
                 if isinstance(value, _StackedDict):
-                    value.indent = self.indent
-                    value.default_factory = self.default_factory
+                    value.default_setup = self.default_setup
                     self[key] = value
                 elif isinstance(value, dict):
                     nested_dict = self.__class__.from_dict(
@@ -3291,8 +3375,7 @@ class _StackedDict(defaultdict[Any, Any]):
 
         for key, value in kwargs.items():
             if isinstance(value, _StackedDict):
-                value.indent = self.indent
-                value.default_factory = self.default_factory
+                value.default_setup = self.default_setup
                 self[key] = value
             elif isinstance(value, dict):
                 nested_dict = self.__class__.from_dict(

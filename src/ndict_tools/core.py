@@ -3,6 +3,9 @@ This module provides tools and class for creating nested dictionaries, since sta
 dictionaries.
 """
 
+from collections.abc import Iterable, Mapping
+from typing import Any
+
 from ._compat import override
 from .tools import _CPaths, _Paths, _StackedDict
 
@@ -41,18 +44,21 @@ class NestedDictionary(_StackedDict):
     ...                   ('third', 3), ('fourth', 4)])
     """
 
-    def __init__(self, *args, **kwargs):
+    @classmethod
+    @override
+    def _normalize_setup(
+        cls, setup: Mapping[str, Any] | Iterable[tuple[str, Any]] | None
+    ) -> dict[str, Any]:
+        """
+        Supply the default configuration when none is given.
 
-        default_setup = kwargs.pop("default_setup", None)
-
-        if not default_setup:
-            default_setup = {"indent": 0, "default_factory": NestedDictionary}
-
-        super().__init__(
-            *args,
-            **kwargs,
-            default_setup=default_setup,
-        )
+        A missing or empty ``setup`` becomes
+        ``{'indent': 0, 'default_factory': NestedDictionary}``. Any other
+        configuration is passed on unchanged for validation.
+        """
+        if not setup:
+            setup = {"indent": 0, "default_factory": NestedDictionary}
+        return super()._normalize_setup(setup)
 
     @override
     def paths(self) -> "PathsView":
@@ -149,16 +155,20 @@ class StrictNestedDictionary(NestedDictionary):
     automatic creation of nested dictionaries for unknown keys.
     """
 
-    def __init__(self, *args, **kwargs):
+    @classmethod
+    @override
+    def _normalize_setup(
+        cls, setup: Mapping[str, Any] | Iterable[tuple[str, Any]] | None
+    ) -> dict[str, Any]:
+        """
+        Force ``default_factory`` to None; ``indent`` defaults to 0.
 
-        setup = kwargs.pop("default_setup", None)
-        if setup:
-            setup["indent"] = setup.pop("indent", 0)
-            setup["default_factory"] = None
-        else:
-            setup = {"indent": 0, "default_factory": None}
-
-        super().__init__(*args, **kwargs, default_setup=setup)
+        Works on a copy: the caller's configuration is never modified.
+        """
+        normalized = dict(setup) if setup else {}
+        normalized.setdefault("indent", 0)
+        normalized["default_factory"] = None
+        return super()._normalize_setup(normalized)
 
 
 class SmoothNestedDictionary(NestedDictionary):
@@ -181,17 +191,20 @@ class SmoothNestedDictionary(NestedDictionary):
     automatically creating nested dictionaries for unknown keys.
     """
 
-    def __init__(self, *args, **kwargs):
+    @classmethod
+    @override
+    def _normalize_setup(
+        cls, setup: Mapping[str, Any] | Iterable[tuple[str, Any]] | None
+    ) -> dict[str, Any]:
+        """
+        Force ``default_factory`` to SmoothNestedDictionary; ``indent`` defaults to 0.
 
-        setup = kwargs.pop("default_setup", None)
-        if setup:
-            setup["indent"] = setup.pop("indent", 0)
-            setup["default_factory"] = SmoothNestedDictionary
-
-        else:
-            setup = {"indent": 0, "default_factory": SmoothNestedDictionary}
-
-        super().__init__(*args, **kwargs, default_setup=setup)
+        Works on a copy: the caller's configuration is never modified.
+        """
+        normalized = dict(setup) if setup else {}
+        normalized.setdefault("indent", 0)
+        normalized["default_factory"] = SmoothNestedDictionary
+        return super()._normalize_setup(normalized)
 
 
 class PathsView(_Paths):

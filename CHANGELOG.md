@@ -29,6 +29,17 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   3.12+, a local decorator that sets `__override__` on 3.11. No runtime
   dependency is added; `typing_extensions` is used by the type checker only.
   The shim is removed in 1.4.0. Closes #103.
+- **Configuration propagation (`default_setup`).** `update()` passes its
+  configuration to inserted `_StackedDict` values through the
+  `default_setup` setter, so every nested level of the inserted value is
+  updated, not only its top level. An inserted `StrictNestedDictionary` or
+  `SmoothNestedDictionary` keeps its own `default_factory`. Closes #137.
+- **`_StackedDict.__init__`** takes `default_setup` as an explicit
+  keyword-only parameter instead of reading it from `**kwargs`. Runtime
+  behaviour is unchanged. `NestedDictionary`, `StrictNestedDictionary` and
+  `SmoothNestedDictionary` no longer define `__init__`: their defaults and
+  forced values go through the `_normalize_setup` class hook, which custom
+  subclasses can override.
 
 ### Fixed
 
@@ -40,6 +51,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **`deepcopy()`** shared mutable leaf values (lists, sets, custom objects)
   with the original, because the copy was rebuilt through
   `to_dict()` / `from_dict()`. Every value is now deep-copied.
+- **`default_setup` setter** stored the new configuration without applying
+  it: `indent` and `default_factory` kept their old values. It now validates
+  the configuration like the constructor, applies it and propagates it to
+  every nested level; shared sub-structures and self-references are handled.
+  On a strict or smooth dictionary, `default_factory` stays forced.
+- **`StrictNestedDictionary` / `SmoothNestedDictionary`** modified the
+  `default_setup` dict passed by the caller. They now work on a copy.
 
 ---
 
