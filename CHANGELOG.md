@@ -9,6 +9,16 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [1.3.0] — Unreleased
 
+### Added
+
+- **Inline type information (PEP 561).** The package ships a `py.typed`
+  marker, so type checkers use its inline annotations instead of treating
+  it as untyped. Downstream stubs for `ndict_tools` are no longer needed.
+  Closes #129 (DD-027).
+- **`verifytypes` tox environment.** Runs `basedpyright --verifytypes` on the
+  installed package; the type completeness of the exported API must stay at
+  100%. Included in `pre-push` (hence `local`), `check` and `ci-quality`.
+
 ### Changed
 
 - **Python 3.11 is the minimum version.** Python 3.10 support is dropped
