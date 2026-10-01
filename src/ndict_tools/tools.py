@@ -27,7 +27,7 @@ from collections import defaultdict, deque
 from collections.abc import Callable, Generator, Iterable, Iterator, Mapping
 from pathlib import Path
 from textwrap import indent
-from typing import Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from ._compat import override
 from .exception import (
@@ -37,6 +37,9 @@ from .exception import (
     StackedTypeError,
     StackedValueError,
 )
+
+if TYPE_CHECKING:
+    from _typeshed import SupportsKeysAndGetItem
 
 MAX_DEPTH = 100
 
@@ -3286,9 +3289,10 @@ class _StackedDict(defaultdict[Any, Any]):
         return path, value
 
     @override
-    def update(  # pyright: ignore[reportIncompatibleMethodOverride]
+    def update(
         self,
-        __m: Mapping[Any, Any] | Iterable[tuple[Any, Any]] | None = None,
+        m: "SupportsKeysAndGetItem[Any, Any] | Iterable[tuple[Any, Any]] | None" = None,
+        /,
         **kwargs: Any,
     ) -> None:
         """
@@ -3302,9 +3306,11 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Parameters
         ----------
-        __m : Mapping[Any, Any] or Iterable[tuple[Any, Any]], optional
-            Either a mapping (dict, _StackedDict) or an iterable of (key, value)
-            tuples to merge. If None, only kwargs are used.
+        m : SupportsKeysAndGetItem or Iterable[tuple[Any, Any]], optional
+            Positional-only. A mapping (dict, _StackedDict), any object with
+            ``keys()`` and ``__getitem__``, or an iterable of (key, value)
+            tuples to merge, as accepted by ``dict.update``. If None, only
+            kwargs are used.
         **kwargs : Any
             Additional key/value pairs to merge
 
@@ -3334,7 +3340,8 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Notes
         -----
-        - Accepts mappings (dict, _StackedDict, etc.)
+        - Accepts mappings (dict, _StackedDict, etc.) and any object with
+          ``keys()`` and ``__getitem__``
         - Accepts iterables of (key, value) tuples
         - Accepts keyword arguments
         - Regular dicts are converted to _StackedDict recursively
@@ -3350,20 +3357,20 @@ class _StackedDict(defaultdict[Any, Any]):
         """
 
         # Handle mapping or iterable argument
-        if __m is not None:
+        if m is not None:
             # Convert to dict if it's an iterable of tuples
-            if not isinstance(__m, Mapping):
+            if not isinstance(m, Mapping):
                 try:
-                    __m = dict(__m)
+                    m = dict(m)
                 except (TypeError, ValueError) as e:
                     raise StackedTypeError(
-                        f"update() argument must be a mapping or iterable of pairs, got {type(__m).__name__}",
+                        f"update() argument must be a mapping or iterable of pairs, got {type(m).__name__}",
                         expected_type=Mapping,
-                        actual_type=type(__m),
+                        actual_type=type(m),
                     ) from e
 
             # Process the mapping
-            for key, value in __m.items():
+            for key, value in m.items():
                 if isinstance(value, _StackedDict):
                     value.default_setup = self.default_setup
                     self[key] = value

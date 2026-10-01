@@ -66,6 +66,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   - `CompactPathsView.is_covering`, `coverage`, `missing_paths`,
     `uncovered_paths`: `stacked_dict: _StackedDict`;
   - `NestedDictionaryEncoder.iterencode(...) -> Iterator[str]`.
+- **`update()` first argument** is annotated like `dict.update`:
+  `SupportsKeysAndGetItem[Any, Any] | Iterable[tuple[Any, Any]] | None`,
+  positional-only (`m, /` instead of `__m`). Objects with `keys()` and
+  `__getitem__` were already accepted at runtime; the override of
+  `MutableMapping.update` is now compatible and its suppression comment is
+  removed. Closes #105.
 - **Docstrings** of `NestedDictionary`, `StrictNestedDictionary` and
   `SmoothNestedDictionary` describe the current parameters. The `indent` and
   `strict` keyword settings were removed in 1.2.0 (#114); keyword arguments
