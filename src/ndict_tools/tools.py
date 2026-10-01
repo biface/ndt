@@ -73,7 +73,7 @@ def _reconstruct(
 """Internal functions"""
 
 
-def compare_dict(d1, d2) -> bool:
+def compare_dict(d1: Any, d2: Any) -> bool:
     """
     Recursively compare two potentially nested structures for equality.
 
@@ -178,7 +178,9 @@ def unpack_items(
             yield (key,), value
 
 
-def from_dict(dictionary: dict[Any, Any], class_name: type[T], **class_options) -> T:
+def from_dict(
+    dictionary: dict[Any, Any], class_name: type[T], **class_options: Any
+) -> T:
     """
     Recursively convert a standard dictionary to a _StackedDict or subclass.
 
@@ -1994,7 +1996,9 @@ class _StackedDict(defaultdict[Any, Any]):
     # ========================================================================
 
     @classmethod
-    def from_dict(cls, dictionary: dict[Any, Any], **class_options) -> "_StackedDict":
+    def from_dict(
+        cls, dictionary: dict[Any, Any], **class_options: Any
+    ) -> "_StackedDict":
         """
         Recursively convert a standard dictionary to a ``_StackedDict`` or subclass.
 
@@ -2117,7 +2121,7 @@ class _StackedDict(defaultdict[Any, Any]):
             json.dump(self, f, cls=NestedDictionaryEncoder, indent=_indent or None)
 
     @classmethod
-    def from_json(cls, path: str | Path, **class_options) -> "_StackedDict":
+    def from_json(cls, path: str | Path, **class_options: Any) -> "_StackedDict":
         """
         Reconstruct a ``_StackedDict`` (or subclass) from a JSON file.
 
@@ -2191,7 +2195,7 @@ class _StackedDict(defaultdict[Any, Any]):
         cls,
         path: str | Path,
         verify: bool = True,
-        **class_options,
+        **class_options: Any,
     ) -> "_StackedDict":
         """
         Reconstruct a ``_StackedDict`` (or subclass) from a pickle file.
@@ -2401,7 +2405,7 @@ class _StackedDict(defaultdict[Any, Any]):
         self._propagate_setup(type(self)._normalize_setup(value), set())
 
     @override
-    def __str__(self, padding=0) -> str:
+    def __str__(self, padding: int = 0) -> str:
         """ "
         Convert to JSON-like formatted string representation.
 
@@ -2539,7 +2543,7 @@ class _StackedDict(defaultdict[Any, Any]):
         return new
 
     @override
-    def __setitem__(self, key, value) -> None:
+    def __setitem__(self, key: Any, value: Any) -> None:
         """
         set item with support for hierarchical keys.
 
@@ -2609,7 +2613,7 @@ class _StackedDict(defaultdict[Any, Any]):
             super().__setitem__(key, value)
 
     @override
-    def __getitem__(self, key):
+    def __getitem__(self, key: Any) -> Any:
         """
         Get item with support for hierarchical keys.
 
@@ -2676,7 +2680,7 @@ class _StackedDict(defaultdict[Any, Any]):
         return super().__getitem__(key)
 
     @override
-    def __delitem__(self, key):
+    def __delitem__(self, key: Any) -> None:
         """
         Delete item with support for hierarchical keys and cleanup.
 
@@ -2727,7 +2731,7 @@ class _StackedDict(defaultdict[Any, Any]):
             super().__delitem__(key)
 
     @override
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         """
         Override __eq__ to compare two dictionaries, this function an isomorphism to dictionaries set
 
@@ -2776,7 +2780,7 @@ class _StackedDict(defaultdict[Any, Any]):
             return compare_dict(self.to_dict(), dict(other))
 
     @override
-    def __ne__(self, other):
+    def __ne__(self, other: object) -> bool:
         """
         Check inequality (negation of __eq__).
 
@@ -2792,7 +2796,7 @@ class _StackedDict(defaultdict[Any, Any]):
 
         return not self.__eq__(other)
 
-    def equal(self, other):
+    def equal(self, other: object) -> bool:
         """
         Check equality: same class, configuration, and content.
 
@@ -2838,7 +2842,7 @@ class _StackedDict(defaultdict[Any, Any]):
             return False
         return compare_dict(self.to_dict(), other.to_dict())
 
-    def similar(self, other):
+    def similar(self, other: object) -> bool:
         """
         Check if two structures share the same content (ignoring setup).
 
@@ -2881,7 +2885,7 @@ class _StackedDict(defaultdict[Any, Any]):
 
         return compare_dict(self.to_dict(), other.to_dict())
 
-    def isomorph(self, other):
+    def isomorph(self, other: object) -> bool:
         """
         Check if structures are isomorphic (same keys/values, any dict type).
 
@@ -3127,7 +3131,7 @@ class _StackedDict(defaultdict[Any, Any]):
         return copy.deepcopy(self)
 
     @override
-    def pop(self, key: Any | list[Any], default=None) -> Any:
+    def pop(self, key: Any | list[Any], default: Any = None) -> Any:
         """
         Remove and return value at key or hierarchical path.
 
@@ -3209,7 +3213,7 @@ class _StackedDict(defaultdict[Any, Any]):
             return super().pop(key, default)
 
     @override
-    def popitem(self):
+    def popitem(self) -> tuple[list[Any], Any]:
         """
         Remove and return the last item as (path, value) pair.
 
@@ -3285,7 +3289,7 @@ class _StackedDict(defaultdict[Any, Any]):
     def update(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         __m: Mapping[Any, Any] | Iterable[tuple[Any, Any]] | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         """
         Update _StackedDict with key/value pairs from mapping, iterable, or kwargs.
@@ -3673,7 +3677,9 @@ class _StackedDict(defaultdict[Any, Any]):
 
         return _CPaths(self)
 
-    def dfs(self, node=None, path=None) -> Generator[tuple[list[Any], Any], None, None]:
+    def dfs(
+        self, node: Mapping[Any, Any] | None = None, path: list[Any] | None = None
+    ) -> Generator[tuple[list[Any], Any], None, None]:
         """
         Depth-First Search traversal of the nested dictionary.
 
@@ -3940,10 +3946,10 @@ class _StackedDict(defaultdict[Any, Any]):
         _HKey.is_balanced : Tree-based balance check
         """
 
-        def check_balance(node):
+        def check_balance(node: Any) -> tuple[int, bool]:
             if not isinstance(node, _StackedDict) or not node:
                 return 0, True  # Height, is_balanced
-            heights = []
+            heights: list[int] = []
             for key in node:
                 height, balanced = check_balance(node[key])
                 if not balanced:
@@ -3956,7 +3962,7 @@ class _StackedDict(defaultdict[Any, Any]):
         _, balanced = check_balance(self)
         return balanced
 
-    def ancestors(self, value):
+    def ancestors(self, value: Any) -> list[Any]:
         """
         Find the hierarchical path (ancestors) leading to a specific value.
 
@@ -4482,7 +4488,7 @@ class _CPaths(_Paths):
                 f"Structure must be a list, got {type(structure).__name__}"
             )
 
-        def validate_node(node, depth=0):
+        def validate_node(node: Any, depth: int = 0) -> None:
             if depth > MAX_DEPTH:  # Prevent infinite recursion
                 raise ValueError(
                     f"Structure too deeply nested (max depth: {MAX_DEPTH})"
@@ -4611,7 +4617,7 @@ class _CPaths(_Paths):
         of all keys. This is the core factorization algorithm.
         """
 
-        def compact_node(node) -> Any:
+        def compact_node(node: _HKey) -> Any:
             """
             Recursively compact a node from _hkey tree.
 
@@ -4795,7 +4801,7 @@ class _CPaths(_Paths):
         only_in_2 = set2 - set1
         return set1, set2, intersection, only_in_1, only_in_2
 
-    def is_covering(self, stacked_dict) -> bool:
+    def is_covering(self, stacked_dict: "_StackedDict") -> bool:
         """
         Check if this _CPaths covers all paths in the given _StackedDict.
 
@@ -4835,7 +4841,7 @@ class _CPaths(_Paths):
         set1, set2, _, _, _ = self._compare_path_sets(expanded_paths, target_paths)
         return set1 == set2
 
-    def coverage(self, stacked_dict) -> float:
+    def coverage(self, stacked_dict: "_StackedDict") -> float:
         """
         Calculate the coverage percentage of this _CPaths over a _StackedDict.
 
@@ -4892,7 +4898,7 @@ class _CPaths(_Paths):
 
         return len(intersection) / len(set2)
 
-    def missing_paths(self, stacked_dict) -> list[list[Any]]:
+    def missing_paths(self, stacked_dict: "_StackedDict") -> list[list[Any]]:
         """
         Get paths from this _CPaths that are NOT in the _StackedDict.
 
@@ -4942,7 +4948,7 @@ class _CPaths(_Paths):
         extra_set = set(only_in_1)
         return [list(p) for p in expanded_paths if tuple(p) in extra_set]
 
-    def uncovered_paths(self, stacked_dict) -> list[list[Any]]:
+    def uncovered_paths(self, stacked_dict: "_StackedDict") -> list[list[Any]]:
         """
         Get paths from _StackedDict that are NOT covered by this _CPaths.
 

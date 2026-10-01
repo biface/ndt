@@ -40,6 +40,26 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   `SmoothNestedDictionary` no longer define `__init__`: their defaults and
   forced values go through the `_normalize_setup` class hook, which custom
   subclasses can override.
+- **Type annotations completed on the exported API** (part of #129, DD-027).
+  These signatures are now part of the public contract:
+  - constructors: `*args: Mapping[Any, Any] | Iterable[tuple[Any, Any]]`,
+    `**kwargs: Any`;
+  - `__eq__`, `__ne__`, `equal`, `similar`, `isomorph`: `other: object`,
+    returning `bool`;
+  - `__getitem__`, `__setitem__`, `__delitem__`: `key: Any`;
+  - `pop(key, default: Any = None)`, `popitem() -> tuple[list[Any], Any]`,
+    `ancestors(value: Any) -> list[Any]`, `update(..., **kwargs: Any)`;
+  - `dfs(node: Mapping[Any, Any] | None, path: list[Any] | None)`;
+  - `__str__(padding: int = 0)`;
+  - `**class_options: Any` on `from_dict`, `from_json`, `from_pickle` and the
+    deprecated `from_dict` free function; `compare_dict(d1: Any, d2: Any)`;
+  - `CompactPathsView.is_covering`, `coverage`, `missing_paths`,
+    `uncovered_paths`: `stacked_dict: _StackedDict`;
+  - `NestedDictionaryEncoder.iterencode(...) -> Iterator[str]`.
+- **Docstrings** of `NestedDictionary`, `StrictNestedDictionary` and
+  `SmoothNestedDictionary` describe the current parameters. The `indent` and
+  `strict` keyword settings were removed in 1.2.0 (#114); keyword arguments
+  are data.
 
 ### Fixed
 

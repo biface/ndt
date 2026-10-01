@@ -31,7 +31,7 @@ import hashlib
 import json
 import pickle  # nosec B403
 import warnings
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Any
 
@@ -257,7 +257,7 @@ class NestedDictionaryEncoder(json.JSONEncoder):
         return super().encode(o)
 
     @override
-    def iterencode(self, o: Any, _one_shot: bool = False):
+    def iterencode(self, o: Any, _one_shot: bool = False) -> Iterator[str]:
         from .tools import _StackedDict
 
         if isinstance(o, _StackedDict):

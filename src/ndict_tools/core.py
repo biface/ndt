@@ -21,17 +21,16 @@ class NestedDictionary(_StackedDict):
 
     Parameters
     ----------
-    *args : Iterable
-        The first one of the list must be a dictionary to instantiate an object
-    **kwargs : dict
-        Enrichments settings:
-
-        - indent : int, optional
-            Indentation of the printable nested dictionary (used by json.dumps() function)
-        - strict : bool, optional (default=False)
-            Strict mode define default answer to unknown key
-        - default_setup : dict, optional
-            Custom setup for default behavior
+    *args : Mapping or iterable of (key, value) pairs
+        Initial data. Nested plain dictionaries are converted recursively.
+    default_setup : Mapping[str, Any], optional
+        Configuration (keyword-only) with 'indent' and 'default_factory'
+        keys. When omitted or empty, ``{'indent': 0, 'default_factory':
+        NestedDictionary}`` is used. To get strict behaviour, use
+        ``StrictNestedDictionary`` or pass ``'default_factory': None``.
+    **kwargs : Any
+        Initial data given as keyword arguments. They are data, not settings:
+        ``NestedDictionary(indent=2)`` creates a key ``'indent'``.
 
     Examples
     --------
@@ -144,10 +143,13 @@ class StrictNestedDictionary(NestedDictionary):
 
     Parameters
     ----------
-    *args : Iterable
-        Positional arguments passed to NestedDictionary
-    **kwargs : dict
-        Keyword arguments passed to NestedDictionary
+    *args : Mapping or iterable of (key, value) pairs
+        Initial data, as for ``NestedDictionary``
+    default_setup : Mapping[str, Any], optional
+        Configuration (keyword-only). Its ``default_factory`` is overridden;
+        ``indent`` defaults to 0. The mapping is not modified.
+    **kwargs : Any
+        Initial data given as keyword arguments
 
     Notes
     -----
@@ -180,10 +182,13 @@ class SmoothNestedDictionary(NestedDictionary):
 
     Parameters
     ----------
-    *args : Iterable
-        Positional arguments passed to NestedDictionary
-    **kwargs : dict
-        Keyword arguments passed to NestedDictionary
+    *args : Mapping or iterable of (key, value) pairs
+        Initial data, as for ``NestedDictionary``
+    default_setup : Mapping[str, Any], optional
+        Configuration (keyword-only). Its ``default_factory`` is overridden;
+        ``indent`` defaults to 0. The mapping is not modified.
+    **kwargs : Any
+        Initial data given as keyword arguments
 
     Notes
     -----
