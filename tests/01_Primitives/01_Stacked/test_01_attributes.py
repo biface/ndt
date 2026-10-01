@@ -1,5 +1,3 @@
-import re
-
 import pytest
 
 from ndict_tools.tools import _StackedDict

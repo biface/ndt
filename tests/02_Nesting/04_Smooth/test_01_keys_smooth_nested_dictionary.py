@@ -2,7 +2,7 @@ import re
 
 import pytest
 
-from ndict_tools import NestedDictionary, SmoothNestedDictionary
+from ndict_tools import SmoothNestedDictionary
 from ndict_tools.exception import StackedKeyError, StackedTypeError
 
 

@@ -27,7 +27,7 @@ def bdict_test():
 
 
 def test_bdict_class_extension(bdict_test):
-    assert bdict_test.balanced == True
+    assert bdict_test.balanced is True
 
 
 def test_bdict_class_default_setup(bdict_test):
@@ -41,9 +41,9 @@ def test_bdict_class_default_setup(bdict_test):
 def test_bdict_class_nested(bdict_test):
     assert isinstance(bdict_test, BDict)
     assert isinstance(bdict_test[1], BDict)
-    assert bdict_test[1].balanced == True
+    assert bdict_test[1].balanced is True
     assert isinstance(bdict_test[2], BDict)
-    assert bdict_test[2].balanced == True
+    assert bdict_test[2].balanced is True
 
 
 def test_bdict_value(bdict_test):

@@ -1,5 +1,3 @@
-import re
-
 import pytest
 
 from ndict_tools.exception import NestedDictionaryException, StackedDictionaryError

@@ -55,7 +55,7 @@ def test_nested_strict_option(nd):
 
 def test_nested_strict_behavior(nd):
     with pytest.raises(KeyError):
-        value = nd["b"]["b"]
+        nd["b"]["b"]
 
 
 def test_nested(nd):
@@ -98,7 +98,7 @@ def test_strict_class_option(snd):
 
 def test_strict_class_behavior(snd):
     with pytest.raises(KeyError):
-        value = snd["b"]["b"]
+        snd["b"]["b"]
 
 
 def test_strict_nested(snd):

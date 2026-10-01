@@ -1,6 +1,3 @@
-import pytest
-
-
 class TestSmoothNestedDictionary:
 
     def test_default_setup(self, smooth_c_snd):

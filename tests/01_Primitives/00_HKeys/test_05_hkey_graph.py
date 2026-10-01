@@ -7,8 +7,6 @@ and compute various metrics (balance, node counts, statistics).
 Uses specialized test trees in addition to the main key_tree fixture.
 """
 
-from copy import deepcopy
-
 import pytest
 
 from ndict_tools.tools import _HKey

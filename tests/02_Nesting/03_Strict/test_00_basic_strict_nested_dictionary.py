@@ -1,5 +1,3 @@
-import pytest
-
 from ndict_tools import StrictNestedDictionary
 
 

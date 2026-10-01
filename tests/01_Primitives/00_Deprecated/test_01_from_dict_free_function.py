@@ -30,7 +30,7 @@ def test_from_dict(class_name, function_system_config):
 def test_from_dict_failed(class_name, function_system_config):
     with pytest.raises(
         StackedTypeError,
-        match=re.escape(f"class_name must be a _StackedDict class, got <class 'type'>"),
+        match=re.escape("class_name must be a _StackedDict class, got <class 'type'>"),
     ):
         with pytest.warns(DeprecationWarning, match="1.5.0"):
             from_dict(

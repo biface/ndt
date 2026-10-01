@@ -131,7 +131,7 @@ class TestPathStrictSD:
     )
     def test_change_paths_failed(self, strict_c_sd, false_path, error, error_msg):
         with pytest.raises(error, match=re.escape(error_msg)):
-            test = strict_c_sd[false_path]
+            strict_c_sd[false_path]
 
     @pytest.mark.parametrize(
         "false_keys_type, error, error_msg",
@@ -269,7 +269,7 @@ class TestPathSmoothSD:
     )
     def test_change_paths_failed(self, strict_c_sd, false_path, error, error_msg):
         with pytest.raises(error, match=re.escape(error_msg)):
-            test = strict_c_sd[false_path]
+            strict_c_sd[false_path]
 
     @pytest.mark.parametrize(
         "false_keys_type, error, error_msg",

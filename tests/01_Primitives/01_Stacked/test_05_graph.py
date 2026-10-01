@@ -77,7 +77,7 @@ def test_dfs_node(stacked_dict, sd_dfs, path, index, expected):
         (["k", "l"], 6, (["k", "l", "a", "b", "c"], 42)),
     ],
 )
-def test_dfs(stacked_dict, path, index, expected):
+def test_dfs_path(stacked_dict, path, index, expected):
     assert list(stacked_dict.dfs(path=path))[index] == expected
 
 
@@ -106,8 +106,8 @@ def test_size(stacked_dict):
 
 
 def test_balanced(stacked_dict):
-    assert stacked_dict.is_balanced() == False
-    assert stacked_dict[["a", "b"]].is_balanced() == True
+    assert not stacked_dict.is_balanced()
+    assert stacked_dict[["a", "b"]].is_balanced()
 
 
 # Additional tests to cover _StackedDict.is_balanced comprehensively

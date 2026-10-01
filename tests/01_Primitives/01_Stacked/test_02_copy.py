@@ -1,4 +1,3 @@
-import re
 from copy import copy, deepcopy
 
 import pytest

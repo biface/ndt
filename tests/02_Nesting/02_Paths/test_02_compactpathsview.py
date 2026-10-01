@@ -9,9 +9,9 @@ import re
 import pytest
 
 import ndict_tools
-from ndict_tools import CompactPathsView, NestedDictionary, PathsView
+from ndict_tools import CompactPathsView, NestedDictionary
 from ndict_tools.exception import StackedKeyError
-from ndict_tools.tools import _CPaths, _HKey, _StackedDict
+from ndict_tools.tools import _HKey
 
 
 def test_init_empty():

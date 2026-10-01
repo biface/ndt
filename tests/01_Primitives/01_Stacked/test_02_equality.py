@@ -21,7 +21,7 @@ def test_eq_stacked_dictionary(
 
 
 @pytest.mark.parametrize("source_name", ["strict_f_sd", "smooth_f_sd"])
-def test_eq(source_name, function_system_config, request):
+def test_ne_empty(source_name, function_system_config, request):
     dict_source = request.getfixturevalue(source_name)
     assert dict_source != {}
 

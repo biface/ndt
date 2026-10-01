@@ -86,6 +86,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   `StackedValueError`; a node with more than `n` children makes the predicate
   return `False`. Nodes created with `is_root=True` are still not checked.
   Terminology follows English usage (French *complet* is English *perfect*).
+- **Test suite hygiene.** The flake8 `per-file-ignores` on `tests/` are
+  removed, and what they hid is fixed: three shadowed tests renamed
+  (`test_get_depth_by_path`, `test_ne_empty`, `test_dfs_path`; 11 cases that
+  never ran now run), unused results inside `pytest.raises` blocks turned
+  into bare expressions or used in an assertion, unused imports removed,
+  lambdas assigned to names turned into functions, `== None` / `== True` /
+  `== False` comparisons replaced. Closes #136.
 - **Docstrings** of `NestedDictionary`, `StrictNestedDictionary` and
   `SmoothNestedDictionary` describe the current parameters. The `indent` and
   `strict` keyword settings were removed in 1.2.0 (#114); keyword arguments
