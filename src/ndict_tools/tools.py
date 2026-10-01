@@ -27,7 +27,7 @@ from collections import defaultdict, deque
 from collections.abc import Callable, Generator, Iterable, Iterator, Mapping
 from pathlib import Path
 from textwrap import indent
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar
 
 from ._compat import override
 from .exception import (
@@ -44,6 +44,9 @@ if TYPE_CHECKING:
 MAX_DEPTH = 100
 
 T = TypeVar("T", bound="_StackedDict")
+
+_SetupSource: TypeAlias = Mapping[str, Any] | Iterable[tuple[str, Any]]
+"Accepted by the default_setup setter: a mapping or (key, value) pairs."
 
 
 def _reconstruct(
@@ -2374,9 +2377,11 @@ class _StackedDict(defaultdict[Any, Any]):
         ordered.extend(remaining)
         return ordered
 
+    # Asymmetric on purpose: the setter accepts any source of configuration,
+    # the getter returns the normalized, ordered form (#106).
     @default_setup.setter
     def default_setup(
-        self, value: Mapping[str, Any] | Iterable[tuple[str, Any]]
+        self, value: _SetupSource  # pyright: ignore[reportPropertyTypeMismatch]
     ) -> None:
         """
         Replace the configuration and propagate it to every nested level.
@@ -4399,6 +4404,10 @@ class _Paths:
         return _CPaths(self._stacked_dict)
 
 
+_StructureSource: TypeAlias = _StackedDict | _HKey | list[Any] | dict[str, Any]
+"Accepted by the _CPaths.structure setter: a nested mapping, a key tree or a compact structure."
+
+
 class _CPaths(_Paths):
     """
     A lazy view providing compact representation of hierarchical paths.
@@ -4531,9 +4540,11 @@ class _CPaths(_Paths):
         """
         return self._ensure_structure()
 
+    # Asymmetric on purpose: the setter accepts a nested mapping, a key tree or
+    # a compact structure; the getter always returns the compact structure (#106).
     @structure.setter
     def structure(
-        self, value: _StackedDict | _HKey | list[Any] | dict[str, Any]
+        self, value: _StructureSource  # pyright: ignore[reportPropertyTypeMismatch]
     ) -> None:
         """
         set or build the compact structure representation.
@@ -4545,8 +4556,9 @@ class _CPaths(_Paths):
 
         Parameters
         ----------
-        value : Union[_StackedDict, _HKey, list[Any]]
-            Input used to define the structure.
+        value : _StackedDict, dict, _HKey or list[Any]
+            Input used to define the structure. A plain dict is wrapped in a
+            _StackedDict with ``{'indent': 0, 'default_factory': None}``.
 
         Raises
         ------
@@ -4578,7 +4590,11 @@ class _CPaths(_Paths):
         if isinstance(value, _StackedDict) or isinstance(value, dict):
             # Normalize to _StackedDict
             self._stacked_dict = (
-                value if isinstance(value, _StackedDict) else _StackedDict(value)
+                value
+                if isinstance(value, _StackedDict)
+                else _StackedDict(
+                    value, default_setup={"indent": 0, "default_factory": None}
+                )
             )
             # Invalidate and rebuild from stacked dict
             self._hkey = None

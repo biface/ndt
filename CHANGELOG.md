@@ -72,6 +72,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   `__getitem__` were already accepted at runtime; the override of
   `MutableMapping.update` is now compatible and its suppression comment is
   removed. Closes #105.
+- **`reportPropertyTypeMismatch`** (basedpyright): the `default_setup` and
+  `structure` properties keep their asymmetric types on purpose (the setter
+  accepts several sources, the getter returns the normalized form). Each
+  setter carries a justified, rule-specific suppression, so the rule stays
+  active for other properties. Closes #106.
 - **Docstrings** of `NestedDictionary`, `StrictNestedDictionary` and
   `SmoothNestedDictionary` describe the current parameters. The `indent` and
   `strict` keyword settings were removed in 1.2.0 (#114); keyword arguments
@@ -92,6 +97,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   the configuration like the constructor, applies it and propagates it to
   every nested level; shared sub-structures and self-references are handled.
   On a strict or smooth dictionary, `default_factory` stays forced.
+- **`CompactPathsView.structure` setter** raised `StackedKeyError` when given
+  a plain `dict`, although the docstring lists it as accepted: the dict was
+  wrapped without a `default_setup`. It is now wrapped with
+  `{'indent': 0, 'default_factory': None}`. Found while working on #106.
 - **`StrictNestedDictionary` / `SmoothNestedDictionary`** modified the
   `default_setup` dict passed by the caller. They now work on a copy.
 
