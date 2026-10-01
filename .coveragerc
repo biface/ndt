@@ -16,6 +16,7 @@ exclude_lines =
     if __name__ = "__main__"
     def __repr__
     def __str__
+    if TYPE_CHECKING:
 
 [html]
 directory = coverage/coverage_html
