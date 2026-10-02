@@ -1560,3 +1560,23 @@ class TestCPathsCovering:
         assert c_paths.coverage(strict_c_sd) == coverage
         assert c_paths.uncovered_paths(strict_c_sd) == uncovered
         assert c_paths.missing_paths(strict_c_sd) == missing
+
+
+class TestCPathsRepresentation:
+
+    SETUP = {"indent": 2, "default_factory": None}
+
+    def test_repr(self):
+        c_paths = _CPaths(_StackedDict({"a": 1}, default_setup=self.SETUP))
+        assert repr(c_paths) == "_CPaths(['a'])"
+
+    def test_str(self):
+        sd = _StackedDict({"a": {"b": 1}, "c": 2}, default_setup=self.SETUP)
+        assert str(_CPaths(sd)) == "_CPaths(3 paths): [['a', 'b'], 'c']"
+
+    def test_str_follows_subclass_name(self):
+        class _Custom(_CPaths):
+            pass
+
+        sd = _StackedDict({"a": 1}, default_setup=self.SETUP)
+        assert str(_Custom(sd)).startswith("_Custom(1 paths): ")

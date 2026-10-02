@@ -4871,9 +4871,10 @@ class _CPaths(_Paths):
 
         Examples
         --------
-        >>> c_paths = _CPaths(_StackedDict({'a': 1}))
+        >>> setup = {'indent': 2, 'default_factory': None}
+        >>> c_paths = _CPaths(_StackedDict({'a': 1}, default_setup=setup))
         >>> repr(c_paths)
-        "_CPaths([['a']])"
+        "_CPaths(['a'])"
         """
         return f"{self.__class__.__name__}({self.structure})"
 
@@ -4882,18 +4883,23 @@ class _CPaths(_Paths):
         """
         Return readable string representation.
 
+        The prefix is the name of the actual class, so a public subclass such
+        as ``CompactPathsView`` does not show the private ``_CPaths`` name.
+
         Returns
         -------
         str
-            Human-readable description
+            Class name, number of paths and compact structure
 
         Examples
         --------
-        >>> c_paths = _CPaths(_StackedDict({'a': {'b': 1}, 'c': 2}))
+        >>> setup = {'indent': 2, 'default_factory': None}
+        >>> sd = _StackedDict({'a': {'b': 1}, 'c': 2}, default_setup=setup)
+        >>> c_paths = _CPaths(sd)
         >>> str(c_paths)
-        "_CPaths(3 paths): [['a', 'b'], ['c']]"
+        "_CPaths(3 paths): [['a', 'b'], 'c']"
         """
-        return f"_CPaths({len(self)} paths): {self.structure}"
+        return f"{self.__class__.__name__}({len(self)} paths): {self.structure}"
 
     # ========================================================================
     # COVERAGE ANALYSIS METHODS

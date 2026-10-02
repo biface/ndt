@@ -987,3 +987,8 @@ class TestChildrenPaths:
     )
     def test_not_leaf_paths(self, smooth_c_nd, branch):
         assert branch not in smooth_c_nd.paths().get_leaf_paths()
+
+
+def test_repr_uses_public_class_name():
+    paths = NestedDictionary({"a": {"b": 1}, "c": 2}).paths()
+    assert repr(paths) == "PathsView([['a'], ['a', 'b'], ['c']])"

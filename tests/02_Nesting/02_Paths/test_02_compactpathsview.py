@@ -1566,3 +1566,17 @@ class TestCPathsCovering:
         assert c_paths.coverage(strict_c_nd) == coverage
         assert c_paths.uncovered_paths(strict_c_nd) == uncovered
         assert c_paths.missing_paths(strict_c_nd) == missing
+
+
+class TestCompactPathsViewRepresentation:
+
+    def test_repr_uses_public_class_name(self):
+        c_paths = NestedDictionary({"a": {"b": 1}, "c": 2}).compact_paths()
+        assert repr(c_paths) == "CompactPathsView([['a', 'b'], 'c'])"
+
+    def test_str_uses_public_class_name(self):
+        c_paths = NestedDictionary({"a": {"b": 1}, "c": 2}).compact_paths()
+        assert str(c_paths) == "CompactPathsView(3 paths): [['a', 'b'], 'c']"
+
+    def test_str_does_not_expose_private_name(self, strict_c_nd):
+        assert "_CPaths" not in str(strict_c_nd.compact_paths())

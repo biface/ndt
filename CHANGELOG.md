@@ -140,6 +140,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   `{'indent': 0, 'default_factory': None}`. Found while working on #106.
 - **`StrictNestedDictionary` / `SmoothNestedDictionary`** modified the
   `default_setup` dict passed by the caller. They now work on a copy.
+- **`str(CompactPathsView)`** showed the private class name
+  (`_CPaths(3 paths): ...`): the prefix was hard-coded. It now uses the name
+  of the actual class, like `repr()`. Closes #138.
 
 ---
 
