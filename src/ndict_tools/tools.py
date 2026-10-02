@@ -2408,7 +2408,7 @@ class _StackedDict(defaultdict[Any, Any]):
             new[key] = value
         return new
 
-    def __deepcopy__(self) -> "_StackedDict":
+    def __deepcopy__(self, memo) -> "_StackedDict":
         """
         Create a deep copy of the _StackedDict.
 
@@ -3024,7 +3024,7 @@ class _StackedDict(defaultdict[Any, Any]):
         copy : Shallow copy alternative
         """
 
-        return self.__deepcopy__()
+        return self.__deepcopy__(memo)
 
     def pop(self, key: Any | list[Any], default=None) -> Any:
         """
