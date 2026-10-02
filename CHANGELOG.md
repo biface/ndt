@@ -121,6 +121,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   extension, its `smv_*` settings and the `versioning.html` sidebar template;
   versioned builds move to a per-tag archive (DD-028). The build runs without
   warnings. Closes #130.
+- **Read the Docs configuration** moves from `docs/conf/.readthedocs.yaml` to
+  `.readthedocs.yaml` at the repository root, the location Read the Docs reads
+  by default, and builds with Python 3.11. Read the Docs serves `stable` and
+  `latest` only (DD-028). Part of #132.
 
 ### Removed
 
