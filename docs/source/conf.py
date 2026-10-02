@@ -26,7 +26,6 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.duration",
     "sphinx.ext.todo",
-    "sphinx_multiversion",
     "myst_parser",
 ]
 
@@ -49,16 +48,6 @@ todo_include_todos = True
 
 language = "en"
 
-# -- sphinx-multiversion configuration ---------------------------------------
-# Build one doc set per release tag and keep the master branch as dev.
-smv_tag_whitelist = r"^v\d+\.\d+\.\d+$"
-smv_branch_whitelist = r"^$"  # no branches — tags only
-smv_remote_whitelist = r"^origin$"
-smv_released_pattern = r"^refs/tags/v\d+\.\d+\.\d+$"
-smv_outputdir_format = "{ref.name}"
-smv_prefer_remote_refs = False
-smv_symver_pattern = r"^refs/tags/v(\d+\.\d+)\.\d+$"
-
 # -- Options for HTML output -------------------------------------------------
 html_theme = "furo"
 html_static_path = ["_static"]
@@ -69,19 +58,6 @@ html_favicon = "_static/images/logo.svg"
 html_theme_options = {
     "sidebar_hide_name": False,
     "navigation_with_keys": True,
-}
-
-# Version selector injected by sphinx-multiversion into the sidebar.
-html_sidebars = {
-    "**": [
-        "sidebar/brand.html",
-        "sidebar/search.html",
-        "sidebar/scroll-start.html",
-        "sidebar/navigation.html",
-        "sidebar/ethical-ads.html",
-        "sidebar/scroll-end.html",
-        "versioning.html",
-    ]
 }
 
 # -- External links ----------------------------------------------------------

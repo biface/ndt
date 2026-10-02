@@ -114,6 +114,19 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   `SmoothNestedDictionary` describe the current parameters. The `indent` and
   `strict` keyword settings were removed in 1.2.0 (#114); keyword arguments
   are data.
+- **Documentation toolchain** resolved for Python 3.11, with exact versions in
+  `docs/source/requirements.txt` and the `docs` extra: Sphinx 9.0.4,
+  myst-parser 5.1.0, furo 2025.12.19; `sphinx-intl` 2.4.0 added for the
+  translation catalogs. `sphinx-multiversion-contrib` is removed, with its
+  extension, its `smv_*` settings and the `versioning.html` sidebar template;
+  versioned builds move to a per-tag archive (DD-028). The build runs without
+  warnings. Closes #130.
+
+### Removed
+
+- **Root `requirements.txt`, `requirements.dev.txt` and
+  `requirements.test.txt`.** No tool or workflow read them; development
+  dependencies are in `.tox-config/requirements/` (DD-025). Part of #130.
 
 ### Fixed
 
@@ -264,7 +277,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   Calling the free function now emits a `DeprecationWarning` with an
   explicit removal notice. Migrate to the `classmethod`:
 
-  ```python, ignore
+  ```python
   # Before (deprecated since 1.1.0, removed in 1.5.0)
   from ndict_tools.tools import from_dict
   nd = from_dict(data, NestedDictionary, default_setup={...})
