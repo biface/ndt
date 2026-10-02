@@ -18,6 +18,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **`verifytypes` tox environment.** Runs `basedpyright --verifytypes` on the
   installed package; the type completeness of the exported API must stay at
   100%. Included in `pre-push` (hence `local`), `check` and `ci-quality`.
+- **`typing` tox environment.** Runs `basedpyright tests/typing`, where
+  `assert_type` calls check the types inferred for the public API. Unlike the
+  `basedpyright src` step, it fails on any error. Included in `basedpyright`,
+  `pre-push` (hence `local`), `check` and `ci-quality`. Added with #75.
 
 ### Changed
 
@@ -77,6 +81,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   accepts several sources, the getter returns the normalized form). Each
   setter carries a justified, rule-specific suppression, so the rule stays
   active for other properties. Closes #106.
+- **`typing.Self` (PEP 673)** as the return type of the methods that build
+  an instance of the calling class: `from_dict`, `copy`, `deepcopy`,
+  `__copy__` and `__deepcopy__` on `_StackedDict`, and `_HKey.build_forest`.
+  `StrictNestedDictionary().copy()` is now typed `StrictNestedDictionary`
+  instead of `_StackedDict`. No runtime change. Part of #75.
 - **`_HKey` tree predicates take an arity `n`, binary by default.**
   `is_complete_tree(n=2)`, `is_perfect_tree(n=2)` and `is_full_tree(n=2)`.
   `is_complete_tree` no longer hard-codes arity 2, and `is_perfect_tree` and

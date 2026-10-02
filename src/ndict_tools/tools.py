@@ -27,7 +27,7 @@ from collections import defaultdict, deque
 from collections.abc import Callable, Generator, Iterable, Iterator, Mapping
 from pathlib import Path
 from textwrap import indent
-from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar
+from typing import TYPE_CHECKING, Any, Self, TypeAlias, TypeVar
 
 from ._compat import override
 from .exception import (
@@ -338,7 +338,7 @@ class _HKey:
         self.is_root: bool = is_root
 
     @classmethod
-    def build_forest(cls, stacked_dict: dict[Any, Any]) -> "_HKey":
+    def build_forest(cls, stacked_dict: dict[Any, Any]) -> Self:
         """
         Build a forest of _HKey trees from a nested dictionary.
 
@@ -352,8 +352,11 @@ class _HKey:
 
         Returns
         -------
-        _HKey
-            Root node (with is_root=True, key=None) containing the forest
+        Self
+            Root node (with is_root=True, key=None) containing the forest.
+            The root is an instance of the calling class; the nodes below it
+            are plain ``_HKey`` instances, because ``_build_from_dict`` and
+            ``add_child`` build ``_HKey`` explicitly.
 
         Examples
         --------
@@ -364,7 +367,7 @@ class _HKey:
         >>> forest.is_root
         True
         """
-        root: _HKey = cls(None, is_root=True)
+        root = cls(None, is_root=True)
         root._build_from_dict(stacked_dict)
         return root
 
@@ -2056,9 +2059,7 @@ class _StackedDict(defaultdict[Any, Any]):
     # ========================================================================
 
     @classmethod
-    def from_dict(
-        cls, dictionary: dict[Any, Any], **class_options: Any
-    ) -> "_StackedDict":
+    def from_dict(cls, dictionary: dict[Any, Any], **class_options: Any) -> Self:
         """
         Recursively convert a standard dictionary to a ``_StackedDict`` or subclass.
 
@@ -2076,8 +2077,9 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Returns
         -------
-        _StackedDict
-            New instance of ``cls`` containing the dictionary structure.
+        Self
+            New instance of the calling class containing the dictionary
+            structure.
 
         Raises
         ------
@@ -2518,7 +2520,7 @@ class _StackedDict(defaultdict[Any, Any]):
         return d_str
 
     @override
-    def __copy__(self) -> "_StackedDict":
+    def __copy__(self) -> Self:
         """
         Create a shallow copy of the _StackedDict.
 
@@ -2528,8 +2530,8 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Returns
         -------
-        _StackedDict
-            Shallow copy with same configuration
+        Self
+            Shallow copy of the same class, with the same configuration
 
         Examples
         --------
@@ -2551,7 +2553,7 @@ class _StackedDict(defaultdict[Any, Any]):
             new[key] = value
         return new
 
-    def __deepcopy__(self, memo: dict[int, object] | None = None) -> "_StackedDict":
+    def __deepcopy__(self, memo: dict[int, object] | None = None) -> Self:
         """
         Create a deep copy of the _StackedDict.
 
@@ -2569,7 +2571,7 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Returns
         -------
-        _StackedDict
+        Self
             Independent copy of the same class, with the same configuration
 
         Examples
@@ -3139,14 +3141,14 @@ class _StackedDict(defaultdict[Any, Any]):
         return unpacked_dict
 
     @override
-    def copy(self) -> "_StackedDict":
+    def copy(self) -> Self:
         """
         Create a shallow copy of the _StackedDict.
 
         Returns
         -------
-        _StackedDict
-            Shallow copy with same configuration
+        Self
+            Shallow copy of the same class, with the same configuration
 
         Examples
         --------
@@ -3163,7 +3165,7 @@ class _StackedDict(defaultdict[Any, Any]):
 
         return self.__copy__()
 
-    def deepcopy(self) -> "_StackedDict":
+    def deepcopy(self) -> Self:
         """
         Create a deep copy of the _StackedDict.
 
@@ -3173,8 +3175,8 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Returns
         -------
-        _StackedDict
-            Complete independent copy
+        Self
+            Complete independent copy of the same class
 
         Examples
         --------
