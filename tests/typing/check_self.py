@@ -7,6 +7,7 @@ an error when the inferred type differs, so a regression to a fixed return
 type such as ``_StackedDict`` fails the check. Nothing here is executed.
 """
 
+from pathlib import Path
 from typing import assert_type
 
 from ndict_tools import (
@@ -17,15 +18,19 @@ from ndict_tools import (
 from ndict_tools.tools import _HKey  # pyright: ignore[reportPrivateUsage]
 
 
-def check_nested(nd: NestedDictionary) -> None:
+def check_nested(nd: NestedDictionary, path: Path) -> None:
     _ = assert_type(nd.copy(), NestedDictionary)
     _ = assert_type(nd.deepcopy(), NestedDictionary)
     _ = assert_type(nd.__copy__(), NestedDictionary)
     _ = assert_type(nd.__deepcopy__({}), NestedDictionary)
     _ = assert_type(NestedDictionary.from_dict({}, default_setup={}), NestedDictionary)
+    _ = assert_type(
+        NestedDictionary.from_json(path, default_setup={}), NestedDictionary
+    )
+    _ = assert_type(NestedDictionary.from_pickle(path), NestedDictionary)
 
 
-def check_strict(nd: StrictNestedDictionary) -> None:
+def check_strict(nd: StrictNestedDictionary, path: Path) -> None:
     _ = assert_type(nd.copy(), StrictNestedDictionary)
     _ = assert_type(nd.deepcopy(), StrictNestedDictionary)
     _ = assert_type(nd.__copy__(), StrictNestedDictionary)
@@ -33,9 +38,13 @@ def check_strict(nd: StrictNestedDictionary) -> None:
     _ = assert_type(
         StrictNestedDictionary.from_dict({}, default_setup={}), StrictNestedDictionary
     )
+    _ = assert_type(
+        StrictNestedDictionary.from_json(path, default_setup={}), StrictNestedDictionary
+    )
+    _ = assert_type(StrictNestedDictionary.from_pickle(path), StrictNestedDictionary)
 
 
-def check_smooth(nd: SmoothNestedDictionary) -> None:
+def check_smooth(nd: SmoothNestedDictionary, path: Path) -> None:
     _ = assert_type(nd.copy(), SmoothNestedDictionary)
     _ = assert_type(nd.deepcopy(), SmoothNestedDictionary)
     _ = assert_type(nd.__copy__(), SmoothNestedDictionary)
@@ -43,6 +52,10 @@ def check_smooth(nd: SmoothNestedDictionary) -> None:
     _ = assert_type(
         SmoothNestedDictionary.from_dict({}, default_setup={}), SmoothNestedDictionary
     )
+    _ = assert_type(
+        SmoothNestedDictionary.from_json(path, default_setup={}), SmoothNestedDictionary
+    )
+    _ = assert_type(SmoothNestedDictionary.from_pickle(path), SmoothNestedDictionary)
 
 
 class _Node(_HKey):

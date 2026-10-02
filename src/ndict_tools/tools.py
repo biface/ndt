@@ -2183,7 +2183,7 @@ class _StackedDict(defaultdict[Any, Any]):
             json.dump(self, f, cls=NestedDictionaryEncoder, indent=_indent or None)
 
     @classmethod
-    def from_json(cls, path: str | Path, **class_options: Any) -> "_StackedDict":
+    def from_json(cls, path: str | Path, **class_options: Any) -> Self:
         """
         Reconstruct a ``_StackedDict`` (or subclass) from a JSON file.
 
@@ -2201,8 +2201,14 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Returns
         -------
-        _StackedDict
-            Reconstructed instance of ``cls``.
+        Self
+            Reconstructed instance of the calling class.
+
+        Raises
+        ------
+        StackedTypeError
+            If the root of the JSON document is not an object (for example a
+            list or a scalar), so no instance of the calling class is built.
 
         Examples
         --------
@@ -2218,9 +2224,10 @@ class _StackedDict(defaultdict[Any, Any]):
         from .serialize import _make_decoder_hook
 
         with open(Path(path), "r", encoding="utf-8") as f:
-            return json.load(
+            loaded: object = json.load(
                 f, object_pairs_hook=_make_decoder_hook(cls, class_options)
             )
+        return cls._check_loaded(loaded, path)
 
     def to_pickle(
         self,
@@ -2258,7 +2265,7 @@ class _StackedDict(defaultdict[Any, Any]):
         path: str | Path,
         verify: bool = True,
         **class_options: Any,
-    ) -> "_StackedDict":
+    ) -> Self:
         """
         Reconstruct a ``_StackedDict`` (or subclass) from a pickle file.
 
@@ -2274,13 +2281,18 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Returns
         -------
-        _StackedDict
-            Reconstructed instance.
+        Self
+            Reconstructed instance. The pickled object keeps its own class,
+            which is the calling class or one of its subclasses.
 
         Raises
         ------
         StackedValueError
             If ``verify=True`` and the digest mismatches or sidecar is absent.
+        StackedTypeError
+            If the pickled object is not an instance of the calling class, for
+            example a ``NestedDictionary`` file loaded with
+            ``StrictNestedDictionary.from_pickle``.
 
         Warns
         -----
@@ -2293,7 +2305,40 @@ class _StackedDict(defaultdict[Any, Any]):
         """
         from .serialize import _pickle_load
 
-        return _pickle_load(path, verify=verify)
+        return cls._check_loaded(_pickle_load(path, verify=verify), path)
+
+    @classmethod
+    def _check_loaded(cls, loaded: object, path: str | Path) -> Self:
+        """
+        Check that a deserialized object is an instance of the calling class.
+
+        Shared by :meth:`from_json` and :meth:`from_pickle`, whose loaders
+        return ``Any``. Instances of a subclass of ``cls`` are accepted.
+
+        Parameters
+        ----------
+        loaded : object
+            Object returned by the loader.
+        path : str or Path
+            Source file, used in the error message.
+
+        Returns
+        -------
+        Self
+            ``loaded``, unchanged.
+
+        Raises
+        ------
+        StackedTypeError
+            If ``loaded`` is not an instance of ``cls``.
+        """
+        if not isinstance(loaded, cls):
+            raise StackedTypeError(
+                f"'{path}' does not contain an instance of {cls.__name__}",
+                expected_type=cls,
+                actual_type=type(loaded),
+            )
+        return loaded
 
     # ========================================================================
     # CONFIGURATION (default_setup)

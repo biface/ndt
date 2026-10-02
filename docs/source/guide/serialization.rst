@@ -90,6 +90,13 @@ the sidecar is absent. To skip the check:
 Pickle preserves the full object state, including ``default_setup`` and
 ``default_factory``, without any extra arguments on load.
 
+The pickled object keeps its own class. ``from_pickle`` checks that it is
+an instance of the class it is called on (a subclass is accepted) and
+raises :class:`~ndict_tools.StackedTypeError` otherwise. For example,
+``StrictNestedDictionary.from_pickle`` refuses a file that holds a
+``NestedDictionary``, while ``NestedDictionary.from_pickle`` accepts a file
+that holds a ``StrictNestedDictionary`` and returns it unchanged.
+
 
 JSON vs pickle — when to use which
 ------------------------------------

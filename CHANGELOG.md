@@ -85,7 +85,15 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   an instance of the calling class: `from_dict`, `copy`, `deepcopy`,
   `__copy__` and `__deepcopy__` on `_StackedDict`, and `_HKey.build_forest`.
   `StrictNestedDictionary().copy()` is now typed `StrictNestedDictionary`
-  instead of `_StackedDict`. No runtime change. Part of #75.
+  instead of `_StackedDict`. No runtime change for these methods.
+- **`from_json` and `from_pickle` check the type of what they load** and
+  are also annotated `-> Self`. Their loaders return whatever the file
+  holds, so both methods now raise `StackedTypeError` (a `TypeError`) when
+  the result is not an instance of the calling class: a pickle file holding
+  another variant or a non-dictionary object, or a JSON document whose root
+  is not an object. Before, the object was returned as is. Instances of a
+  subclass are accepted: `NestedDictionary.from_pickle` still returns a
+  pickled `StrictNestedDictionary`. Closes #75 (DD-022 amendment).
 - **`_HKey` tree predicates take an arity `n`, binary by default.**
   `is_complete_tree(n=2)`, `is_perfect_tree(n=2)` and `is_full_tree(n=2)`.
   `is_complete_tree` no longer hard-codes arity 2, and `is_perfect_tree` and
