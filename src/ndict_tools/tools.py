@@ -593,10 +593,11 @@ class _HKey:
 
     def get_all_paths(self) -> list[list[Any]]:
         """
-        Get all paths from this node to all descendants.
+        Get the full paths of every node in the subtree rooted at this node.
 
-        Recursively collects paths to every node in the subtree,
-        including intermediate nodes and leaves.
+        Paths start at the root of the tree, in depth-first pre-order. On a
+        non-root node, the first path is the path of the node itself; on the
+        root, which has no key, only its descendants are listed.
 
         Returns
         -------
@@ -606,14 +607,15 @@ class _HKey:
         Examples
         --------
         >>> root = _HKey.build_forest({'a': {'b': 1, 'c': 2}})
-        >>> paths = root.get_all_paths()
-        >>> len(paths)
-        3
-        >>> sorted([tuple(p) for p in paths])
-        [('a',), ('a', 'b'), ('a', 'c')]
+        >>> root.get_all_paths()
+        [['a'], ['a', 'b'], ['a', 'c']]
+        >>> root.find_by_path(['a']).get_all_paths()
+        [['a'], ['a', 'b'], ['a', 'c']]
         """
         paths: list[list[Any]] = []
-        base_path: list[Any] = self.get_path() if not self.is_root else []
+        # Path of the parent: collect_paths appends the key of each node,
+        # this one included.
+        base_path: list[Any] = self.get_path()[:-1] if not self.is_root else []
 
         def collect_paths(node: _HKey, current_path: list[Any]) -> None:
             if not node.is_root:
@@ -4422,12 +4424,7 @@ class _Paths:
         if node is None:
             return []
 
-        subtree_paths = node.get_all_paths()
-        if not node.is_root:
-            base_path = node.get_path()
-            return [base_path] + subtree_paths if subtree_paths else [base_path]
-
-        return subtree_paths
+        return node.get_all_paths()
 
     def filter_paths(self, predicate: Callable[[list[Any]], bool]) -> list[list[Any]]:
         """

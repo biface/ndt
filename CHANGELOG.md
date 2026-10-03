@@ -180,6 +180,14 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **`str(CompactPathsView)`** showed the private class name
   (`_CPaths(3 paths): ...`): the prefix was hard-coded. It now uses the name
   of the actual class, like `repr()`. Closes #138.
+- **`PathsView.get_subtree_paths()`** returned wrong paths for any non-empty
+  prefix: the key of the prefix node appeared twice
+  (`[['a'], ['a', 'a'], ['a', 'a', 'b'], ...]`). The cause was
+  `_HKey.get_all_paths()`, which added the key of a non-root node twice. It
+  now returns the full path of the node followed by those of its
+  descendants, and `get_subtree_paths()` returns that list as is. The
+  expected values of the existing tests contained the duplicated key and are
+  corrected. Closes #140.
 
 ---
 

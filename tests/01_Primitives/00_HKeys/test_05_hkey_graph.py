@@ -1368,6 +1368,29 @@ class TestTreeMetrics:
                 len(path) <= simple_tree.get_max_depth() + 1
             ), "Path length should not exceed max depth + 1"
 
+    def test_get_all_paths_on_inner_node(self):
+        """
+        On a non-root node, get_all_paths lists the node and its descendants,
+        each with its full path from the root, and the node key only once.
+        """
+        root = _HKey.build_forest({"a": {"b": {"c": 1}, "d": 2}, "e": 3})
+        node = root.find_by_path(["a"])
+        assert node.get_all_paths() == [["a"], ["a", "b"], ["a", "b", "c"], ["a", "d"]]
+        assert root.find_by_path(["a", "b", "c"]).get_all_paths() == [["a", "b", "c"]]
+
+    def test_get_all_paths_matches_prefix_filter(self, simple_tree):
+        """
+        For every node, get_all_paths equals the paths of the whole tree that
+        start with the path of that node.
+        """
+        all_paths = simple_tree.get_all_paths()
+        for node in simple_tree.dfs_preorder():
+            if node.is_root:
+                continue
+            prefix = node.get_path()
+            expected = [p for p in all_paths if p[: len(prefix)] == prefix]
+            assert node.get_all_paths() == expected
+
     def test_path_analysis_leaf_paths(self, perfect_binary_tree):
         """
         Analyze paths specifically to leaf nodes.
