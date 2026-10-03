@@ -10,7 +10,7 @@ import pytest
 
 import ndict_tools
 from ndict_tools import CompactPathsView, NestedDictionary
-from ndict_tools.exception import StackedKeyError
+from ndict_tools.exception import StackedKeyError, StackedTypeError
 from ndict_tools.tools import _HKey
 
 
@@ -1052,6 +1052,24 @@ class TestCompactPathsViewInit:
 
         with pytest.raises(error, match=re.escape(setter_msg_error)):
             c_paths.structure = compact_paths
+
+    @pytest.mark.parametrize(
+        "compact_paths, key, path",
+        [
+            ([[["a"]]], ["a"], []),
+            ([["a", ["b", {"x"}]]], {"x"}, ["a", "b"]),
+            ([("t", [1])], ("t", [1]), []),
+            (["a", {"k": 1}], {"k": 1}, []),
+        ],
+    )
+    def test_structure_setter_rejects_unhashable_keys(self, compact_paths, key, path):
+        c_paths = CompactPathsView()
+        with pytest.raises(StackedTypeError) as exc_info:
+            c_paths.structure = compact_paths
+        assert exc_info.value.actual_type is type(key)
+        assert exc_info.value.path == path
+        assert repr(key) in str(exc_info.value)
+        assert c_paths._structure is None
 
     # Maximum depth is defined in ndict_tools.tools.MAX_DEPTH
     def test_structure_with_too_deeply_nested(self):

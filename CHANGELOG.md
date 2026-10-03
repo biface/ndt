@@ -200,6 +200,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   paths yielded by `unpacked_keys()`. No runtime change; a type checker now
   sees the actual type. Checked by `tests/typing/check_key_list.py`.
   Closes #143.
+- **`CompactPathsView.structure` setter** accepted a structure whose keys are
+  not hashable, such as a list in key position (`[[['a']]]`) or a set as a
+  leaf; `expand()` then returned paths that no nested dictionary can have.
+  Every key of the structure is now checked with `hash()`; an unhashable key
+  raises `StackedTypeError`, with the key in the message, its type in
+  `actual_type` and the path of its parent in `path`. Closes #141.
 
 ---
 

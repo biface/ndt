@@ -24,10 +24,17 @@ import copy
 import json
 import warnings
 from collections import defaultdict, deque
-from collections.abc import Callable, Generator, Iterable, Iterator, Mapping
+from collections.abc import (
+    Callable,
+    Generator,
+    Hashable,
+    Iterable,
+    Iterator,
+    Mapping,
+)
 from pathlib import Path
 from textwrap import indent
-from typing import TYPE_CHECKING, Any, Self, TypeAlias, TypeVar
+from typing import TYPE_CHECKING, Any, Self, TypeAlias, TypeVar, cast
 
 from ._compat import override
 from .exception import (
@@ -4585,6 +4592,10 @@ class _CPaths(_Paths):
         ------
         ValueError
             If structure format is invalid
+        StackedTypeError
+            If a key (a leaf, or the first element of a node list) is not
+            hashable, so that it could not be a key of a nested dictionary.
+            The error carries the path of the parent node.
 
         Notes
         -----
@@ -4599,20 +4610,40 @@ class _CPaths(_Paths):
                 f"Structure must be a list, got {type(structure).__name__}"
             )
 
-        def validate_node(node: Any, depth: int = 0) -> None:
+        def check_key(key: object, path: list[object]) -> None:
+            # hash() rather than isinstance(key, Hashable): a tuple holding
+            # a list is a Hashable instance but cannot be hashed.
+            try:
+                _ = hash(key)
+            except TypeError:
+                raise StackedTypeError(
+                    f"Structure key {key!r} is not hashable and cannot be a "
+                    + "key of a nested dictionary",
+                    expected_type=Hashable,
+                    actual_type=type(key),
+                    path=path,
+                ) from None
+
+        def validate_node(
+            node: object, depth: int = 0, path: list[object] | None = None
+        ) -> None:
             if depth > MAX_DEPTH:  # Prevent infinite recursion
                 raise ValueError(
                     f"Structure too deeply nested (max depth: {MAX_DEPTH})"
                 )
+            parent_path: list[object] = path if path is not None else []
 
             if isinstance(node, list):
-                if len(node) == 0:
+                items = cast(list[object], node)
+                if len(items) == 0:
                     raise ValueError("Empty list not allowed in structure")
                 # First element is the key, rest are children
-                # Recursively validate children
-                for child in node[1:]:
-                    validate_node(child, depth + 1)
-            # Leaf nodes can be any value (will be used as keys)
+                check_key(items[0], parent_path)
+                for child in items[1:]:
+                    validate_node(child, depth + 1, parent_path + [items[0]])
+            else:
+                # A leaf is a key with no children
+                check_key(node, parent_path)
 
         for branch in structure:
             validate_node(branch)
