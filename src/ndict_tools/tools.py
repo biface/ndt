@@ -1467,11 +1467,8 @@ class _HKey:
                 )
 
             # Verify parent's children contain this node
-            if node.parent and not node.is_root:
-                print("->")
-                print(node, ":", node.parent, ":", node.parent.children)
+            if node.parent is not None and not node.is_root:
                 if node not in node.parent.children:
-                    print("-->")
                     issues.append(f"Node {node.key} not in parent's children list")
 
         return len(issues) == 0, issues
@@ -1503,7 +1500,7 @@ class _HKey:
             for child in node.children:
                 if child.parent != node:
                     issues.append(
-                        f"Inconsistent parent: child {child.key} has parent {child.parent.key if child.parent else 'None'} but is child of {node.key}"
+                        f"Inconsistent parent: child {child.key} has parent {child.parent.key if child.parent is not None else 'None'} but is child of {node.key}"
                     )
 
         return issues

@@ -498,7 +498,6 @@ class TestGraphStructure:
     def test_is_valid_tree_detects_cycle(self, cycle_tree):
         is_valid, issues = cycle_tree.is_valid_tree()
         assert not is_valid
-        print(issues)
 
     def test_is_valid_tree_detects_child_without_parent(self, simple_editable_tree):
         child = simple_editable_tree.get_child("B")
@@ -521,6 +520,27 @@ class TestGraphStructure:
         assert expected in issues
         expected = f"Node {child.key} has no parent but is not marked as root"
         assert expected in issues
+
+    def test_is_valid_tree_reports_node_missing_from_parent_children(
+        self, simple_editable_tree
+    ):
+        # D stays a child of B but points to C, which does not list it.
+        d = simple_editable_tree.get_child("B").get_child("D")
+        d.parent = simple_editable_tree.get_child("C")
+
+        is_valid, issues = simple_editable_tree.is_valid_tree()
+
+        assert not is_valid
+        assert "Node D not in parent's children list" in issues
+        # C is a leaf: a node with no children must still be reported as
+        # the parent, not as None.
+        assert "Inconsistent parent: child D has parent C but is child of B" in issues
+
+    def test_is_valid_tree_prints_nothing(self, simple_editable_tree, capsys):
+        _ = simple_editable_tree.is_valid_tree()
+        captured = capsys.readouterr()
+        assert captured.out == ""
+        assert captured.err == ""
 
     # ========================================================================
     # PARENT CONSISTENCY TESTS

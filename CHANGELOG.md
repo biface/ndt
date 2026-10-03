@@ -188,6 +188,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   descendants, and `get_subtree_paths()` returns that list as is. The
   expected values of the existing tests contained the duplicated key and are
   corrected. Closes #140.
+- **`_HKey.is_valid_tree()`** printed debugging traces on standard output
+  for every non-root node; the `print` calls are removed. The same method
+  and `check_parent_consistency()` tested the parent of a node by its truth
+  value, which for `_HKey` is its number of children: a leaf parent counted
+  as missing. A node whose parent is a leaf that does not list it was not
+  reported, and the message named its parent `None`. Both now compare with
+  `None`. Closes #142.
 
 ---
 
