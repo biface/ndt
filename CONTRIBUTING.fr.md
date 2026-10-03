@@ -164,6 +164,53 @@ Cela exécute dans l'ordre :
 
 ---
 
+## Documentation
+
+La documentation est construite avec Sphinx à partir de `docs/source/` ; ses
+dépendances sont dans l'extra `docs` (`uv sync --extra docs`). Le build doit
+passer sans avertissement :
+
+```bash
+sphinx-build -W -b html docs/source docs/build/html
+```
+
+### Traductions
+
+La documentation est rédigée en anglais. Les traductions passent par les
+catalogues gettext de Sphinx, un par page source, dans
+`docs/source/locales/<langue>/LC_MESSAGES/`. Les chaînes non traduites
+s'affichent en anglais.
+
+1. Extraire les messages. Les fichiers `.pot` sont des produits de build et ne
+   sont pas commités :
+
+   ```bash
+   sphinx-build -b gettext docs/source docs/build/gettext
+   ```
+
+2. Créer ou mettre à jour les catalogues d'une langue (ici le français) :
+
+   ```bash
+   sphinx-intl update -p docs/build/gettext -l fr -d docs/source/locales
+   ```
+
+3. Renseigner les entrées `msgstr` des fichiers `.po` et les commiter. Les
+   fichiers `.mo` sont compilés par Sphinx au moment du build et ne sont pas
+   commités.
+
+4. Construire la documentation traduite :
+
+   ```bash
+   sphinx-build -W -b html -D language=fr docs/source docs/build/html-fr
+   ```
+
+Une traduction est publiée dans l'archive GitHub Pages, sous
+`/<langue>/vX.Y.Z/`, dès que son code de langue figure dans
+`docs/source/locales/LANGUAGES`. N'y ajouter le code qu'une fois le catalogue
+traduit.
+
+---
+
 ## Conventions de commit
 
 - Langue : **anglais**

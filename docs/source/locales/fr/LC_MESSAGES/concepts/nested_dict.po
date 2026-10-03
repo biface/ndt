@@ -1,0 +1,147 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2024-2026, biface
+# This file is distributed under the same license as the Nested Dictionary
+# Tools package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Nested Dictionary Tools 1.3.0b1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-03 08:15+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+msgid "Nested Dictionaries"
+msgstr ""
+
+msgid ""
+"Python's built-in :class:`dict` can hold any value — including another "
+":class:`dict`. This natural nesting has no dedicated type in the standard"
+" library, which makes common tasks (checking whether a key exists "
+"anywhere in the hierarchy, counting its occurrences, or converting the "
+"whole structure to JSON) unnecessarily verbose."
+msgstr ""
+
+msgid ""
+"**ndict-tools** fills this gap by providing three ready-to-use classes "
+"built on top of :class:`collections.defaultdict`."
+msgstr ""
+
+msgid "What is a nested dictionary?"
+msgstr ""
+
+msgid ""
+"A nested dictionary is a dictionary whose values may themselves be "
+"dictionaries, to any depth:"
+msgstr ""
+
+msgid ""
+"Accessing ``data[\"project\"][\"authors\"][\"lead\"]`` requires knowing "
+"the exact path in advance. With **ndict-tools**, you can also write:"
+msgstr ""
+
+msgid ""
+"The list notation is a *hierarchical key*: each element is a level in the"
+" nesting."
+msgstr ""
+
+msgid "The three public classes"
+msgstr ""
+
+msgid ""
+"All three classes accept the same construction patterns — a plain "
+":class:`dict`, a :class:`zip`, or a list of ``(key, value)`` pairs:"
+msgstr ""
+
+msgid ""
+"The difference between the three classes lies in how they respond to an "
+"**unknown key**."
+msgstr ""
+
+msgid "NestedDictionary — lenient by default"
+msgstr ""
+
+msgid ""
+"Accessing a missing key silently creates a new, empty "
+":class:`~ndict_tools.NestedDictionary` at that location. This mirrors the"
+" behaviour of :class:`collections.defaultdict`."
+msgstr ""
+
+msgid "StrictNestedDictionary — raises on missing keys"
+msgstr ""
+
+msgid ""
+"Accessing a missing key raises a :class:`KeyError`, just like a plain "
+":class:`dict`. Use this class when unknown keys should never go "
+"unnoticed."
+msgstr ""
+
+msgid "SmoothNestedDictionary — always returns a nested dict"
+msgstr ""
+
+msgid ""
+"Accessing a missing key returns a new, empty "
+":class:`~ndict_tools.SmoothNestedDictionary`. Unlike "
+":class:`NestedDictionary`, every returned object is guaranteed to be a "
+":class:`SmoothNestedDictionary`, making deep chaining safe regardless of "
+"depth."
+msgstr ""
+
+msgid "Hierarchical key access"
+msgstr ""
+
+msgid ""
+"Any :class:`~ndict_tools.NestedDictionary` (and its subclasses) accepts a"
+" Python :class:`list` as a key. Reading and writing both work:"
+msgstr ""
+
+msgid "Constructing from an existing dict"
+msgstr ""
+
+msgid ""
+"The :meth:`~ndict_tools.NestedDictionary.from_dict` class method provides"
+" an alternative constructor that recursively converts a plain dictionary."
+msgstr ""
+
+msgid ""
+"Because a plain :class:`dict` carries no information about how missing "
+"keys should behave or how the structure should be printed, you must "
+"supply that configuration explicitly via ``default_setup``:"
+msgstr ""
+
+msgid ""
+"``indent`` — number of spaces used when printing the dictionary (``0`` "
+"disables indentation)."
+msgstr ""
+
+msgid ""
+"``default_factory`` — the class instantiated for missing keys (set to "
+"``NestedDictionary`` for lenient behaviour, ``None`` for strict "
+"behaviour)."
+msgstr ""
+
+msgid "Searching across all levels"
+msgstr ""
+
+msgid ""
+"Because all keys are tracked in the hierarchy, you can search without "
+"knowing the depth:"
+msgstr ""
+
+msgid "Serialisation"
+msgstr ""
+
+msgid ""
+"A :class:`~ndict_tools.NestedDictionary` can be saved to and restored "
+"from JSON or pickle without any extra setup:"
+msgstr ""
+

@@ -1,0 +1,161 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2024-2026, biface
+# This file is distributed under the same license as the Nested Dictionary
+# Tools package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Nested Dictionary Tools 1.3.0b1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-03 08:15+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+msgid "Exceptions"
+msgstr ""
+
+msgid ""
+"This module provides specific exception classes for nested dictionaries. "
+"These exceptions extend the standard **Exception**, **KeyError** and "
+"**AttributeError** classes to provide more context and better error "
+"handling for nested dictionary operations."
+msgstr ""
+
+msgid ""
+"All exceptions inherit from :class:`~ndict_tools.StackedDictionaryError`,"
+" which itself inherits from :class:`Exception`. Specialisations also "
+"inherit from the matching standard library exception so that standard "
+"``except`` clauses continue to work:"
+msgstr ""
+
+msgid "Base exception"
+msgstr ""
+
+msgid "Base exception class for all stacked dictionary errors."
+msgstr ""
+
+msgid ""
+"This is the parent class for all exceptions related to stacked "
+"dictionaries. It provides context about the error including an optional "
+"error code."
+msgstr ""
+
+msgid "Initialize a StackedDictionaryError."
+msgstr ""
+
+msgid "Parameters"
+msgstr ""
+
+msgid "A message describing the error."
+msgstr ""
+
+msgid "An integer code identifying the error type."
+msgstr ""
+
+msgid "The path in the nested dictionary where the error occurred."
+msgstr ""
+
+msgid "Specialisations"
+msgstr ""
+
+msgid "Exception raised when a key operation fails in a stacked dictionary."
+msgstr ""
+
+msgid ""
+"This exception is raised for key-related errors such as missing keys, "
+"invalid key types, or operations that cannot be performed on certain "
+"keys."
+msgstr ""
+
+msgid "Initialize a StackedKeyError."
+msgstr ""
+
+msgid "The key that caused the error."
+msgstr ""
+
+msgid ""
+"Exception raised when an attribute operation fails in a stacked "
+"dictionary."
+msgstr ""
+
+msgid ""
+"This exception is raised when attempting to access or modify attributes "
+"that don't exist or cannot be modified in the current context."
+msgstr ""
+
+msgid "Initialize a StackedAttributeError."
+msgstr ""
+
+msgid "The attribute that caused the error."
+msgstr ""
+
+msgid ""
+"Exception raised when a type error occurs in a stacked dictionary "
+"operation."
+msgstr ""
+
+msgid ""
+"This exception is raised when an operation receives an argument of the "
+"wrong type, such as using nested lists as keys or attempting to perform "
+"operations on incompatible types."
+msgstr ""
+
+msgid "Initialize a StackedTypeError."
+msgstr ""
+
+msgid "The expected type for the operation."
+msgstr ""
+
+msgid "The actual type that was provided."
+msgstr ""
+
+msgid ""
+"Exception raised when a value error occurs in a stacked dictionary "
+"operation."
+msgstr ""
+
+msgid ""
+"This exception is raised when an operation receives a value that is "
+"semantically inappropriate, such as a value that cannot be found in the "
+"dictionary."
+msgstr ""
+
+msgid "Initialize a StackedValueError."
+msgstr ""
+
+msgid "The value that caused the error."
+msgstr ""
+
+msgid ""
+"Exception raised when an index error occurs in a stacked dictionary "
+"operation."
+msgstr ""
+
+msgid ""
+"This exception is raised when attempting to access an empty dictionary or"
+" when an operation cannot be performed due to the dictionary being empty."
+msgstr ""
+
+msgid "Initialize a StackedIndexError."
+msgstr ""
+
+msgid "General exception for nested dictionary operations."
+msgstr ""
+
+msgid ""
+"This exception is raised when a nested dictionary operation fails but "
+"doesn't fall into a more specific error category."
+msgstr ""
+
+msgid "Initialize a NestedDictionaryException."
+msgstr ""
+

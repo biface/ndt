@@ -1,0 +1,116 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2024-2026, biface
+# This file is distributed under the same license as the Nested Dictionary
+# Tools package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Nested Dictionary Tools 1.3.0b1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-03 08:15+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+msgid "Compact Paths"
+msgstr ""
+
+msgid ""
+"A :class:`~ndict_tools.CompactPathsView` expresses the same set of paths "
+"as a :class:`~ndict_tools.PathsView`, but in a **factorised** form that "
+"groups siblings under their shared parent. This makes the structure "
+"easier to read and inspect at a glance."
+msgstr ""
+
+msgid "The compact structure format"
+msgstr ""
+
+msgid ""
+"The compact form is a Python list where each element represents a branch "
+"of the dictionary tree:"
+msgstr ""
+
+msgid "A **leaf** (a node with no children) is represented by its key alone."
+msgstr ""
+
+msgid ""
+"An **internal node** (a node with children) is represented as a list "
+"``[key, child1, child2, ...]``, where each child follows the same rule "
+"recursively."
+msgstr ""
+
+#, python-brace-format
+msgid ""
+"For the dictionary ``{\"a\": {\"b\": 1, \"c\": 2}, \"d\": 3}`` the "
+"compact structure is:"
+msgstr ""
+
+msgid ""
+"Reading it: ``'a'`` has two children ``'b'`` and ``'c'``; ``'d'`` is a "
+"leaf."
+msgstr ""
+
+msgid ""
+"The full expanded paths ``['a']``, ``['a', 'b']``, ``['a', 'c']``, "
+"``['d']`` can be recovered exactly from this compact form — the mapping "
+"is bijective."
+msgstr ""
+
+msgid "Obtaining a compact paths view"
+msgstr ""
+
+msgid "Reading the structure"
+msgstr ""
+
+msgid "Expanding to full paths"
+msgstr ""
+
+msgid ""
+":meth:`~ndict_tools.CompactPathsView.expand` reconstructs all paths from "
+"the compact structure:"
+msgstr ""
+
+msgid ""
+"Iterating a :class:`~ndict_tools.CompactPathsView` directly yields the "
+"same result (inherited from :class:`~ndict_tools.PathsView`):"
+msgstr ""
+
+msgid "Setting a custom structure"
+msgstr ""
+
+msgid ""
+"The :attr:`~ndict_tools.CompactPathsView.structure` attribute is "
+"writable. You can assign a hand-crafted compact structure and then expand"
+" or analyse it:"
+msgstr ""
+
+msgid ""
+"You can also assign a :class:`~ndict_tools.NestedDictionary` directly to "
+"rebuild the structure from a different source:"
+msgstr ""
+
+msgid "Converting between views"
+msgstr ""
+
+msgid "Both view classes can be converted to the other in one step:"
+msgstr ""
+
+msgid "Deeper nesting example"
+msgstr ""
+
+msgid "The compact format handles arbitrary depth. Given:"
+msgstr ""
+
+msgid ""
+"Each branch is factorised: ``'europe'`` groups its two country sub-"
+"branches, each of which groups its single ``'capital'`` leaf."
+msgstr ""
+

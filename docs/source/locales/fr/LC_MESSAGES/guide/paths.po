@@ -1,0 +1,92 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2024-2026, biface
+# This file is distributed under the same license as the Nested Dictionary
+# Tools package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Nested Dictionary Tools 1.3.0b1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-03 08:15+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+msgid "Part 2 — Working with Paths"
+msgstr ""
+
+msgid ""
+"This part shows how to enumerate, navigate, filter, and analyse the paths"
+" of a :class:`~ndict_tools.NestedDictionary`. For the underlying "
+"concepts, see :doc:`/concepts/paths` and :doc:`/concepts/compact_paths`."
+msgstr ""
+
+msgid "Listing all paths"
+msgstr ""
+
+msgid ""
+"Call :meth:`~ndict_tools.NestedDictionary.paths` to obtain a "
+":class:`~ndict_tools.PathsView` — a lazy view that enumerates every node "
+"in the tree, from root to leaves:"
+msgstr ""
+
+msgid ""
+"The view is computed once on first access and cached — subsequent "
+"iterations and membership tests reuse the same internal tree."
+msgstr ""
+
+msgid "Navigating parent–child relationships"
+msgstr ""
+
+msgid "Filtering paths"
+msgstr ""
+
+msgid ""
+"Pass a predicate to :meth:`~ndict_tools.PathsView.filter_paths` to select"
+" a subset:"
+msgstr ""
+
+msgid "Searching by key name"
+msgstr ""
+
+msgid ""
+"When you don't know the exact path but know the key name, use the search "
+"methods directly on the dictionary:"
+msgstr ""
+
+msgid "Working with compact paths"
+msgstr ""
+
+msgid ""
+"A :class:`~ndict_tools.CompactPathsView` groups siblings under their "
+"shared parent. It is useful for inspecting structure at a glance and for "
+"coverage analysis."
+msgstr ""
+
+msgid "Convert between the two views freely:"
+msgstr ""
+
+msgid "Checking coverage"
+msgstr ""
+
+msgid ""
+"Use a :class:`~ndict_tools.CompactPathsView` to measure how much of a "
+"nested dictionary a given path set describes."
+msgstr ""
+
+msgid ""
+"A typical use case is validating that an incoming payload covers all keys"
+" required by a template:"
+msgstr ""
+
+msgid "If the payload is incomplete:"
+msgstr ""
+

@@ -1,0 +1,152 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2024-2026, biface
+# This file is distributed under the same license as the Nested Dictionary
+# Tools package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Nested Dictionary Tools 1.3.0b1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-03 08:15+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+msgid "Part 1 — Getting Started"
+msgstr ""
+
+msgid ""
+"This page covers everything you need to go from zero to a working "
+":class:`~ndict_tools.NestedDictionary` in a few minutes."
+msgstr ""
+
+msgid "Installation"
+msgstr ""
+
+msgid "Install **ndict-tools** from PyPI using ``pip``:"
+msgstr ""
+
+msgid "Or with ``uv``:"
+msgstr ""
+
+msgid ""
+"The package requires **Python 3.10 or later** and has no runtime "
+"dependencies beyond the standard library."
+msgstr ""
+
+msgid "Creating a nested dictionary"
+msgstr ""
+
+msgid ""
+"All three public classes share the same construction interface. The "
+"simplest way is to pass a plain :class:`dict`:"
+msgstr ""
+
+msgid "You can also pass any iterable of ``(key, value)`` pairs or a ``zip``:"
+msgstr ""
+
+msgid ""
+"To convert a pre-existing plain dictionary — including deeply nested ones"
+" — use :meth:`~ndict_tools.NestedDictionary.from_dict`. Because a plain "
+":class:`dict` carries no information about how missing keys or printing "
+"should behave, you must supply that configuration explicitly:"
+msgstr ""
+
+msgid "The ``default_setup`` dictionary accepts two keys:"
+msgstr ""
+
+msgid ""
+"``indent`` — number of spaces used when printing (``0`` disables "
+"indentation)."
+msgstr ""
+
+msgid ""
+"``default_factory`` — the class instantiated for missing keys; set to "
+"``NestedDictionary`` for lenient behaviour or ``None`` for strict."
+msgstr ""
+
+msgid "Reading, writing, and deleting"
+msgstr ""
+
+msgid "Standard single-key access works exactly like a plain :class:`dict`:"
+msgstr ""
+
+msgid ""
+"For multi-level access, pass a :class:`list` of keys — a *hierarchical "
+"key*:"
+msgstr ""
+
+msgid "You can also chain standard attribute access:"
+msgstr ""
+
+msgid "Searching across all levels"
+msgstr ""
+
+msgid ""
+"Unlike a plain :class:`dict`, a :class:`~ndict_tools.NestedDictionary` "
+"tracks every key at every depth. You can search without knowing the exact"
+" path:"
+msgstr ""
+
+msgid "Choosing the right variant"
+msgstr ""
+
+msgid ""
+"All three classes share the same interface. The only difference is what "
+"happens when you access a key that does not exist."
+msgstr ""
+
+msgid "Class"
+msgstr ""
+
+msgid "Behaviour on unknown key"
+msgstr ""
+
+msgid ":class:`~ndict_tools.NestedDictionary`"
+msgstr ""
+
+msgid ""
+"Returns a new empty :class:`~ndict_tools.NestedDictionary` and records "
+"the access. Mirrors :class:`collections.defaultdict`."
+msgstr ""
+
+msgid ":class:`~ndict_tools.StrictNestedDictionary`"
+msgstr ""
+
+msgid ""
+"Raises :class:`KeyError`. Use when unknown keys should never go unnoticed"
+" — configuration parsing, validated payloads."
+msgstr ""
+
+msgid ":class:`~ndict_tools.SmoothNestedDictionary`"
+msgstr ""
+
+msgid ""
+"Returns a new empty :class:`~ndict_tools.SmoothNestedDictionary` at any "
+"depth. Safe for deep chaining without prior key checks."
+msgstr ""
+
+msgid "A quick rule of thumb:"
+msgstr ""
+
+msgid "Building a structure from scratch → :class:`~ndict_tools.NestedDictionary`"
+msgstr ""
+
+msgid ""
+"Validating or reading a known structure → "
+":class:`~ndict_tools.StrictNestedDictionary`"
+msgstr ""
+
+msgid ""
+"Navigating an unknown structure without guards → "
+":class:`~ndict_tools.SmoothNestedDictionary`"
+msgstr ""
+

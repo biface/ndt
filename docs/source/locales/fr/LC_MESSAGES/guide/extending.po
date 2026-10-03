@@ -1,0 +1,147 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2024-2026, biface
+# This file is distributed under the same license as the Nested Dictionary
+# Tools package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Nested Dictionary Tools 1.3.0b1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-03 08:15+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+msgid "Part 4 — Extending the Package"
+msgstr ""
+
+msgid ""
+"This part is aimed at developers who want to subclass, modify, or "
+"contribute to **ndict-tools**. It explains the internal architecture and "
+"the contracts that hold the package together."
+msgstr ""
+
+msgid ""
+"All private classes described here are documented in the "
+":doc:`/api/internal/tools` and :doc:`/api/internal/serialize` reference "
+"pages. Their interfaces are subject to change between releases."
+msgstr ""
+
+msgid "The private/public split"
+msgstr ""
+
+msgid ""
+"The package is organised in three layers, each with a clearly defined "
+"responsibility:"
+msgstr ""
+
+msgid ""
+"The rule is simple: **nothing from** ``tools.py`` **or** ``serialize.py``"
+" **is exported from** ``__init__.py``. Users import exclusively from the "
+"top-level package. Internal classes are underscored and considered "
+"implementation details."
+msgstr ""
+
+msgid ""
+"When you extend the package, subclass the public classes in ``core.py``, "
+"not the private classes in ``tools.py`` directly. The public classes are "
+"the stable surface."
+msgstr ""
+
+msgid "The ``default_setup`` contract"
+msgstr ""
+
+msgid ""
+"Every ``_StackedDict`` instance carries a ``default_setup`` dictionary "
+"that bundles its configuration:"
+msgstr ""
+
+msgid ""
+"This contract must be respected by any method that creates a new instance"
+" — constructors, ``from_dict``, ``from_json``, ``from_pickle``, and any "
+"custom factory you write. The ``default_setup`` must round-trip cleanly "
+"through serialisation so that the reconstructed object behaves "
+"identically to the original."
+msgstr ""
+
+msgid "When writing a custom subclass, forward ``default_setup`` explicitly:"
+msgstr ""
+
+msgid "The ``from_dict`` recursion pattern"
+msgstr ""
+
+msgid ""
+":meth:`~ndict_tools.NestedDictionary.from_dict` converts a plain "
+":class:`dict` recursively. The recursion is driven by ``default_factory``"
+" inside ``default_setup``: whenever a value is itself a :class:`dict`, "
+"the method calls ``default_factory.from_dict(value, ...)`` to convert it "
+"to the same class."
+msgstr ""
+
+msgid ""
+"This means the ``default_factory`` must itself implement ``from_dict``. "
+"All three public classes satisfy this contract. If you write a custom "
+"subclass and use it as ``default_factory``, ensure it does too."
+msgstr ""
+
+msgid "The ``_HKey`` tree model"
+msgstr ""
+
+msgid ""
+"Internally, all paths are stored in a tree of "
+":class:`~ndict_tools.tools._HKey` nodes. Each node is an immutable named "
+"tuple that holds:"
+msgstr ""
+
+msgid "its **key** (the single dictionary key this node represents),"
+msgstr ""
+
+msgid "its **children** (a tuple of ``_HKey`` nodes, one per child key),"
+msgstr ""
+
+msgid "a **leaf flag** (``True`` when this node has no children)."
+msgstr ""
+
+msgid ""
+"The tree is built once by :class:`~ndict_tools.tools._Paths` on first "
+"access and reused for all subsequent operations (membership, children "
+"lookup, subtree traversal, filtering). It is never mutated — a new tree "
+"is built whenever the underlying dictionary changes."
+msgstr ""
+
+msgid ""
+"``_HKey`` uses ``__slots__`` and is hashable. It is never exposed in the "
+"public API."
+msgstr ""
+
+msgid "Writing a custom path filter"
+msgstr ""
+
+msgid ""
+"The simplest extension point is "
+":meth:`~ndict_tools.PathsView.filter_paths`. It takes any callable that "
+"accepts a path (a :class:`list` of keys) and returns a :class:`bool`:"
+msgstr ""
+
+msgid ""
+"For more structured filtering, subclass "
+":class:`~ndict_tools.tools._Paths` and override ``filter_paths`` — then "
+"expose the subclass via a new method on your custom dictionary class."
+msgstr ""
+
+msgid "Writing a custom subclass"
+msgstr ""
+
+msgid ""
+"Here is a minimal but complete example: a ``FrozenNestedDictionary`` that"
+" raises on any write attempt after construction:"
+msgstr ""
+

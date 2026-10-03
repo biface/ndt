@@ -4,7 +4,7 @@
 # python-ci-build.yaml and the package publication) builds that tag once, from
 # its own sources and documentation requirements, and publishes it under
 # /vX.Y.Z/ on the gh-pages branch. Release candidates are not archived.
-# Translations listed in the tag's docs/source/locale/LANGUAGES go under
+# Translations listed in the tag's docs/source/locales/LANGUAGES go under
 # /<lang>/vX.Y.Z/. Existing directories are never deleted; the root index.html
 # is regenerated from the directories present. Read the Docs serves `stable`
 # and `latest`.
@@ -103,7 +103,7 @@ jobs:
               ${language:+-D language="$language"} source/docs/source "$output"
           }
           build "" "site/$TAG"
-          languages=source/docs/source/locale/LANGUAGES
+          languages=source/docs/source/locales/LANGUAGES
           if [ -f "$languages" ]; then
             for language in $(grep -Ev '^[[:space:]]*(#|$)' "$languages"); do
               if [[ ! "$language" =~ ^[a-z]{2}(_[A-Z]{2})?$ ]]; then

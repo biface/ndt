@@ -1,0 +1,98 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2024-2026, biface
+# This file is distributed under the same license as the Nested Dictionary
+# Tools package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Nested Dictionary Tools 1.3.0b1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-03 08:15+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+msgid "Deprecation Notices"
+msgstr ""
+
+msgid "This page tracks all active and resolved deprecations in **ndict-tools**."
+msgstr ""
+
+msgid "Symbol"
+msgstr ""
+
+msgid "Deprecated in"
+msgstr ""
+
+msgid "Removed in"
+msgstr ""
+
+msgid "Migration"
+msgstr ""
+
+msgid "``DictPaths``"
+msgstr ""
+
+msgid "1.0.0"
+msgstr ""
+
+msgid "1.2.0"
+msgstr ""
+
+msgid "Use :class:`~ndict_tools.CompactPathsView` or ``nd.compact_paths()``."
+msgstr ""
+
+msgid "``from_dict`` *(free function)*"
+msgstr ""
+
+msgid "1.1.0"
+msgstr ""
+
+msgid "1.5.0 *(planned)*"
+msgstr ""
+
+#, python-brace-format
+msgid "Use ``NestedDictionary.from_dict(data, default_setup={...})``."
+msgstr ""
+
+msgid "Active deprecations"
+msgstr ""
+
+msgid "``from_dict`` free function"
+msgstr ""
+
+msgid ""
+"The free function ``from_dict`` (importable from ``ndict_tools.tools``) "
+"is deprecated. It will be **removed in 1.5.0** (issue :issue:`81`)."
+msgstr ""
+
+msgid ""
+"Calling it emits a :class:`DeprecationWarning` with an explicit removal "
+"notice."
+msgstr ""
+
+msgid "Migrate to the classmethod available on all three public classes:"
+msgstr ""
+
+msgid "Resolved deprecations"
+msgstr ""
+
+msgid ""
+"``DictPaths`` was deprecated in 1.0.0 and **removed in 1.2.0** (issue "
+":issue:`49`)."
+msgstr ""
+
+msgid ""
+"Use :class:`~ndict_tools.CompactPathsView` or call "
+":meth:`~ndict_tools.NestedDictionary.compact_paths` on any "
+":class:`~ndict_tools.NestedDictionary` instance."
+msgstr ""
+

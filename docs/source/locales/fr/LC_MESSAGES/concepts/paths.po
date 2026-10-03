@@ -1,0 +1,105 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2024-2026, biface
+# This file is distributed under the same license as the Nested Dictionary
+# Tools package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Nested Dictionary Tools 1.3.0b1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-03 08:15+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+msgid "Paths"
+msgstr ""
+
+msgid ""
+"A **path** is the ordered list of keys that leads from the root of a "
+"nested dictionary to any node — intermediate or leaf. For example, in:"
+msgstr ""
+
+msgid "the paths are ``['a']``, ``['a', 'b']``, ``['a', 'c']``, and ``['d']``."
+msgstr ""
+
+msgid ""
+"Standard Python gives you no direct way to enumerate them. **ndict-"
+"tools** exposes all paths through a lazy view object: "
+":class:`~ndict_tools.PathsView`."
+msgstr ""
+
+msgid "Obtaining a paths view"
+msgstr ""
+
+msgid ""
+"Call :meth:`~ndict_tools.NestedDictionary.paths` on any "
+":class:`~ndict_tools.NestedDictionary`:"
+msgstr ""
+
+msgid ""
+"The view is *lazy*: no paths are materialised in memory until you "
+"actually iterate or query the view. The underlying tree is built once on "
+"first access and reused for all subsequent operations."
+msgstr ""
+
+msgid "Iterating over paths"
+msgstr ""
+
+msgid ""
+"Paths are yielded in depth-first, pre-order — each node before its "
+"children."
+msgstr ""
+
+msgid "Counting paths"
+msgstr ""
+
+msgid "Membership testing"
+msgstr ""
+
+msgid ""
+"Membership testing uses the internal tree structure and does not iterate "
+"all paths:"
+msgstr ""
+
+msgid "Navigating the tree"
+msgstr ""
+
+msgid ""
+"A :class:`~ndict_tools.PathsView` understands the parent–child "
+"relationships between paths:"
+msgstr ""
+
+msgid "Filtering paths"
+msgstr ""
+
+msgid "Pass a predicate to keep only the paths that match a condition:"
+msgstr ""
+
+msgid "Converting to compact form"
+msgstr ""
+
+msgid ""
+"A :class:`~ndict_tools.PathsView` can be converted to a "
+":class:`~ndict_tools.CompactPathsView` in one step:"
+msgstr ""
+
+msgid "See :doc:`compact_paths` for the full picture."
+msgstr ""
+
+msgid "Equality"
+msgstr ""
+
+msgid ""
+"Two :class:`~ndict_tools.PathsView` objects are equal when they contain "
+"the same set of paths, regardless of order:"
+msgstr ""
+

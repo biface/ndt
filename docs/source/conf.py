@@ -48,6 +48,14 @@ todo_include_todos = True
 
 language = "en"
 
+# -- Internationalisation (DD-028) -------------------------------------------
+# Catalogs live in docs/source/locales/<lang>/LC_MESSAGES/, one per source
+# document. Source locations are left out of the catalogs so that editing a page
+# does not rewrite the line references of every translation.
+locale_dirs = ["locales/"]
+gettext_compact = False
+gettext_location = False
+
 # -- Options for HTML output -------------------------------------------------
 html_theme = "furo"
 html_static_path = ["_static"]

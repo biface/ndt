@@ -1,0 +1,84 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2024-2026, biface
+# This file is distributed under the same license as the Nested Dictionary
+# Tools package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Nested Dictionary Tools 1.3.0b1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-03 08:15+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+msgid "Coverage"
+msgstr ""
+
+msgid ""
+"**Coverage** answers the question: *how much of a nested dictionary does "
+"a given set of paths describe?*"
+msgstr ""
+
+msgid ""
+"This is useful when you work with a partial or independently defined "
+":class:`~ndict_tools.CompactPathsView` and want to know how much of a "
+"target dictionary it accounts for."
+msgstr ""
+
+msgid "Full coverage"
+msgstr ""
+
+msgid ""
+"A :class:`~ndict_tools.CompactPathsView` built directly from a dictionary"
+" always covers it completely:"
+msgstr ""
+
+msgid "Partial coverage"
+msgstr ""
+
+msgid "Assign a reduced structure to simulate partial coverage:"
+msgstr ""
+
+msgid "Identifying uncovered paths"
+msgstr ""
+
+msgid ""
+":meth:`~ndict_tools.CompactPathsView.uncovered_paths` returns the paths "
+"that exist in the dictionary but are absent from the compact structure:"
+msgstr ""
+
+msgid "Identifying missing paths"
+msgstr ""
+
+msgid ""
+":meth:`~ndict_tools.CompactPathsView.missing_paths` returns the paths "
+"present in the compact structure but absent from the dictionary — useful "
+"when the structure was set manually and may contain invalid entries:"
+msgstr ""
+
+msgid "Over-coverage"
+msgstr ""
+
+msgid ""
+"Coverage can exceed 1.0 when the compact structure contains more paths "
+"than the dictionary has:"
+msgstr ""
+
+msgid "Practical example"
+msgstr ""
+
+msgid ""
+"Suppose you receive a specification describing the expected structure of "
+"a nested dictionary, and you want to verify that an incoming payload "
+"satisfies it:"
+msgstr ""
+

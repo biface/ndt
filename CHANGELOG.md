@@ -133,10 +133,18 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   and publishes it under `/vX.Y.Z/` without touching the other directories.
   Release candidates are not archived. The Python
   version comes from the tag's `.readthedocs.yaml`. Translations listed in
-  `docs/source/locale/LANGUAGES` go under `/<lang>/vX.Y.Z/`. The landing
+  `docs/source/locales/LANGUAGES` go under `/<lang>/vX.Y.Z/`. The landing
   page lists the archived versions and links to Read the Docs `stable` and
   `latest`, replacing the hard-coded redirect to a `v1.2.0/` build that was
   never produced (DD-028). Closes #131.
+- **Documentation translations (infrastructure).** Sphinx gettext catalogs,
+  one per source page, in `docs/source/locales/<lang>/LC_MESSAGES/`
+  (`locale_dirs`, `gettext_compact = False`, `gettext_location = False`). A
+  French catalog is generated, not yet translated; untranslated strings fall
+  back to English. `docs/source/locales/LANGUAGES`, empty for now, lists the
+  translations published in the GitHub Pages archive. The extraction, update
+  and build steps are documented in `CONTRIBUTING.md` and
+  `CONTRIBUTING.fr.md` (DD-028). Closes #133.
 
 ### Removed
 
