@@ -125,6 +125,18 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   `.readthedocs.yaml` at the repository root, the location Read the Docs reads
   by default, and builds with Python 3.11. Read the Docs serves `stable` and
   `latest` only (DD-028). Part of #132.
+- **GitHub Pages archive.** `docs-ghpages.yml` no longer runs
+  sphinx-multiversion on every push to `master`. It runs when a final
+  release tag `vX.Y.Z` is pushed, like the package build and publication
+  (or by hand through `workflow_dispatch` with `tag` and `python-version`),
+  builds that tag once from its own sources and documentation requirements,
+  and publishes it under `/vX.Y.Z/` without touching the other directories.
+  Release candidates are not archived. The Python
+  version comes from the tag's `.readthedocs.yaml`. Translations listed in
+  `docs/source/locale/LANGUAGES` go under `/<lang>/vX.Y.Z/`. The landing
+  page lists the archived versions and links to Read the Docs `stable` and
+  `latest`, replacing the hard-coded redirect to a `v1.2.0/` build that was
+  never produced (DD-028). Closes #131.
 
 ### Removed
 

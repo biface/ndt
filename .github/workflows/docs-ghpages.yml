@@ -1,54 +1,185 @@
-name: Deploy docs to GitHub Pages
+# Archive the documentation of each final release on GitHub Pages (DD-028).
+#
+# Pushing a final release tag vX.Y.Z (the event that also triggers
+# python-ci-build.yaml and the package publication) builds that tag once, from
+# its own sources and documentation requirements, and publishes it under
+# /vX.Y.Z/ on the gh-pages branch. Release candidates are not archived.
+# Translations listed in the tag's docs/source/locale/LANGUAGES go under
+# /<lang>/vX.Y.Z/. Existing directories are never deleted; the root index.html
+# is regenerated from the directories present. Read the Docs serves `stable`
+# and `latest`.
+#
+# Backfill or rebuild a tag by hand:
+#   gh workflow run docs-ghpages.yml -f tag=vX.Y.Z [-f python-version=3.x]
+
+name: Archive documentation on GitHub Pages
 
 on:
   push:
-    branches:
-      - master
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to archive (vX.Y.Z)"
+        required: true
+        type: string
+      python-version:
+        description: "Python version (default: build.tools.python of the tag's .readthedocs.yaml)"
+        required: false
+        type: string
 
 permissions:
   contents: write
 
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
 jobs:
-  deploy-docs:
+  archive:
     runs-on: ubuntu-latest
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
 
     steps:
-      - name: Checkout repository
+      - name: Check the tag name
+        run: |
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::'$TAG' is not a final release tag (vX.Y.Z)"
+            exit 1
+          fi
+
+      - name: Check out the tag
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0  # required by sphinx-multiversion to access all tags
+          ref: ${{ env.TAG }}
+          path: source
+
+      - name: Check out gh-pages
+        uses: actions/checkout@v6
+        with:
+          ref: gh-pages
+          path: site
+
+      - name: Resolve the Python version
+        id: python
+        env:
+          REQUESTED: ${{ inputs.python-version }}
+        run: |
+          version="$REQUESTED"
+          if [ -z "$version" ]; then
+            # Root file from v1.3.0 on, docs/conf/ before (DD-028).
+            for config in source/.readthedocs.yaml source/docs/conf/.readthedocs.yaml; do
+              if [ -f "$config" ]; then
+                version=$(sed -n 's/^[[:space:]]*python:[[:space:]]*"\{0,1\}\([0-9][0-9.]*\)"\{0,1\}[[:space:]]*$/\1/p' "$config" | head -n 1)
+                break
+              fi
+            done
+          fi
+          if [ -z "$version" ]; then
+            echo "::error::No Python version found for $TAG; pass the python-version input"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: ${{ steps.python.outputs.version }}
 
-      - name: Install documentation dependencies
-        run: pip install -r docs/source/requirements.txt
-
-      - name: Install package (editable)
-        run: pip install -e .
-
-      - name: Build docs with sphinx-multiversion
-        run: sphinx-multiversion docs/source docs/build/html
-
-      - name: Add redirect from root to latest
+      - name: Install the tag's documentation requirements and package
         run: |
-          cat > docs/build/html/index.html << 'HTML'
-          <!DOCTYPE html>
-          <html>
+          python -m pip install --upgrade pip
+          pip install -r source/docs/source/requirements.txt
+          pip install ./source
+
+      - name: Build the documentation
+        run: |
+          build() {
+            local language="$1" output="$2"
+            rm -rf "$output"
+            sphinx-build -b html -d "$RUNNER_TEMP/doctrees-${language:-en}" \
+              ${language:+-D language="$language"} source/docs/source "$output"
+          }
+          build "" "site/$TAG"
+          languages=source/docs/source/locale/LANGUAGES
+          if [ -f "$languages" ]; then
+            for language in $(grep -Ev '^[[:space:]]*(#|$)' "$languages"); do
+              if [[ ! "$language" =~ ^[a-z]{2}(_[A-Z]{2})?$ ]]; then
+                echo "::error::Invalid language code '$language' in $languages"
+                exit 1
+              fi
+              build "$language" "site/$language/$TAG"
+            done
+          fi
+
+      - name: Regenerate the landing page
+        run: |
+          python - site <<'PY'
+          import html
+          import re
+          import sys
+          from pathlib import Path
+
+          site = Path(sys.argv[1])
+          rtd = "https://ndict-tools.readthedocs.io/en"
+          release = re.compile(r"^v(\d+)\.(\d+)\.(\d+)$")
+          language = re.compile(r"^[a-z]{2}(_[A-Z]{2})?$")
+
+
+          def versions(root: Path) -> list[str]:
+              found = [p.name for p in root.iterdir() if p.is_dir() and release.match(p.name)]
+              return sorted(found, key=lambda v: tuple(map(int, release.match(v).groups())), reverse=True)
+
+
+          def section(title: str, prefix: str, names: list[str]) -> str:
+              items = "\n".join(
+                  f'      <li><a href="{prefix}{html.escape(n)}/">{html.escape(n)}</a></li>' for n in names
+              )
+              return f"    <h2>{html.escape(title)}</h2>\n    <ul>\n{items}\n    </ul>\n"
+
+
+          body = section("Archived versions", "", versions(site))
+          for lang_dir in sorted(p for p in site.iterdir() if p.is_dir() and language.match(p.name)):
+              names = versions(lang_dir)
+              if names:
+                  body += section(f"Archived versions ({lang_dir.name})", f"{lang_dir.name}/", names)
+
+          page = f"""<!DOCTYPE html>
+          <html lang="en">
             <head>
-              <meta http-equiv="refresh" content="0; url=v1.2.0/" />
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1">
+              <title>ndict-tools documentation</title>
+              <style>
+                :root {{ color-scheme: light dark; }}
+                body {{ font-family: system-ui, sans-serif; max-width: 40rem; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; }}
+                li {{ margin: 0.2rem 0; }}
+              </style>
             </head>
             <body>
-              <p>Redirecting to <a href="v1.2.0/">v1.2.0</a>…</p>
-            </body>
+              <h1>ndict-tools documentation</h1>
+              <p>Current documentation on Read the Docs:
+                <a href="{rtd}/stable/">stable</a> (last release) and
+                <a href="{rtd}/latest/">latest</a> (development branch).</p>
+          {body}  </body>
           </html>
-          HTML
+          """
+          (site / "index.html").write_text(page, encoding="utf-8")
+          print(f"index.html: {len(versions(site))} archived versions")
+          PY
+          touch site/.nojekyll
 
-      - name: Deploy to gh-pages branch
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: docs/build/html
-          publish_branch: gh-pages
+      - name: Publish to gh-pages
+        working-directory: site
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nothing to publish for $TAG"
+            exit 0
+          fi
+          git commit -m "docs: archive $TAG"
+          git push origin HEAD:gh-pages
