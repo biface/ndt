@@ -3600,7 +3600,7 @@ class _StackedDict(defaultdict[Any, Any]):
                         __occurrences += 1
         return __occurrences
 
-    def key_list(self, key: Any) -> list[list[Any]]:
+    def key_list(self, key: Any) -> list[tuple[Any, ...]]:
         """
         Get all hierarchical paths containing a specific key.
 
@@ -3614,7 +3614,7 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Returns
         -------
-        list :
+        list[tuple[Any, ...]]
             list of paths (as tuples) containing the key
 
         Raises
@@ -3640,7 +3640,7 @@ class _StackedDict(defaultdict[Any, Any]):
         occurrences : Count occurrences
         """
 
-        __key_list = []
+        __key_list: list[tuple[Any, ...]] = []
 
         if self.is_key(key):
             for keys in self.unpacked_keys():

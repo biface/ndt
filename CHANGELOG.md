@@ -195,6 +195,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   as missing. A node whose parent is a leaf that does not list it was not
   reported, and the message named its parent `None`. Both now compare with
   `None`. Closes #142.
+- **`key_list()`** was annotated `-> list[list[Any]]` but returns tuples, as
+  its docstring shows. The annotation is now `list[tuple[Any, ...]]`, like the
+  paths yielded by `unpacked_keys()`. No runtime change; a type checker now
+  sees the actual type. Checked by `tests/typing/check_key_list.py`.
+  Closes #143.
 
 ---
 
