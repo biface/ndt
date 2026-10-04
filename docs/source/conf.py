@@ -26,6 +26,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.duration",
     "sphinx.ext.todo",
+    "sphinx.ext.doctest",
     "myst_parser",
 ]
 
@@ -45,6 +46,10 @@ napoleon_use_rtype = True
 
 # todo
 todo_include_todos = True
+
+# doctest: `sphinx-build -b doctest` runs the explicit ``.. doctest::`` blocks of
+# the pages only. Docstring examples rendered by autodoc are not collected.
+doctest_test_doctest_blocks = ""
 
 language = "en"
 

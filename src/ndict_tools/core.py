@@ -117,7 +117,7 @@ class NestedDictionary(_StackedDict):
         >>> nd = NestedDictionary({'a': {'b': 1, 'c': 2}, 'd': 3})
         >>> cpaths = nd.compact_paths()
         >>> cpaths.structure
-        [['a', 'b', 'c'], ['d']]
+        [['a', 'b', 'c'], 'd']
 
         >>> # Expand to full paths
         >>> cpaths.expand()
@@ -286,7 +286,7 @@ class PathsView(_Paths):
         >>> paths = nd.paths()
         >>> compact = paths.to_compact()
         >>> compact.structure
-        [['a', 'b', 'c'], ['d']]
+        [['a', 'b', 'c'], 'd']
         """
         return CompactPathsView(self._stacked_dict)
 
@@ -305,8 +305,8 @@ class CompactPathsView(_CPaths):
     - Leaf nodes are represented by their key alone
     - Internal nodes are represented as [key, child1, child2, ...]
 
-    This class provides a bijective mapping between compact and expanded forms,
-    allowing efficient conversion in both directions.
+    A structure built from a dictionary is the canonical form of its paths, and
+    conversion works in both directions.
 
     Parameters
     ----------
@@ -327,7 +327,7 @@ class CompactPathsView(_CPaths):
 
     >>> # Get compact structure
     >>> cpaths.structure
-    [['a', 'b', 'c'], ['d']]
+    [['a', 'b', 'c'], 'd']
 
     >>> # Expand to full paths
     >>> cpaths.expand()

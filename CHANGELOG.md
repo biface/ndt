@@ -206,6 +206,17 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   Every key of the structure is now checked with `hash()`; an unhashable key
   raises `StackedTypeError`, with the key in the message, its type in
   `actual_type` and the path of its parent in `path`. Closes #141.
+- **Concepts pages and compact-path docstrings** stated behaviours the code
+  does not have: a compact structure shown as `[['a', 'b', 'c'], ['d']]`
+  instead of `[['a', 'b', 'c'], 'd']`, a coverage of `1.25` (coverage is the
+  share of the dictionary's paths found in the structure, always between 0
+  and 1), an `uncovered_paths()` result of `[]` where it is
+  `[['settings', 'lang']]`, and a bijective compact format (only the
+  canonical form is unique). They now state that `is_covering()` tests the
+  equality of the two sets of paths, and that `['a', 'b', 'c']` and
+  `['a', ['b', 'c']]` describe different trees. The examples of the Concepts
+  pages are `.. doctest::` blocks, checked by `sphinx-build -b doctest`.
+  Closes #145.
 
 ---
 

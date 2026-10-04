@@ -3784,7 +3784,8 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Notes
         -----
-        - Provides bijective mapping between expanded and compact forms
+        - The structure built from a dictionary is the canonical compact form
+          of its paths; expanding it gives those paths back
         - Useful for path coverage analysis
         - More compact representation for deeply nested structures
 
@@ -4519,9 +4520,17 @@ class _CPaths(_Paths):
     - Leaf nodes: just the key
     - Internal nodes: [key, child1, child2, ...]
 
-    The compact structure uses a bijective mapping:
-    - Paths → Compact structure (factorization)
+    Inside a node list, every element after the first is a child of the
+    first: ``['b', 'c', 'd']`` is ``b`` with two children, while
+    ``['b', ['c', 'd']]`` is the chain ``b``, ``c``, ``d``.
+
+    Paths and compact structure are converted both ways:
+    - Paths → Compact structure (factorization), which gives the canonical form
     - Compact structure → Paths (expansion)
+
+    Each set of paths has exactly one canonical form. Other structures are
+    accepted and can expand to the same paths, such as ``['a']`` for the leaf
+    ``'a'``.
 
     .. warning::
        This is a private class (underscore prefix) and should not be instantiated
@@ -4542,7 +4551,7 @@ class _CPaths(_Paths):
     >>> data = _StackedDict({'a': 1, 'b': {'c': 2, 'd': 3}})
     >>> c_paths = _CPaths(data)
     >>> c_paths.structure
-    [['a'], ['b', 'c', 'd']]
+    ['a', ['b', 'c', 'd']]
     >>> list(c_paths)  # Inherited from _Paths
     [['a'], ['b'], ['b', 'c'], ['b', 'd']]
 
@@ -4818,9 +4827,13 @@ class _CPaths(_Paths):
 
         Examples
         --------
-        >>> structure = [['a'], ['b', 'c', 'd']]
+        >>> structure = ['a', ['b', 'c', 'd']]
         >>> _CPaths.expand_structure(structure)
         [['a'], ['b'], ['b', 'c'], ['b', 'd']]
+
+        >>> # Inside a node list, a nested list is a chain, not siblings
+        >>> _CPaths.expand_structure([['b', ['c', 'd']]])
+        [['b'], ['b', 'c'], ['b', 'c', 'd']]
 
         >>> structure = [['x', ['y', 'z1', 'z2'], 'a']]
         >>> _CPaths.expand_structure(structure)
@@ -4958,10 +4971,13 @@ class _CPaths(_Paths):
 
     def is_covering(self, stacked_dict: "_StackedDict") -> bool:
         """
-        Check if this _CPaths covers all paths in the given _StackedDict.
+        Check if this _CPaths describes exactly the paths of a _StackedDict.
 
-        A _CPaths is "covering" if its expanded paths exactly match all paths
-        in the target _StackedDict.
+        With S the set of paths expanded from this structure and T the set of
+        paths of ``stacked_dict``, the result is ``S == T``. It is stricter
+        than full coverage: ``coverage()`` returns ``1.0`` as soon as T is
+        included in S, while ``is_covering()`` also requires S to hold no
+        other path.
 
         Parameters
         ----------
@@ -4971,7 +4987,7 @@ class _CPaths(_Paths):
         Returns
         -------
         bool
-            True if all paths in stacked_dict are present in this _CPaths
+            True if both sets of paths are equal
 
         Examples
         --------
@@ -4984,6 +5000,11 @@ class _CPaths(_Paths):
         >>> c_paths.structure = [['a']]  # Only covers 'a', not 'a.b' or 'c'
         >>> c_paths.is_covering(sdict)
         False
+
+        >>> # Every path of sdict plus an extra one: full coverage, not equal
+        >>> c_paths.structure = [['a', 'b'], 'c', 'e']
+        >>> c_paths.coverage(sdict), c_paths.is_covering(sdict)
+        (1.0, False)
 
         Notes
         -----
@@ -4998,11 +5019,13 @@ class _CPaths(_Paths):
 
     def coverage(self, stacked_dict: "_StackedDict") -> float:
         """
-        Calculate the coverage percentage of this _CPaths over a _StackedDict.
+        Calculate the share of the paths of a _StackedDict found in this _CPaths.
 
-        Coverage is defined as the ratio of paths in this _CPaths that exist
-        in the target _StackedDict, divided by the total number of paths in
-        the _StackedDict.
+        With S the set of paths expanded from this structure and T the set of
+        paths of ``stacked_dict``, coverage is ``len(S & T) / len(T)``. Paths
+        of S that are not in T do not change it, so the value stays between
+        0.0 and 1.0. When T is empty, the result is 1.0 if S is empty too and
+        0.0 otherwise.
 
         Parameters
         ----------
@@ -5012,8 +5035,7 @@ class _CPaths(_Paths):
         Returns
         -------
         float
-            Coverage percentage between 0.0 and 1.0 (or > 1.0 if _CPaths
-            contains paths not in stacked_dict)
+            Coverage between 0.0 and 1.0
 
         Examples
         --------
@@ -5027,10 +5049,10 @@ class _CPaths(_Paths):
         >>> c_paths.coverage(sdict)
         0.5
 
-        >>> # Over-coverage: includes paths not in sdict
+        >>> # Extra paths do not raise the value above 1.0
         >>> c_paths.structure = [['a', 'b', 'c'], ['d'], ['e']]
         >>> c_paths.coverage(sdict)
-        1.25
+        1.0
 
         Notes
         -----
@@ -5038,8 +5060,8 @@ class _CPaths(_Paths):
         _CPaths(sdict).coverage(sdict) will ALWAYS return 1.0
         because all paths from sdict are included.
 
-        The coverage can be > 1.0 if the _CPaths contains more paths than
-        the _StackedDict (e.g., manually set structure).
+        Use ``missing_paths()`` to list the extra paths and ``is_covering()``
+        to check that the two sets are equal.
         """
         target_paths = list(_Paths(stacked_dict))
         expanded_paths = self.expand()
