@@ -7,7 +7,7 @@ used by the serialization methods on ``_StackedDict`` (``to_json``, ``from_json`
 
 Contents
 --------
-- ``_encode_key`` / ``_decode_key`` : JSON key encoding via type-tagged string prefix
+- ``_encode_key`` / ``_decode_key`` : JSON key encoding in square brackets
 - ``NestedDictionaryEncoder``       : ``json.JSONEncoder`` subclass
 - ``_make_decoder_hook``            : factory for ``object_pairs_hook``
 - ``_pickle_dump`` / ``_pickle_load``: pickle helpers with SHA-256 verification
@@ -16,10 +16,11 @@ Design decisions
 ----------------
 - **JSON key encoding** (design decision `#87 <https://github.com/biface/ndt/issues/87>`_):
   JSON mandates string keys; Python supports arbitrary hashable keys. Non-string keys
-  are encoded as ``__type__:value`` tagged strings (e.g., ``__int__:42``,
-  ``__tuple__:(1, 2)``). Decoding uses ``ast.literal_eval`` for safe reconstruction of
-  ``tuple`` and ``frozenset`` values. Known limitation: string keys that already start
-  with a ``__type__:`` prefix are indistinguishable from encoded keys.
+  are written in square brackets (e.g., ``[42]``, ``[3.14]``, ``[True]``,
+  ``[(1, 2)]``, ``[frozenset{1, 2}]``). A string key that starts with ``[`` is
+  escaped with a backslash (``[42]`` → ``\\[42]``), so it cannot be read back as
+  an encoded key. Decoding uses ``ast.literal_eval`` for safe reconstruction of
+  ``tuple`` and ``frozenset`` values.
 - **API placement** (design decision `#94 <https://github.com/biface/ndt/issues/94>`_):
   Serialization methods (``to_json``, ``from_json``, ``to_pickle``, ``from_pickle``)
   are defined on ``_StackedDict`` and delegate to the private helpers below via lazy
@@ -51,12 +52,13 @@ def _encode_key(key: Any) -> str:
     Encode a ``_StackedDict`` key to a JSON-safe string.
 
     JSON mandates string keys. This function maps any supported hashable
-    Python key to a unique, reversible string using a type-tagged prefix of
-    the form ``__type__:value`` (e.g., integer ``42`` → ``"__int__:42"``,
-    tuple ``(1, 2)`` → ``"__tuple__:(1, 2)"``). Plain string keys are passed
-    through unchanged. Known limitation: a string key that already starts with
-    a recognised prefix (e.g. ``"__int__:42"``) is indistinguishable from an
-    encoded integer key after a round-trip.
+    Python key to a unique, reversible string. A non-string key is written in
+    square brackets: its ``repr()`` for ``int``, ``float``, ``bool`` and
+    ``tuple`` (integer ``42`` → ``"[42]"``, tuple ``(1, 2)`` →
+    ``"[(1, 2)]"``), and ``frozenset{...}`` for a ``frozenset``. A string key
+    is passed through unchanged, unless it starts with ``[``: it is then
+    escaped with a backslash (``"[42]"`` → ``"\\[42]"``), so that it is not
+    read back as an encoded key.
 
     Parameters
     ----------
@@ -128,14 +130,9 @@ def _decode_key(encoded: str) -> Any:
     """
     Decode an encoded JSON key back to its original Python type.
 
-    Applies five sequential decoding rules in priority order:
-
-    1. ``__bool__:`` prefix → ``bool`` (checked before ``int`` to avoid misclassification).
-    2. ``__int__:`` prefix → ``int``.
-    3. ``__float__:`` prefix → ``float``.
-    4. ``__frozenset__:`` prefix → ``frozenset`` (via ``ast.literal_eval``).
-    5. ``__tuple__:`` prefix → ``tuple`` (via ``ast.literal_eval``).
-    6. No recognised prefix → plain ``str`` (identity).
+    Reverses ``_encode_key`` with the five rules listed in the Notes below:
+    an escaped string, a ``frozenset``, a ``tuple``, a scalar in square
+    brackets, or a plain string.
 
     No ``eval()`` is used. ``ast.literal_eval()`` is used only for flat
     tuples of Python scalars, which are valid Python literals by definition.

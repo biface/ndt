@@ -283,6 +283,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   configuration and content, `NestedDictionary(d).equal(Inventory(d))` was
   `True` and the reverse `False`. It tested `isinstance(other, type(self))`;
   it now requires the same type, as its docstring states. Part of #157.
+- **Docstrings of the JSON key encoding** (`to_json()`, `from_json()` and the
+  `serialize` module) described a `__type__:value` prefix (`"__int__:42"`)
+  and a collision with string keys of the same form. Keys are written in
+  square brackets (`"[42]"`), and a string key that starts with `[` is
+  escaped with a backslash, so that collision does not occur. No runtime
+  change. Part of #148.
 
 ---
 
