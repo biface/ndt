@@ -55,6 +55,9 @@ T = TypeVar("T", bound="_StackedDict")
 _SetupSource: TypeAlias = Mapping[str, Any] | Iterable[tuple[str, Any]]
 "Accepted by the default_setup setter: a mapping or (key, value) pairs."
 
+# Marks a missing ``default`` argument, so that ``None`` stays a valid default.
+_MISSING: Any = object()
+
 
 def _reconstruct(
     cls: type, dictionary: dict[Any, Any], default_setup: dict[str, Any]
@@ -3297,13 +3300,14 @@ class _StackedDict(defaultdict[Any, Any]):
         return copy.deepcopy(self)
 
     @override
-    def pop(self, key: Any | list[Any], default: Any = None) -> Any:
+    def pop(self, key: Any | list[Any], default: Any = _MISSING) -> Any:
         """
         Remove and return value at key or hierarchical path.
 
         Removes the specified key (flat or hierarchical) and returns its value.
         Automatically cleans up empty parent dictionaries after removal.
-        If the key doesn't exist, returns the default value or raises an error.
+        If the key doesn't exist, returns the default value, ``None`` included,
+        or raises an error when no default is given, as ``dict.pop`` does.
 
         Parameters
         ----------
@@ -3339,6 +3343,8 @@ class _StackedDict(defaultdict[Any, Any]):
         >>> # With default
         >>> sd.pop('nonexistent', 'default_value')
         'default_value'
+        >>> sd.pop('nonexistent', None) is None  # None is a valid default
+        True
 
         See Also
         --------
@@ -3352,7 +3358,7 @@ class _StackedDict(defaultdict[Any, Any]):
             parents = []  # Track parent dictionaries for cleanup
             for sub_key in key[:-1]:  # Traverse up to the last key
                 if sub_key not in current:
-                    if default is not None:
+                    if default is not _MISSING:
                         return default
                     raise StackedKeyError(
                         f"Key path {key} does not exist.", key=key, path=key[:-1]
@@ -3369,14 +3375,18 @@ class _StackedDict(defaultdict[Any, Any]):
                         parent.pop(sub_key)
                 return value
             else:
-                if default is not None:
+                if default is not _MISSING:
                     return default
                 raise StackedKeyError(
                     f"Key path {key} does not exist.", key=key[-1], path=key[:-1]
                 )
         else:
             # Handle flat keys
-            return super().pop(key, default)
+            if key in self:
+                return super().pop(key)
+            if default is not _MISSING:
+                return default
+            raise StackedKeyError(f"Key {key!r} does not exist.", key=key)
 
     @override
     def popitem(self) -> tuple[list[Any], Any]:

@@ -260,6 +260,14 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   than two children. The root is now skipped, as in `is_complete_tree()`,
   `is_perfect_tree()` and `is_full_tree()`, so the number of top-level keys
   is free. Found while writing the Concepts page of #146.
+- **`pop()`** used `None` both as its default value and as the mark of a
+  missing default. A missing flat key without a default returned `None`
+  instead of raising, unlike `dict.pop()` and the docstring, and a missing
+  path with an explicit `default=None` raised instead of returning `None`. A
+  private sentinel now marks the missing default: without a default, a
+  missing key or path raises `StackedKeyError` (a `KeyError`); an explicit
+  `None` is returned. The test named after the flat case tested a path; it is
+  renamed and the flat case is tested. Closes #155.
 
 ---
 
