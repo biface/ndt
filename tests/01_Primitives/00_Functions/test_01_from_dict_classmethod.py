@@ -6,7 +6,7 @@ Covers:
 - Correct type propagation to nested dicts
 - _default_setup preservation through the classmethod
 - Already-instantiated _StackedDict values preserved as-is
-- Without default_setup: the class default, via _normalize_setup (#NNN);
+- Without default_setup: the class default, via _normalize_setup (#151);
   StackedKeyError for the base class, which has no default
 - DeprecationWarning emitted by the free function
 - Round-trip: from_dict(to_dict()) produces a structurally equal dict

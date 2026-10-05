@@ -163,7 +163,7 @@ class TestJsonAllVariants:
         function_system_config,
         tmp_function_file,
     ):
-        """Without default_setup, from_json uses the class default (#NNN)."""
+        """Without default_setup, from_json uses the class default (#151)."""
         nd = make(cls, function_system_config, init_factory)
         path = tmp_function_file / f"{cls.__name__}_no_setup.json"
         nd.to_json(path)

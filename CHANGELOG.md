@@ -62,7 +62,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   or forced as before. Only the base `_StackedDict`, which has no default,
   still raises `StackedKeyError`, now with the message of `_normalize_setup`.
   The deprecated `from_dict()` free function follows the same rule.
-  Closes #NNN.
+  Closes #151.
 - **Type annotations completed on the exported API** (part of #129, DD-027).
   These signatures are now part of the public contract:
   - constructors: `*args: Mapping[Any, Any] | Iterable[tuple[Any, Any]]`,
