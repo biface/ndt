@@ -15,6 +15,7 @@ you need:
    :maxdepth: 2
 
    getting_started
+   exploring
    paths
    serialization
    extending

@@ -301,6 +301,8 @@ whatever ``default_setup`` says. Only ``indent`` can be chosen:
 Where to go next
 ----------------
 
+- :doc:`exploring` searches, walks through, measures, compares and copies a
+  whole nested dictionary.
 - :doc:`paths` lists, filters and compares the paths of a nested dictionary.
 - :doc:`serialization` saves a nested dictionary to JSON or pickle.
 - :doc:`extending` explains how to write your own subclass.

@@ -1,4 +1,4 @@
-Part 2 — Working with Paths
+Part 3 — Working with Paths
 ============================
 
 This part shows how to enumerate, navigate, filter, and analyse the paths

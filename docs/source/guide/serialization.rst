@@ -1,4 +1,4 @@
-Part 3 — Serialisation
+Part 4 — Serialisation
 =======================
 
 **ndict-tools** provides built-in serialisation to JSON and pickle for

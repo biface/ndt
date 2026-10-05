@@ -1,4 +1,4 @@
-Part 4 — Extending the Package
+Part 5 — Extending the Package
 ================================
 
 This part is aimed at developers who want to subclass, modify, or
