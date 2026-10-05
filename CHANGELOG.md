@@ -226,6 +226,23 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   `['a', ['b', 'c']]` describe different trees. The examples of the Concepts
   pages are `.. doctest::` blocks, checked by `sphinx-build -b doctest`.
   Closes #145.
+- **`size()`** counted the leaf paths of the dictionary instead of its keys,
+  although its docstring describes the number of keys at every level, which
+  is the number of nodes of the forest of keys. It now counts every key:
+  `{'a': {'b': {'c': 1}}, 'd': 2, 'e': {}}` gives 5 instead of 3. The result
+  changes for any dictionary with a nested level. Part of #144.
+- **`leaves()`** dropped the value of a key whose value is an empty nested
+  dictionary, although such a key has no children and is a leaf, as the
+  docstring states and as `paths()`, `unpacked_values()` and `height()`
+  already treat it. The empty dictionary is now in the result. Part of #144.
+- **Docstrings of the traversal and measure methods** described other
+  results than the code returns. `bfs()` yields the terminal values only,
+  in breadth-first order, not every node. `height()`, `PathsView.get_depth()`
+  and `_HKey.get_max_depth()` called on the forest root return the number of
+  levels, which is the greatest depth of a key plus 1 (top-level keys have
+  depth 0). `_HKey.get_statistics()` counts the forest root in
+  `total_nodes`; the examples of `get_statistics()` and `prune()` are
+  corrected to the actual output. No runtime change. Closes #144.
 
 ---
 

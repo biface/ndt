@@ -655,12 +655,24 @@ class _HKey:
 
     def get_depth(self) -> int:
         """
-        Get the depth of this node (distance from root).
+        Get the depth of this node in the forest of keys.
+
+        A top-level key is the root of its tree and has depth 0; each level
+        below adds 1. The node returned by :meth:`build_forest`, which holds
+        no key, also returns 0.
 
         Returns
         -------
         int
-            Depth level (0 for direct children of root)
+            Number of edges between this node and the root of its tree
+
+        Examples
+        --------
+        >>> root = _HKey.build_forest({'a': {'b': {'c': 1}}})
+        >>> root.find_by_path(['a']).get_depth()
+        0
+        >>> root.find_by_path(['a', 'b', 'c']).get_depth()
+        2
         """
         depth: int = 0
         current: "_HKey | None" = self.parent
@@ -673,12 +685,27 @@ class _HKey:
 
     def get_max_depth(self) -> int:
         """
-        Get the maximum depth of the subtree rooted at this node.
+        Get the height of the subtree rooted at this node.
+
+        On a key node, this is the number of edges on the longest path from
+        the node down to a leaf: 0 for a leaf. On the node returned by
+        :meth:`build_forest`, which holds no key and sits above the top-level
+        keys, the extra edge makes the result the number of levels of the
+        forest, that is the greatest depth of a key plus 1 (0 for an empty
+        dictionary).
 
         Returns
         -------
         int
-            Maximum depth (0 for leaf nodes)
+            Height of the subtree, or number of levels on the forest root
+
+        Examples
+        --------
+        >>> root = _HKey.build_forest({'a': {'b': {'c': 1}}, 'd': 2})
+        >>> root.find_by_path(['a']).get_max_depth()
+        2
+        >>> root.get_max_depth()
+        3
         """
         if not self.children:
             return 0
@@ -1199,7 +1226,7 @@ class _HKey:
         >>> root = _HKey.build_forest({'a': {'b': {'c': 1}, 'x': {'b': {'z': 1}}}})
         >>> pruned = root.prune(lambda n: n.key == 'b' and n.get_depth() == 2)
         >>> pruned.get_all_paths()
-        [['a'], ['a', 'b'], ['a', 'x'], ['a', 'x', 'b']]
+        [['a'], ['a', 'x'], ['a', 'x', 'b']]
 
         >>> # Keep only leaf nodes
         >>> root = _HKey.build_forest({'a': {'b': 1, 'c': 2}})
@@ -1279,23 +1306,38 @@ class _HKey:
 
     def get_statistics(self) -> dict[str, Any]:
         """
-        Get comprehensive statistics about the tree.
+        Get statistics about the subtree rooted at this node.
 
         Returns
         -------
         dict[str, Any]
-            Dictionary containing various tree statistics
+            Dictionary with the following entries:
+
+            - ``total_nodes``: nodes of the subtree, this node included. On
+              the node returned by :meth:`build_forest`, the count includes
+              that node, which holds no key, so it is the number of keys
+              plus 1.
+            - ``leaf_count``: nodes without children.
+            - ``max_depth``: result of :meth:`get_max_depth`, so the number
+              of levels of the forest when called on the forest root.
+            - ``avg_branching_factor``: mean number of children of the nodes
+              that have children, rounded to 2 decimals.
+            - ``total_paths``: number of paths returned by
+              :meth:`get_all_paths`, one per key of the subtree.
+            - ``levels``: number of levels of keys in the subtree.
 
         Examples
         --------
         >>> root = _HKey.build_forest({'a': {'b': {'c': 1}}, 'd': 2})
         >>> stats = root.get_statistics()
         >>> stats['total_nodes']
-        4
+        5
         >>> stats['max_depth']
-        2
+        3
         >>> stats['leaf_count']
         2
+        >>> stats['levels']
+        3
         """
         all_nodes = list(self.dfs_preorder())
         leaves = list(self.iter_leaves())
@@ -3856,38 +3898,35 @@ class _StackedDict(defaultdict[Any, Any]):
 
     def bfs(self) -> Generator[tuple[tuple[Any, ...], Any], None, None]:
         """
-        Breadth-First Search traversal of the nested dictionary.
+        Breadth-first traversal of the terminal values.
 
-        Iteratively traverses the dictionary level by level, visiting all
-        nodes at depth N before moving to depth N+1. Uses a queue (deque)
-        for efficient FIFO operations.
+        Walks the dictionary level by level with a queue, and yields the
+        keys whose value is not a nested dictionary, with their path: all
+        those of depth N before those of depth N+1. Keys whose value is a
+        nested dictionary are traversed but not yielded, so an empty nested
+        dictionary yields nothing.
 
         Yields
         ------
         tuple
-            (path_tuple, value) for each node in BFS order
+            (path_tuple, value) for each terminal value, in breadth-first
+            order
 
         Examples
         --------
         >>> sd = _StackedDict({'a': {'b': {'c': 1}}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> for path, value in sd.bfs():
-        ...     print(f'{path} -> {value}')
-        ('a',) -> <_StackedDict>
-        ('a', 'b') -> <_StackedDict>
-        ('a', 'b', 'c') -> 1
+        >>> list(sd.bfs())
+        [(('a', 'b', 'c'), 1)]
 
-        >>> # Only leaf values
         >>> sd = _StackedDict({'a': {'b': 1, 'c': 2}, 'd': 3}, default_setup={'indent': 2, 'default_factory': None})
-        >>> leaves = [(p, v) for p, v in sd.bfs() if not isinstance(v, _StackedDict)]
-        >>> leaves
-        [(('a', 'b'), 1), ('a', 'c'), 2), (('d',), 3)]
+        >>> list(sd.bfs())
+        [(('d',), 3), (('a', 'b'), 1), (('a', 'c'), 2)]
 
         Notes
         -----
-        - Visits all nodes at same depth before going deeper
+        - Yields terminal values only, unlike :meth:`dfs`, which also yields
+          the keys whose value is a nested dictionary
         - Returns paths as immutable tuples
-        - Includes all nodes (intermediate and terminal)
-        - More memory efficient than collecting all paths first
 
         See Also
         --------
@@ -3913,15 +3952,16 @@ class _StackedDict(defaultdict[Any, Any]):
 
     def height(self) -> int:
         """
-        Compute the height (maximum depth) of the nested structure.
+        Compute the number of levels of the nested structure.
 
-        The height is defined as the length of the longest path from root
-        to any leaf node. An empty dictionary has height 0.
+        This is the number of keys on the longest path. Top-level keys have
+        depth 0, so the result is the greatest depth of a key plus 1. An
+        empty dictionary has height 0.
 
         Returns
         -------
         int
-            Maximum path length in the dictionary
+            Number of keys on the longest path
 
         Examples
         --------
@@ -3945,7 +3985,7 @@ class _StackedDict(defaultdict[Any, Any]):
 
         See Also
         --------
-        size : Count total number of keys
+        size : Count every key
         leaves : Get all leaf values
         """
 
@@ -3973,6 +4013,11 @@ class _StackedDict(defaultdict[Any, Any]):
         >>> sd.size()
         4
 
+        >>> # A key whose value is an empty dictionary counts
+        >>> sd = _StackedDict({'a': {}}, default_setup={'indent': 2, 'default_factory': None})
+        >>> sd.size()
+        1
+
         Notes
         -----
         - Counts all keys at all levels
@@ -3981,18 +4026,18 @@ class _StackedDict(defaultdict[Any, Any]):
 
         See Also
         --------
-        height : Get maximum depth
+        height : Get the number of levels
         __len__ : Get top-level key count
         """
 
-        return sum(1 for _ in self.unpacked_items())
+        return sum(1 for _ in self.dfs())
 
     def leaves(self) -> list[Any]:
         """
-        Extract all leaf (terminal) values from the nested structure.
+        Extract the values of all leaf keys from the nested structure.
 
-        Returns a list of all values that are not themselves nested
-        dictionaries, i.e., all terminal nodes in the tree structure.
+        A leaf is a key without children: its value is either not a nested
+        dictionary, or an empty one. Returns the values of these keys.
 
         Returns
         -------
@@ -4012,7 +4057,7 @@ class _StackedDict(defaultdict[Any, Any]):
         >>> # Empty dict as leaf value
         >>> sd = _StackedDict({'a': {}}, default_setup={'indent': 2, 'default_factory': None})
         >>> sd.leaves()
-        [{}]
+        [_StackedDict(None, {})]
 
         Notes
         -----
@@ -4026,7 +4071,11 @@ class _StackedDict(defaultdict[Any, Any]):
         dfs : Traversal including intermediate nodes
         """
 
-        return [value for _, value in self.dfs() if not isinstance(value, _StackedDict)]
+        return [
+            value
+            for _, value in self.dfs()
+            if not isinstance(value, _StackedDict) or not value
+        ]
 
     def is_balanced(self) -> bool:
         """
@@ -4461,12 +4510,15 @@ class _Paths:
 
     def get_depth(self) -> int:
         """
-        Get the maximum depth of paths.
+        Get the number of levels of the paths.
+
+        This is the number of keys on the longest path, that is the greatest
+        depth of a key plus 1, since top-level keys have depth 0.
 
         Returns
         -------
         int
-            Maximum path length
+            Number of keys on the longest path
 
         Examples
         --------

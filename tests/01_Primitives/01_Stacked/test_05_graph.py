@@ -102,7 +102,36 @@ def test_height(stacked_dict):
 
 
 def test_size(stacked_dict):
-    assert stacked_dict.size() == 7
+    # Every key counts, at every level: h, f, g, a, e, b, c, d, (1, 2), (i, j).
+    assert stacked_dict.size() == 10
+
+
+@pytest.mark.parametrize(
+    "data, expected",
+    [
+        ({}, 0),
+        ({"a": 1}, 1),
+        ({"a": {}}, 1),
+        ({"a": {"b": {"c": 1}}, "d": 2, "e": {}}, 5),
+    ],
+)
+def test_size_counts_every_key(standard_strict_f_setup, data, expected):
+    """size() is the number of keys, the number of nodes of the forest (#144)."""
+    sd = _StackedDict(data, default_setup=standard_strict_f_setup)
+    assert sd.size() == expected
+    assert sd.size() == len(list(sd.dfs()))
+
+
+def test_leaves_empty_subdictionary(standard_strict_f_setup):
+    """A key whose value is an empty dictionary is a leaf (#144)."""
+    sd = _StackedDict(
+        {"a": {"b": {"c": 1}}, "d": 2, "e": {}}, default_setup=standard_strict_f_setup
+    )
+    leaves = sd.leaves()
+    assert len(leaves) == 3
+    assert leaves[:2] == [1, 2]
+    assert isinstance(leaves[2], _StackedDict)
+    assert len(leaves[2]) == 0
 
 
 def test_balanced(stacked_dict):

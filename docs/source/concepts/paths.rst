@@ -96,7 +96,7 @@ between paths:
     >>> # Leaf paths only (no children)
     >>> paths.get_leaf_paths()
     [['a', 'b'], ['a', 'c'], ['d']]
-    >>> # Maximum depth across all paths
+    >>> # Number of levels: keys on the longest path
     >>> paths.get_depth()
     2
 
