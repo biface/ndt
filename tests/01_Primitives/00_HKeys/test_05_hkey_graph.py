@@ -864,14 +864,31 @@ class TestGraphStructure:
         """
         is_binary = key_tree.is_binary_tree()
 
+        # The root built by build_forest holds the top-level keys and is not
+        # checked, like in the other shape predicates.
         max_children = max(
-            (len(n.children) for n in key_tree.dfs_preorder()), default=0
+            (len(n.children) for n in key_tree.dfs_preorder() if not n.is_root),
+            default=0,
         )
 
         # Consistency check
         assert is_binary == (
             max_children <= 2
         ), "is_binary_tree should match max_children check"
+
+    @pytest.mark.parametrize(
+        "data, expected",
+        [
+            ({"a": {"b": 1, "c": 2}, "d": 3, "e": 4}, True),
+            ({"a": 1, "b": 2, "c": 3, "d": 4}, True),
+            ({"a": {"b": 1, "c": 2, "x": 3}, "d": 4}, False),
+        ],
+    )
+    def test_is_binary_tree_forest_root_not_checked(self, data, expected):
+        """
+        The number of top-level keys is free: only the keys are checked.
+        """
+        assert _HKey.build_forest(data).is_binary_tree() is expected
 
     # ========================================================================
     # FULL TREE TESTS

@@ -1844,25 +1844,34 @@ class _HKey:
         """
         Check if this is a binary tree (all nodes have at most 2 children).
 
+        Nodes created with ``is_root=True`` are not checked: the root is the
+        virtual container whose children are the top-level keys, so the number
+        of top-level keys is free.
+
         Returns
         -------
         bool
-            True if all nodes have 0, 1, or 2 children
+            True if every node other than the root has 0, 1, or 2 children
 
         Examples
         --------
         >>> root = _HKey('a')
-        >>> root.add_child('b')
-        >>> root.add_child('c')
+        >>> b = root.add_child('b')
+        >>> c = root.add_child('c')
         >>> root.is_binary_tree()
         True
 
-        >>> root.add_child('d')  # Now has 3 children
+        >>> d = root.add_child('d')  # Now has 3 children
         >>> root.is_binary_tree()
         False
+
+        >>> # Three top-level keys, each with at most 2 children
+        >>> forest = _HKey.build_forest({'a': {'b': 1, 'c': 2}, 'd': 3, 'e': 4})
+        >>> forest.is_binary_tree()
+        True
         """
         for node in self.dfs_preorder():
-            if len(node.children) > 2:
+            if not node.is_root and len(node.children) > 2:
                 return False
         return True
 

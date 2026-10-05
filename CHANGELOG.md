@@ -251,6 +251,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   depth 0). `_HKey.get_statistics()` counts the forest root in
   `total_nodes`; the examples of `get_statistics()` and `prune()` are
   corrected to the actual output. No runtime change. Closes #144.
+- **`_HKey.is_binary_tree()`** also checked the root built by
+  `build_forest()`, whose children are the top-level keys: a dictionary with
+  more than two top-level keys was never binary, even when no key had more
+  than two children. The root is now skipped, as in `is_complete_tree()`,
+  `is_perfect_tree()` and `is_full_tree()`, so the number of top-level keys
+  is free. Found while writing the Concepts page of #146.
 
 ---
 
