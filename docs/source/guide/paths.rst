@@ -1,172 +1,227 @@
 Part 3 — Working with Paths
-============================
+===========================
 
-This part shows how to enumerate, navigate, filter, and analyse the paths
-of a :class:`~ndict_tools.NestedDictionary`. For the underlying concepts,
-see :doc:`/concepts/paths` and :doc:`/concepts/compact_paths`.
+Every key of a nested dictionary is reached by a path, the list of keys from
+the top level down to it. This part lists these paths, moves along them,
+filters them, writes them in a compact form, and uses that form to check a
+dictionary against a list of what it should contain. How paths are defined
+is explained in :doc:`/concepts/paths`, :doc:`/concepts/compact_paths` and
+:doc:`/concepts/coverage`.
 
+The examples use the first floor of the house:
 
-Listing all paths
-------------------
+.. doctest::
 
-Call :meth:`~ndict_tools.NestedDictionary.paths` to obtain a
-:class:`~ndict_tools.PathsView` — a lazy view that enumerates every node
-in the tree, from root to leaves:
-
-.. code-block:: python
-
-   from ndict_tools import NestedDictionary
-
-   nd = NestedDictionary({
-       "config": {"host": "localhost", "port": 5432},
-       "debug": True,
-   })
-
-   pv = nd.paths()
-
-   for path in pv:
-       print(path)
-   # ['config']
-   # ['config', 'host']
-   # ['config', 'port']
-   # ['debug']
-
-   len(pv)            # 4
-   ['debug'] in pv    # True
-   ['config', 'db'] in pv  # False
-
-The view is computed once on first access and cached — subsequent
-iterations and membership tests reuse the same internal tree.
+   >>> from ndict_tools import NestedDictionary
+   >>> first_floor = NestedDictionary({
+   ...     "bedroom": {"lights": "ceiling", "heating": {"type": "radiator", "power": 1000}},
+   ...     "bathroom": {"lights": "mirror", "heating": {"type": "towel rail"}},
+   ... })
 
 
-Navigating parent–child relationships
----------------------------------------
+Listing the paths
+-----------------
 
-.. code-block:: python
+:meth:`~ndict_tools.NestedDictionary.paths` returns a
+:class:`~ndict_tools.PathsView`. It plays for paths the role that
+:meth:`dict.keys` plays for keys: it holds one path per key, at every level,
+in the order of the keys.
 
-   pv.get_children(['config'])        # ['host', 'port']
-   pv.get_children(['config', 'host']) # []  — leaf node
-   pv.has_children(['config'])        # True
-   pv.has_children(['debug'])         # False
+.. doctest::
 
-   # All paths rooted at a prefix
-   pv.get_subtree_paths(['config'])
-   # [['config'], ['config', 'host'], ['config', 'port']]
+   >>> paths = first_floor.paths()
+   >>> for path in paths:
+   ...     print(path)
+   ['bedroom']
+   ['bedroom', 'lights']
+   ['bedroom', 'heating']
+   ['bedroom', 'heating', 'type']
+   ['bedroom', 'heating', 'power']
+   ['bathroom']
+   ['bathroom', 'lights']
+   ['bathroom', 'heating']
+   ['bathroom', 'heating', 'type']
 
-   # Leaf paths only (nodes with no children)
-   pv.get_leaf_paths()
-   # [['config', 'host'], ['config', 'port'], ['debug']]
+There are as many paths as keys, and ``in`` tests whether a path exists:
 
-   # Maximum nesting depth
-   pv.get_depth()     # 2
+.. doctest::
+
+   >>> len(paths)
+   9
+   >>> ["bathroom", "heating"] in paths
+   True
+   >>> ["bathroom", "heating", "power"] in paths
+   False
+
+Unlike :meth:`dict.keys`, the view does not follow later changes. It reads
+the dictionary the first time it is used and keeps that state. To see the
+paths of a dictionary after a change, call
+:meth:`~ndict_tools.NestedDictionary.paths` again:
+
+.. doctest::
+
+   >>> first_floor["office"] = {"lights": "desk lamp"}
+   >>> len(paths)
+   9
+   >>> len(first_floor.paths())
+   11
+   >>> del first_floor["office"]
+
+
+Moving along the paths
+----------------------
+
+:meth:`~ndict_tools.PathsView.get_children` returns the keys just below a
+path, and :meth:`~ndict_tools.PathsView.has_children` whether there are any:
+
+.. doctest::
+
+   >>> paths = first_floor.paths()
+   >>> paths.get_children(["bedroom"])
+   ['lights', 'heating']
+   >>> paths.get_children(["bedroom", "lights"])
+   []
+   >>> paths.has_children(["bedroom", "heating"])
+   True
+
+:meth:`~ndict_tools.PathsView.get_subtree_paths` returns a path and every
+path below it, :meth:`~ndict_tools.PathsView.get_leaf_paths` the paths of the
+keys without children:
+
+.. doctest::
+
+   >>> paths.get_subtree_paths(["bedroom", "heating"])
+   [['bedroom', 'heating'], ['bedroom', 'heating', 'type'], ['bedroom', 'heating', 'power']]
+   >>> paths.get_leaf_paths()
+   [['bedroom', 'lights'], ['bedroom', 'heating', 'type'], ['bedroom', 'heating', 'power'], ['bathroom', 'lights'], ['bathroom', 'heating', 'type']]
+
+:meth:`~ndict_tools.PathsView.get_depth` returns the number of levels, like
+:meth:`~ndict_tools.NestedDictionary.height`: the room, the equipment and its
+settings.
+
+.. doctest::
+
+   >>> paths.get_depth()
+   3
 
 
 Filtering paths
-----------------
+---------------
 
-Pass a predicate to :meth:`~ndict_tools.PathsView.filter_paths` to
-select a subset:
+:meth:`~ndict_tools.PathsView.filter_paths` keeps the paths for which a
+function returns ``True``. The function receives each path as a list. Where
+is the type of heating recorded, and which keys sit three levels down?
 
-.. code-block:: python
+.. doctest::
 
-   # Only paths deeper than one level
-   pv.filter_paths(lambda p: len(p) > 1)
-   # [['config', 'host'], ['config', 'port']]
-
-   # Paths that contain the key 'host'
-   pv.filter_paths(lambda p: 'host' in p)
-   # [['config', 'host']]
-
-   # Leaf paths under 'config'
-   pv.filter_paths(lambda p: p[0] == 'config' and not pv.has_children(p))
-   # [['config', 'host'], ['config', 'port']]
+   >>> paths.filter_paths(lambda path: path[-1] == "type")
+   [['bedroom', 'heating', 'type'], ['bathroom', 'heating', 'type']]
+   >>> paths.filter_paths(lambda path: len(path) == 3)
+   [['bedroom', 'heating', 'type'], ['bedroom', 'heating', 'power'], ['bathroom', 'heating', 'type']]
 
 
-Searching by key name
-----------------------
+Compact paths
+-------------
 
-When you don't know the exact path but know the key name, use the search
-methods directly on the dictionary:
+The list of paths repeats every prefix: ``bedroom`` appears in five paths.
+:meth:`~ndict_tools.NestedDictionary.compact_paths` returns a
+:class:`~ndict_tools.CompactPathsView`, which writes each key once. Its
+:attr:`~ndict_tools.CompactPathsView.structure` is a list with one entry per
+top-level key: the key, then its children; a child that has children of its
+own is a list in turn.
 
-.. code-block:: python
+.. doctest::
 
-   nd = NestedDictionary({
-       "prod":    {"db": {"host": "prod.db", "port": 5432}},
-       "staging": {"db": {"host": "stg.db",  "port": 5432}},
-   })
+   >>> compact = first_floor.compact_paths()
+   >>> compact.structure
+   [['bedroom', 'lights', ['heating', 'type', 'power']], ['bathroom', 'lights', ['heating', 'type']]]
 
-   nd.is_key("host")       # True  — exists somewhere
-   nd.occurrences("host")  # 2     — found at two paths
-   nd.key_list("host")
-   # [('prod', 'db', 'host'), ('staging', 'db', 'host')]
-   nd.items_list("host")
-   # ['prod.db', 'stg.db']
+The compact view holds the same paths as the other one, and offers the same
+methods. :meth:`~ndict_tools.CompactPathsView.expand` writes them in full,
+and the two views convert into each other:
 
+.. doctest::
 
-Working with compact paths
----------------------------
-
-A :class:`~ndict_tools.CompactPathsView` groups siblings under their
-shared parent. It is useful for inspecting structure at a glance and for
-coverage analysis.
-
-.. code-block:: python
-
-   cpv = nd.compact_paths()
-   cpv.structure
-   # [['prod', ['db', 'host', 'port']], ['staging', ['db', 'host', 'port']]]
-
-Convert between the two views freely:
-
-.. code-block:: python
-
-   # PathsView → CompactPathsView
-   cpv = nd.paths().to_compact()
-
-   # CompactPathsView → PathsView
-   pv2 = cpv.to_paths()
+   >>> compact.expand() == list(paths)
+   True
+   >>> type(compact.to_paths()).__name__
+   'PathsView'
+   >>> type(paths.to_compact()).__name__
+   'CompactPathsView'
 
 
-Checking coverage
-------------------
+Checking a dictionary against a list
+------------------------------------
 
-Use a :class:`~ndict_tools.CompactPathsView` to measure how much of a
-nested dictionary a given path set describes.
+A compact view can serve as a checklist. When you take over a house, you
+check, room by room, the lights and the type of heating. The checklist is
+built from a dictionary whose keys are the items to check; its values do not
+matter:
 
-A typical use case is validating that an incoming payload covers all keys
-required by a template:
+.. doctest::
 
-.. code-block:: python
+   >>> checklist = NestedDictionary({
+   ...     "bedroom": {"lights": None, "heating": {"type": None}},
+   ...     "bathroom": {"lights": None, "heating": {"type": None}},
+   ... }).compact_paths()
 
-   from ndict_tools import NestedDictionary
+Four methods compare the paths of the checklist with those of a dictionary.
+Two of them list the differences:
 
-   # Required structure — values are irrelevant, keys matter
-   template = NestedDictionary({
-       "user": {"name": None, "email": None},
-       "settings": {"theme": None},
-   })
-   spec = template.compact_paths()
+- :meth:`~ndict_tools.CompactPathsView.missing_paths` lists the paths of the
+  checklist that the dictionary does not have: what is missing from the
+  house;
+- :meth:`~ndict_tools.CompactPathsView.uncovered_paths` lists the paths of
+  the dictionary that the checklist does not have: what the house has beyond
+  the list.
 
-   # Incoming payload
-   payload = NestedDictionary({
-       "user": {"name": "Alice", "email": "alice@example.com"},
-       "settings": {"theme": "dark"},
-   })
+The first floor has everything on the list, and also the power of the
+bedroom radiator, which the list does not mention:
 
-   spec.is_covering(payload)      # True  — all required paths present
-   spec.coverage(payload)         # 1.0
-   spec.uncovered_paths(payload)  # []
-   spec.missing_paths(payload)    # []
+.. doctest::
 
-If the payload is incomplete:
+   >>> checklist.missing_paths(first_floor)
+   []
+   >>> checklist.uncovered_paths(first_floor)
+   [['bedroom', 'heating', 'power']]
 
-.. code-block:: python
+:meth:`~ndict_tools.CompactPathsView.coverage` is the share of the
+dictionary's paths that the checklist describes: here 8 of 9.
+:meth:`~ndict_tools.CompactPathsView.is_covering` is ``True`` only when the
+two sets of paths are the same:
 
-   incomplete = NestedDictionary({
-       "user": {"name": "Bob"},   # missing 'email'
-       "settings": {"theme": "light"},
-   })
+.. doctest::
 
-   spec.is_covering(incomplete)      # False
-   spec.coverage(incomplete)         # 0.8  — 4 of 5 paths covered
-   spec.uncovered_paths(incomplete)  # [['user', 'email']]
+   >>> round(checklist.coverage(first_floor), 2)
+   0.89
+   >>> checklist.is_covering(first_floor)
+   False
+
+Coverage looks at the dictionary only. In a bathroom without lights, every
+path of the house is on the list, so coverage is complete, although an item
+of the list is missing. Only ``missing_paths`` reports it:
+
+.. doctest::
+
+   >>> unlit = NestedDictionary({
+   ...     "bedroom": {"lights": "ceiling", "heating": {"type": "radiator"}},
+   ...     "bathroom": {"heating": {"type": "towel rail"}},
+   ... })
+   >>> checklist.coverage(unlit)
+   1.0
+   >>> checklist.missing_paths(unlit)
+   [['bathroom', 'lights']]
+   >>> checklist.is_covering(unlit)
+   False
+
+To check that nothing on the list is missing, test ``missing_paths``. To
+check that the house matches the list exactly, use ``is_covering``:
+
+.. doctest::
+
+   >>> inspected = NestedDictionary({
+   ...     "bedroom": {"lights": "ceiling", "heating": {"type": "radiator"}},
+   ...     "bathroom": {"lights": "mirror", "heating": {"type": "towel rail"}},
+   ... })
+   >>> checklist.is_covering(inspected)
+   True
