@@ -1,144 +1,306 @@
 Part 1 — Getting Started
 ========================
 
-This page covers everything you need to go from zero to a working
-:class:`~ndict_tools.NestedDictionary` in a few minutes.
+This part takes you from installation to a working
+:class:`~ndict_tools.NestedDictionary`: building one, reading and changing it
+with hierarchical keys, configuring it, and choosing between the three
+public classes.
 
 
 Installation
 ------------
 
-Install **ndict-tools** from PyPI using ``pip``:
+Install **ndict-tools** from PyPI with ``pip``:
 
 .. code-block:: bash
 
    pip install ndict-tools
 
-Or with ``uv``:
+or add it to a project managed by ``uv``:
 
 .. code-block:: bash
 
    uv add ndict-tools
 
-The package requires **Python 3.10 or later** and has no runtime
-dependencies beyond the standard library.
+The package requires **Python 3.11 or later** and has no runtime dependencies
+beyond the standard library.
 
 
-Creating a nested dictionary
------------------------------
-
-All three public classes share the same construction interface. The
-simplest way is to pass a plain :class:`dict`:
-
-.. code-block:: python
-
-   from ndict_tools import NestedDictionary
-
-   nd = NestedDictionary({"project": {"name": "ndict-tools", "version": "1.1.0"}})
-
-You can also pass any iterable of ``(key, value)`` pairs or a ``zip``:
-
-.. code-block:: python
-
-   nd = NestedDictionary(zip(["a", "b"], [{"x": 1}, 2]))
-   nd = NestedDictionary([("a", {"x": 1}), ("b", 2)])
-
-To convert a pre-existing plain dictionary — including deeply nested ones
-— use :meth:`~ndict_tools.NestedDictionary.from_dict`. Because a plain
-:class:`dict` carries no information about how missing keys or printing
-should behave, you must supply that configuration explicitly:
-
-.. code-block:: python
-
-   plain = {"europe": {"france": "Paris", "germany": "Berlin"}}
-   nd = NestedDictionary.from_dict(
-       plain,
-       default_setup={"indent": 2, "default_factory": NestedDictionary},
-   )
-
-The ``default_setup`` dictionary accepts two keys:
-
-- ``indent`` — number of spaces used when printing (``0`` disables indentation).
-- ``default_factory`` — the class instantiated for missing keys; set to
-  ``NestedDictionary`` for lenient behaviour or ``None`` for strict.
-
-
-Reading, writing, and deleting
---------------------------------
-
-Standard single-key access works exactly like a plain :class:`dict`:
-
-.. code-block:: python
-
-   nd = NestedDictionary({"a": {"b": 1}, "c": 2})
-
-   nd["a"]          # NestedDictionary({'b': 1})
-   nd["c"]          # 2
-
-For multi-level access, pass a :class:`list` of keys — a *hierarchical key*:
-
-.. code-block:: python
-
-   nd[["a", "b"]]         # 1
-
-   nd[["a", "b"]] = 99    # write — intermediate levels created automatically
-   nd[["a", "b"]]         # 99
-
-   del nd[["a", "b"]]     # delete — empty parent 'a' is cleaned up automatically
-   "a" in nd              # False
-
-You can also chain standard attribute access:
-
-.. code-block:: python
-
-   nd["a"]["b"]    # equivalent to nd[["a", "b"]]
-
-
-Searching across all levels
+Building a nested dictionary
 ----------------------------
 
-Unlike a plain :class:`dict`, a :class:`~ndict_tools.NestedDictionary`
-tracks every key at every depth. You can search without knowing the exact
-path:
+Pass a plain :class:`dict` to the constructor. Here is a small house of one
+floor: each room holds its equipment, and some equipment has settings of its
+own.
 
-.. code-block:: python
+.. doctest::
 
-   nd = NestedDictionary({
-       "europe": {"france": {"capital": "Paris"}},
-       "asia":   {"japan":  {"capital": "Tokyo"}},
-   })
+   >>> from ndict_tools import NestedDictionary
+   >>> house = NestedDictionary({
+   ...     "kitchen": {
+   ...         "lights": "ceiling",
+   ...         "heating": {"type": "radiator", "power": 1500},
+   ...     },
+   ...     "living room": {"lights": "floor lamp", "heating": {"type": "fireplace"}},
+   ...     "garage": {},
+   ...     "garden": {"shed": "tools"},
+   ... })
 
-   nd.is_key("capital")       # True  — exists somewhere in the tree
-   nd.occurrences("capital")  # 2     — appears at two different paths
-   nd.key_list("capital")     # [('europe', 'france', 'capital'),
-                              #  ('asia', 'japan', 'capital')]
-   nd.items_list("capital")   # ['Paris', 'Tokyo']
+The constructor converts every nested :class:`dict` into a
+:class:`~ndict_tools.NestedDictionary`, at every level. The garage, which has
+nothing in it yet, is an empty nested dictionary:
+
+.. doctest::
+
+   >>> type(house["kitchen"]).__name__
+   'NestedDictionary'
+   >>> type(house["kitchen"]["heating"]).__name__
+   'NestedDictionary'
+   >>> len(house["garage"])
+   0
+
+:meth:`~ndict_tools.NestedDictionary.to_dict` gives the content back as plain
+dictionaries, which is the easiest way to look at it:
+
+.. doctest::
+
+   >>> house.to_dict()["living room"]
+   {'lights': 'floor lamp', 'heating': {'type': 'fireplace'}}
+
+The constructor accepts the same arguments as :class:`dict`: an iterable of
+``(key, value)`` pairs, a ``zip``, or keyword arguments. Keyword arguments
+are data, never settings:
+
+.. doctest::
+
+   >>> rooms = NestedDictionary([("bedroom", {"lights": "ceiling"}), ("bathroom", {"lights": "mirror"})])
+   >>> rooms.to_dict()
+   {'bedroom': {'lights': 'ceiling'}, 'bathroom': {'lights': 'mirror'}}
+   >>> rooms = NestedDictionary(zip(["bedroom", "bathroom"], [{"lights": "ceiling"}, {"lights": "mirror"}]))
+   >>> rooms.to_dict()
+   {'bedroom': {'lights': 'ceiling'}, 'bathroom': {'lights': 'mirror'}}
+   >>> NestedDictionary(shed="tools", pond={"fish": 3}).to_dict()
+   {'shed': 'tools', 'pond': {'fish': 3}}
+
+:meth:`~ndict_tools.NestedDictionary.from_dict` builds the same structure from
+an existing plain dictionary. It is useful when the dictionary comes from
+elsewhere, for example a parsed configuration file:
+
+.. doctest::
+
+   >>> parsed = {"cellar": {"lights": "bulb", "boiler": {"fuel": "gas"}}}
+   >>> cellar = NestedDictionary.from_dict(parsed)
+   >>> type(cellar["cellar"]["boiler"]).__name__
+   'NestedDictionary'
 
 
-Choosing the right variant
----------------------------
+Hierarchical keys
+-----------------
 
-All three classes share the same interface. The only difference is what
-happens when you access a key that does not exist.
+A single key works as with a plain :class:`dict`, and keys can be chained:
+
+.. doctest::
+
+   >>> house["garden"]["shed"]
+   'tools'
+
+A :class:`list` of keys is a *hierarchical key*: it names a path from a
+top-level key down to a nested one, and reaches it in one step.
+
+.. doctest::
+
+   >>> house[["kitchen", "heating", "power"]]
+   1500
+
+Writing through a hierarchical key creates the missing levels. The house gets
+an attic, and the kitchen a new heating power:
+
+.. doctest::
+
+   >>> house[["attic", "window"]] = "skylight"
+   >>> house["attic"].to_dict()
+   {'window': 'skylight'}
+   >>> house[["kitchen", "heating", "power"]] = 2000
+   >>> house[["kitchen", "heating"]].to_dict()
+   {'type': 'radiator', 'power': 2000}
+
+``del`` and :meth:`~ndict_tools.NestedDictionary.pop` accept hierarchical keys
+too. When the deleted key was the last one of its level, the emptied levels
+above it are removed as well: taking the tools out of the shed removes the
+garden.
+
+.. doctest::
+
+   >>> del house[["attic", "window"]]
+   >>> "attic" in house
+   False
+   >>> house.pop(["garden", "shed"])
+   'tools'
+   >>> "garden" in house
+   False
+
+Only ``del`` and :meth:`~ndict_tools.NestedDictionary.pop` remove levels,
+and only the levels they empty. A level that was empty from the start, like
+the garage, stays:
+
+.. doctest::
+
+   >>> "garage" in house
+   True
+
+Only a :class:`list` is read as a path. A :class:`tuple` is an ordinary
+hashable key, as in a plain :class:`dict`:
+
+.. doctest::
+
+   >>> grid = NestedDictionary({(0, 1): "door", 0: {1: "window"}})
+   >>> grid[(0, 1)]
+   'door'
+   >>> grid[[0, 1]]
+   'window'
+
+The ``in`` operator, :meth:`~ndict_tools.NestedDictionary.get` and
+:meth:`~ndict_tools.NestedDictionary.setdefault` take a single key, as for a
+plain :class:`dict`. To test whether a path exists, ask the view of the paths
+(see :doc:`paths`):
+
+.. doctest::
+
+   >>> house.get("garden", "no garden")
+   'no garden'
+   >>> ["kitchen", "heating", "type"] in house.paths()
+   True
+
+
+Configuration
+-------------
+
+Every nested dictionary carries a configuration, ``default_setup``, with two
+settings:
+
+- ``indent``: the number of spaces added at each level when the dictionary is
+  printed;
+- ``default_factory``: what reading a missing key does. A class creates an
+  empty nested dictionary of that class under the key; ``None`` raises
+  :class:`KeyError`.
+
+Without ``default_setup``, a :class:`~ndict_tools.NestedDictionary` uses
+``indent`` 0 and creates :class:`~ndict_tools.NestedDictionary` levels. Pass
+``default_setup`` to choose; it needs both settings. Reading it returns the
+settings as an ordered list of pairs:
+
+.. doctest::
+
+   >>> kitchen = NestedDictionary(
+   ...     {"lights": "ceiling", "heating": {"type": "radiator", "power": 1500}},
+   ...     default_setup={"indent": 2, "default_factory": NestedDictionary},
+   ... )
+   >>> kitchen.default_setup
+   [('indent', 2), ('default_factory', <class 'ndict_tools.core.NestedDictionary'>)]
+
+The list is the normalized form of the configuration: always the same order,
+whatever the form it was given in. Printing uses ``indent``:
+
+.. doctest::
+
+   >>> print(kitchen)
+   {
+     lights : ceiling,
+     heating : {
+         type : radiator,
+         power : 1500,
+     },
+   }
+
+All levels of a nested dictionary share its configuration. Assigning
+``default_setup`` changes it at every level:
+
+.. doctest::
+
+   >>> kitchen.default_setup = {"indent": 4, "default_factory": None}
+   >>> kitchen["heating"].default_setup
+   [('indent', 4), ('default_factory', None)]
+
+
+Choosing a class
+----------------
+
+The three public classes have the same interface. They differ in what reading
+a missing key does, that is, in their ``default_factory``:
 
 .. list-table::
    :header-rows: 1
    :widths: 30 70
 
    * - Class
-     - Behaviour on unknown key
+     - Reading a missing key
    * - :class:`~ndict_tools.NestedDictionary`
-     - Returns a new empty :class:`~ndict_tools.NestedDictionary` and
-       records the access. Mirrors :class:`collections.defaultdict`.
+     - Creates an empty nested dictionary under the key, like
+       :class:`collections.defaultdict`. The ``default_factory`` can be
+       changed in ``default_setup``.
    * - :class:`~ndict_tools.StrictNestedDictionary`
-     - Raises :class:`KeyError`. Use when unknown keys should never go
-       unnoticed — configuration parsing, validated payloads.
+     - Raises :class:`KeyError`. The ``default_factory`` is always ``None``.
    * - :class:`~ndict_tools.SmoothNestedDictionary`
-     - Returns a new empty :class:`~ndict_tools.SmoothNestedDictionary`
-       at any depth. Safe for deep chaining without prior key checks.
+     - Creates an empty :class:`~ndict_tools.SmoothNestedDictionary` under the
+       key. The ``default_factory`` is always
+       :class:`~ndict_tools.SmoothNestedDictionary`.
 
-A quick rule of thumb:
+With a :class:`~ndict_tools.NestedDictionary`, reading a room that does not
+exist adds it:
 
-- Building a structure from scratch → :class:`~ndict_tools.NestedDictionary`
-- Validating or reading a known structure → :class:`~ndict_tools.StrictNestedDictionary`
-- Navigating an unknown structure without guards → :class:`~ndict_tools.SmoothNestedDictionary`
+.. doctest::
+
+   >>> plan = NestedDictionary({"kitchen": {"lights": "ceiling"}})
+   >>> plan["office"].to_dict()
+   {}
+   >>> "office" in plan
+   True
+
+This suits a house you are still furnishing. To check an inventory that is
+already complete, a :class:`~ndict_tools.StrictNestedDictionary` reports the
+unknown room instead:
+
+.. doctest::
+
+   >>> from ndict_tools import StrictNestedDictionary
+   >>> inventory = StrictNestedDictionary({"kitchen": {"lights": "ceiling"}})
+   >>> inventory["office"]
+   Traceback (most recent call last):
+       ...
+   KeyError: 'office'
+
+:class:`~ndict_tools.StrictNestedDictionary` and
+:class:`~ndict_tools.SmoothNestedDictionary` keep their ``default_factory``
+whatever ``default_setup`` says. Only ``indent`` can be chosen:
+
+.. doctest::
+
+   >>> from ndict_tools import SmoothNestedDictionary
+   >>> sketch = SmoothNestedDictionary(default_setup={"indent": 2, "default_factory": None})
+   >>> sketch.default_setup
+   [('indent', 2), ('default_factory', <class 'ndict_tools.core.SmoothNestedDictionary'>)]
+   >>> type(sketch["attic"]["window"]).__name__
+   'SmoothNestedDictionary'
+
+.. warning::
+
+   Because reading a missing key adds it, a tool that reads keys it does not
+   know changes the data. The variable viewers of debuggers built on
+   ``pydevd``, such as those of PyCharm and VS Code, read the attributes of a
+   dictionary subclass as keys first: inspecting a
+   :class:`~ndict_tools.NestedDictionary` can add keys such as
+   ``default_setup`` or ``_default_setup``. To inspect without side effects,
+   use a :class:`~ndict_tools.StrictNestedDictionary` or set
+   ``default_factory`` to ``None``.
+
+   Keep in mind the difference between the attribute ``house.default_setup``,
+   the configuration, and the item ``house["default_setup"]``, a key of the
+   data.
+
+
+Where to go next
+----------------
+
+- :doc:`paths` lists, filters and compares the paths of a nested dictionary.
+- :doc:`serialization` saves a nested dictionary to JSON or pickle.
+- :doc:`extending` explains how to write your own subclass.
