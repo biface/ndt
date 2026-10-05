@@ -54,6 +54,15 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   `SmoothNestedDictionary` no longer define `__init__`: their defaults and
   forced values go through the `_normalize_setup` class hook, which custom
   subclasses can override.
+- **`from_dict()` and `from_json()` without `default_setup`.** The
+  alternate constructors resolve the configuration like the constructor,
+  through `cls._normalize_setup`: `NestedDictionary.from_dict(d)` and
+  `NestedDictionary.from_json(path)` use the default of the class, and the
+  Strict and Smooth variants their own. A given `default_setup` is validated
+  or forced as before. Only the base `_StackedDict`, which has no default,
+  still raises `StackedKeyError`, now with the message of `_normalize_setup`.
+  The deprecated `from_dict()` free function follows the same rule.
+  Closes #NNN.
 - **Type annotations completed on the exported API** (part of #129, DD-027).
   These signatures are now part of the public contract:
   - constructors: `*args: Mapping[Any, Any] | Iterable[tuple[Any, Any]]`,

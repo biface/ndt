@@ -33,9 +33,10 @@ Use :meth:`~ndict_tools.NestedDictionary.to_json` to write and
    )
    nd2[["project", "name"]]   # 'ndict-tools'
 
-The ``default_setup`` parameter in ``from_json`` is required for the same
-reason as in :meth:`~ndict_tools.NestedDictionary.from_dict` — the JSON
-file carries no information about the target class behaviour.
+The JSON file carries no information about the target class behaviour.
+Pass ``default_setup`` to choose it; without it, ``from_json`` uses the
+default configuration of the class, as
+:meth:`~ndict_tools.NestedDictionary.from_dict` and the constructor do.
 
 
 Non-string keys
@@ -127,7 +128,7 @@ JSON vs pickle — when to use which
      - None built-in
      - SHA-256 sidecar (automatic)
    * - **``default_setup`` on load**
-     - Required
+     - Given, or the default of the class
      - Preserved automatically
 
 **Rule of thumb:** use JSON for configuration files, data exchange, and

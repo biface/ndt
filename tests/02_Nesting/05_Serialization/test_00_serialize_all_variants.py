@@ -155,6 +155,24 @@ class TestJsonAllVariants:
         assert restored.default_factory is expected_factory
 
     @pytest.mark.parametrize("cls,expected_factory,init_factory", VARIANTS)
+    def test_from_json_without_default_setup(
+        self,
+        cls,
+        expected_factory,
+        init_factory,
+        function_system_config,
+        tmp_function_file,
+    ):
+        """Without default_setup, from_json uses the class default (#NNN)."""
+        nd = make(cls, function_system_config, init_factory)
+        path = tmp_function_file / f"{cls.__name__}_no_setup.json"
+        nd.to_json(path)
+        restored = cls.from_json(path)
+        assert type(restored) is cls
+        assert restored.default_factory is expected_factory
+        assert restored.to_dict() == nd.to_dict()
+
+    @pytest.mark.parametrize("cls,expected_factory,init_factory", VARIANTS)
     def test_json_non_string_keys_preserved(
         self,
         cls,

@@ -283,8 +283,8 @@ def _make_decoder_hook(cls: type, class_options: dict[str, Any]) -> Callable[...
     cls : type
         The ``_StackedDict`` subclass to instantiate.
     class_options : dict
-        Keyword arguments forwarded to ``cls.from_dict``, must include
-        ``default_setup``.
+        Keyword arguments forwarded to ``cls.from_dict``. ``default_setup``
+        is optional and resolved by ``cls._normalize_setup``.
 
     Returns
     -------

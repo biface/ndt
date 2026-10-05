@@ -155,9 +155,10 @@ Constructing from an existing dict
 The :meth:`~ndict_tools.NestedDictionary.from_dict` class method provides
 an alternative constructor that recursively converts a plain dictionary.
 
-Because a plain :class:`dict` carries no information about how missing keys
-should behave or how the structure should be printed, you must supply that
-configuration explicitly via ``default_setup``:
+A plain :class:`dict` carries no information about how missing keys should
+behave or how the structure should be printed. As with the constructor, that
+configuration comes from ``default_setup`` when you give it, and from the
+default of the class otherwise:
 
 - ``indent`` — number of spaces used when printing the dictionary (``0``
   disables indentation).
@@ -168,12 +169,15 @@ configuration explicitly via ``default_setup``:
 
     >>> from ndict_tools import NestedDictionary
     >>> plain = {"region": {"country": {"city": "Paris"}}}
+    >>> nd = NestedDictionary.from_dict(plain)
+    >>> nd[["region", "country", "city"]]
+    'Paris'
     >>> nd = NestedDictionary.from_dict(
     ...     plain,
     ...     default_setup={"indent": 2, "default_factory": NestedDictionary},
     ... )
-    >>> nd[["region", "country", "city"]]
-    'Paris'
+    >>> nd.indent
+    2
 
 
 Searching across all levels

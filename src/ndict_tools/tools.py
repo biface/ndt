@@ -210,8 +210,8 @@ def from_dict(
         The _StackedDict class (or subclass) to instantiate.
         Must be a subclass of _StackedDict.
     **class_options : dict
-        Initialization options for the class instances.
-        Must contain 'default_setup' key with configuration dict.
+        Initialization options for the class instances. ``default_setup`` is
+        optional and resolved by ``class_name._normalize_setup``.
 
     Returns
     -------
@@ -222,7 +222,8 @@ def from_dict(
     Raises
     ------
     StackedKeyError
-        If 'default_setup' key is missing from class_options
+        If 'default_setup' is missing and class_name defines no default
+        configuration
     StackedTypeError
         If class_name is not a valid _StackedDict class or subclass
 
@@ -255,17 +256,12 @@ def from_dict(
         stacklevel=2,
     )
 
-    if "default_setup" in class_options:
-        if not isinstance(class_name, type) or not issubclass(class_name, _StackedDict):
-            raise StackedTypeError(
-                f"class_name must be a _StackedDict class, got {type(class_name)}"
-            )
-        dict_object: T = class_name(**class_options)
-    else:
-        raise StackedKeyError(
-            f"The key 'default_setup' must be present in class options : {class_options}",
-            key="default_setup",
+    if not isinstance(class_name, type) or not issubclass(class_name, _StackedDict):
+        raise StackedTypeError(
+            f"class_name must be a _StackedDict class, got {type(class_name)}"
         )
+    # The configuration is resolved by class_name._normalize_setup in __init__.
+    dict_object: T = class_name(**class_options)
 
     for key, value in dictionary.items():
         if isinstance(value, _StackedDict):
@@ -2079,7 +2075,10 @@ class _StackedDict(defaultdict[Any, Any]):
         dictionary : dict
             The dictionary to transform (may be nested).
         **class_options : dict
-            Initialization options. Must contain ``default_setup`` key.
+            Initialization options, passed to ``cls`` at every level.
+            ``default_setup`` is optional: as for the constructor, the
+            configuration is resolved by ``cls._normalize_setup``, which
+            supplies the default of the class when none is given.
 
         Returns
         -------
@@ -2090,16 +2089,18 @@ class _StackedDict(defaultdict[Any, Any]):
         Raises
         ------
         StackedKeyError
-            If ``default_setup`` is missing from ``class_options``.
+            If ``default_setup`` is missing and ``cls`` defines no default
+            configuration (the base ``_StackedDict`` does not).
 
         Examples
         --------
-        >>> nd = NestedDictionary.from_dict(
+        >>> nd = NestedDictionary.from_dict({'a': {'b': 1}})
+        >>> nd['a']['b']
+        1
+        >>> strict = NestedDictionary.from_dict(
         ...     {'a': {'b': 1}},
         ...     default_setup={'indent': 0, 'default_factory': None}
         ... )
-        >>> nd['a']['b']
-        1
 
         Notes
         -----
@@ -2111,11 +2112,7 @@ class _StackedDict(defaultdict[Any, Any]):
         --------
         to_dict : Inverse operation.
         """
-        if "default_setup" not in class_options:
-            raise StackedKeyError(
-                f"The key 'default_setup' must be present in class options : {class_options}",
-                key="default_setup",
-            )
+        # The configuration is resolved by cls._normalize_setup in __init__.
         dict_object = cls(**class_options)
         for key, value in dictionary.items():
             if isinstance(value, _StackedDict):
@@ -2203,7 +2200,9 @@ class _StackedDict(defaultdict[Any, Any]):
         path : str or Path
             Path to the JSON file.
         **class_options : dict
-            Passed to ``cls.from_dict``; must include ``default_setup``.
+            Passed to ``cls.from_dict``. The JSON file carries no
+            configuration: ``default_setup`` gives it, and when it is absent
+            ``cls._normalize_setup`` supplies the default of the class.
 
         Returns
         -------
@@ -2218,7 +2217,8 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> nd = NestedDictionary.from_json(
+        >>> nd = NestedDictionary.from_json('/tmp/nd.json')
+        >>> strict = NestedDictionary.from_json(
         ...     '/tmp/nd.json',
         ...     default_setup={'indent': 0, 'default_factory': None}
         ... )
