@@ -27,7 +27,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   levels), matches `len()`, `size()`, `leaves()`, `height()` and
   `occurrences()` with measures of the forest, explains why the `_HKey` tree
   operations apply, defines complete, perfect and full trees for an arity n,
-  and states the limits of the model (shared references, cycles). The EN/FR
+  and states the limits of the model (shared references, cycles). Its
+  diagrams are Mermaid flowcharts, rendered by `sphinxcontrib-mermaid` 2.1.1,
+  added to the `docs` extra and `docs/source/requirements.txt`; the extension
+  pins the Mermaid version it loads in the browser (11.12.1). The EN/FR
   table of tree shapes becomes the translation glossary of `CONTRIBUTING.md`
   and `CONTRIBUTING.fr.md`. Closes #146.
 

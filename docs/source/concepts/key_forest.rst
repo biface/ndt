@@ -15,12 +15,23 @@ The examples use this dictionary:
     >>> from ndict_tools import NestedDictionary
     >>> nd = NestedDictionary({"a": {"b": {"c": 1}, "d": 2}, "e": {}, "f": 3})
 
-.. code-block:: text
+Its forest has three trees, rooted at ``a``, ``e`` and ``f``. The leaves are
+drawn with rounded corners:
 
-    a           e       f
-    ├── b
-    │   └── c
-    └── d
+.. mermaid::
+
+    flowchart TD
+        subgraph ta [tree a]
+            a[a] --> ab[b]
+            ab --> abc([c])
+            a --> ad([d])
+        end
+        subgraph te [tree e]
+            e([e])
+        end
+        subgraph tf [tree f]
+            f([f])
+        end
 
 
 Definition
@@ -235,6 +246,20 @@ complete tree full.
     ...     "south": {"home": 2, "away": 2},
     ... })
     >>> shapes = _HKey.build_forest(scores)
+
+.. mermaid::
+
+    flowchart TD
+        north[north] --> nh([home])
+        north --> na([away])
+        south[south] --> sh([home])
+        south --> sa([away])
+
+Every internal node has two children and every leaf has depth 1: the forest
+is full, perfect and complete for :math:`n = 2`.
+
+.. doctest::
+
     >>> shapes.is_full_tree(), shapes.is_perfect_tree(), shapes.is_complete_tree()
     (True, True, True)
     >>> shapes.is_perfect_tree(n=3)
@@ -260,6 +285,12 @@ stays a forest:
     True
     >>> list(twice.paths())
     [['p'], ['p', 'k'], ['q'], ['q', 'k']]
+
+.. mermaid::
+
+    flowchart TD
+        p[p] --> pk([k])
+        q[q] --> qk([k])
 
 **Cycles.** A nested dictionary can contain itself, directly or through one of
 its values. The construction allows it on purpose. Such a dictionary has no

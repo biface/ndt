@@ -28,6 +28,7 @@ extensions = [
     "sphinx.ext.todo",
     "sphinx.ext.doctest",
     "myst_parser",
+    "sphinxcontrib.mermaid",
 ]
 
 templates_path = ["_templates"]
