@@ -165,6 +165,16 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   translations published in the GitHub Pages archive. The extraction, update
   and build steps are documented in `CONTRIBUTING.md` and
   `CONTRIBUTING.fr.md` (DD-028). Closes #133.
+- **Comparisons (breaking).** `==` is now strict, like `equal()`: same
+  class, same `default_setup` and same content. A nested dictionary is no
+  longer equal to a plain `dict` with the same content, in either order;
+  `!=` follows. `similar()` and `isomorph()` exchange their behaviour:
+  `isomorph()` compares the content of two dictionaries of the
+  `_StackedDict` family, whatever their class and configuration, and is
+  never true for a plain `dict`; `similar()` compares the content alone and
+  accepts a plain `dict`. `equal()` implies `isomorph()`, which implies
+  `similar()`. To compare a nested dictionary with a plain `dict`, use
+  `similar()` or `to_dict() ==` (DD-031). Closes #157.
 
 ### Removed
 
@@ -268,6 +278,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   missing key or path raises `StackedKeyError` (a `KeyError`); an explicit
   `None` is returned. The test named after the flat case tested a path; it is
   renamed and the flat case is tested. Closes #155.
+- **`equal()`** accepted an instance of a subclass in one direction only:
+  for a subclass `Inventory` of `NestedDictionary` with the same
+  configuration and content, `NestedDictionary(d).equal(Inventory(d))` was
+  `True` and the reverse `False`. It tested `isinstance(other, type(self))`;
+  it now requires the same type, as its docstring states. Part of #157.
 
 ---
 

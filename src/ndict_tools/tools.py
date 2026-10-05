@@ -2902,51 +2902,41 @@ class _StackedDict(defaultdict[Any, Any]):
     @override
     def __eq__(self, other: object) -> bool:
         """
-        Override __eq__ to compare two dictionaries, this function an isomorphism to dictionaries set
+        Check strict equality, like :meth:`equal`.
 
-        Two structures are isomorphic if they represent the same nested
-        dictionary structure, regardless of whether they're _StackedDict,
-        plain dict, or any other dict-like type.
+        ``a == b`` is ``a.equal(b)``: same class, same ``default_setup`` and
+        same content. A plain ``dict`` is never equal to a nested dictionary,
+        even with the same content; use :meth:`similar` to compare content.
 
         Parameters
         ----------
-        other : dict or _StackedDict
-            Dictionary to compare with
+        other : object
+            Object to compare with
 
         Returns
         -------
         bool
-            True if structure-preserving mapping exists
+            True if ``other`` is equal to this dictionary
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> regular_dict = {'a': {'b': 1}}
-        >>> sd == regular_dict
+        >>> setup = {'indent': 2, 'default_factory': None}
+        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup=setup)
+        >>> sd == _StackedDict({'a': {'b': 1}}, default_setup=setup)
         True
         >>> sd == {'a': {'b': 1}}
-        True
-        >>> sd == {'a': {'b': 2}}
         False
-
-        Notes
-        -----
-        Checks if sd[k1]...[kn] == other[k1]...[kn] for all paths.
-        This is the most permissive comparison method.
+        >>> sd.similar({'a': {'b': 1}})
+        True
 
         See Also
         --------
         equal : Strict equality
-        similar : Compare _StackedDict instances
-        isomorph : Compare as plain dicts
+        isomorph : Same content, any class of the family
+        similar : Same content only
         """
 
-        if not isinstance(other, (dict, _StackedDict)):
-            return False
-        elif isinstance(other, _StackedDict):
-            return compare_dict(self.to_dict(), other.to_dict())
-        else:
-            return compare_dict(self.to_dict(), dict(other))
+        return self.equal(other)
 
     @override
     def __ne__(self, other: object) -> bool:
@@ -2974,9 +2964,11 @@ class _StackedDict(defaultdict[Any, Any]):
         2. Identical default_setup configuration
         3. Identical dictionary structure and values
 
+        This is the strictest comparison, and the one used by ``==``.
+
         Parameters
         ----------
-        other : Any
+        other : object
             Object to compare with
 
         Returns
@@ -2989,41 +2981,44 @@ class _StackedDict(defaultdict[Any, Any]):
         >>> setup = {'indent': 2, 'default_factory': None}
         >>> sd1 = _StackedDict({'a': 1}, default_setup=setup)
         >>> sd2 = _StackedDict({'a': 1}, default_setup=setup)
-        >>> sd1 == sd2
+        >>> sd1.equal(sd2)
         True
 
         >>> # Different setup
         >>> sd3 = _StackedDict({'a': 1}, default_setup={'indent': 4, 'default_factory': None})
-        >>> sd1 == sd3
+        >>> sd1.equal(sd3)
         False
 
         See Also
         --------
-        __eq__ : dictionaries equalities
+        __eq__ : Same as equal
         __ne__ : Inequality check
-        similar : Compare content only (ignore class/setup)
-        isomorph : Compare as plain dicts
+        isomorph : Same content, any class of the family
+        similar : Same content only
         """
 
-        if not isinstance(other, type(self)):
+        if not isinstance(other, _StackedDict) or type(other) is not type(self):
             return False
         if self._default_setup != other._default_setup:
             return False
         return compare_dict(self.to_dict(), other.to_dict())
 
-    def similar(self, other: object) -> bool:
+    def isomorph(self, other: object) -> bool:
         """
-        Check if two structures share the same content (ignoring setup).
+        Check if two nested dictionaries are isomorphic.
 
-        Two structures are similar if they:
-        1. Are both _StackedDict instances (any subclass)
+        Two structures are isomorphic if they:
+        1. Are both _StackedDict instances (any class of the family)
         2. Have identical dictionary content (keys and values)
 
-        Configuration differences are ignored.
+        They describe the same nested structure, up to the choice of class:
+        a NestedDictionary and a StrictNestedDictionary with the same content
+        differ only in what reading a missing key does. Configuration
+        differences are ignored. A plain dict is never isomorphic.
 
         Parameters
         ----------
-        other : Any
+        other : object
             Object to compare with
 
         Returns
@@ -3037,65 +3032,63 @@ class _StackedDict(defaultdict[Any, Any]):
         >>> setup2 = {'indent': 4, 'default_factory': _StackedDict}
         >>> sd1 = _StackedDict({'a': 1}, default_setup=setup1)
         >>> sd2 = _StackedDict({'a': 1}, default_setup=setup2)
-        >>> sd1 == sd2
+        >>> sd1.equal(sd2)
         False
-        >>> sd1.similar(sd2)
+        >>> sd1.isomorph(sd2)
         True
+        >>> sd1.isomorph({'a': 1})
+        False
 
         See Also
         --------
-        __eq__ : dictionaries equalities
-        __ne__ : Inequality check
-        equal : Strict equality (includes setup)
-        isomorph : Compare as plain dicts
+        equal : Strict equality (includes class and setup)
+        similar : Same content only, plain dicts accepted
         """
+
         if not isinstance(other, _StackedDict):
             return False
 
         return compare_dict(self.to_dict(), other.to_dict())
 
-    def isomorph(self, other: object) -> bool:
+    def similar(self, other: object) -> bool:
         """
-        Check if structures are isomorphic (same keys/values, any dict type).
+        Check if two structures have the same content, whatever holds it.
 
-        Two structures are isomorphic if they represent the same nested
-        dictionary structure, regardless of whether they're _StackedDict,
-        plain dict, or any other dict-like type.
+        Two structures are similar if they represent the same nested
+        dictionary content, regardless of whether they are _StackedDict
+        instances or plain dicts. Class and configuration are ignored.
 
         Parameters
         ----------
-        other : dict or _StackedDict
+        other : object
             Dictionary to compare with
 
         Returns
         -------
         bool
-            True if structure-preserving mapping exists
+            True if ``other`` is a dict with the same content
 
         Examples
         --------
         >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> regular_dict = {'a': {'b': 1}}
-        >>> sd.isomorph(regular_dict)
+        >>> sd.similar({'a': {'b': 1}})
         True
-
-        >>> sd.isomorph({'a': {'b': 2}})
+        >>> sd.similar({'a': {'b': 2}})
         False
 
         Notes
         -----
         Checks if sd[k1]...[kn] == other[k1]...[kn] for all paths.
-        This is the most permissive comparison method.
+        This is the most permissive comparison method:
+        ``equal`` implies ``isomorph``, which implies ``similar``.
 
         See Also
         --------
-        __eq__ : dictionaries equalities
-        __ne__ : Inequality check
         equal : Strict equality
-        similar : Compare _StackedDict instances
+        isomorph : Same content, any class of the family
         """
 
-        if not isinstance(other, (dict, _StackedDict)):
+        if not isinstance(other, dict):
             return False
         elif isinstance(other, _StackedDict):
             return compare_dict(self.to_dict(), other.to_dict())
