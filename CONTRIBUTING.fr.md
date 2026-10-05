@@ -209,6 +209,19 @@ Une traduction est publiée dans l'archive GitHub Pages, sous
 `docs/source/locales/LANGUAGES`. N'y ajouter le code qu'une fois le catalogue
 traduit.
 
+### Glossaire de traduction
+
+La documentation et le code suivent l'usage anglais pour les formes d'arbre.
+Les termes français ne se traduisent pas mot à mot : un *arbre complet* en
+français est un *perfect tree* en anglais. Les traductions suivent ce tableau ;
+les définitions sont sur la page Concepts « The Forest of Keys ».
+
+| Anglais | Français | Sens |
+|---|---|---|
+| complete tree | arbre quasi complet (*tassé à gauche*) | tous les niveaux remplis sauf peut-être le dernier, rempli de gauche à droite |
+| perfect tree | arbre complet | tous les niveaux remplis |
+| full tree | arbre localement complet (*strict*) | chaque nœud interne a exactement n enfants |
+
 ---
 
 ## Conventions de commit

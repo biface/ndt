@@ -22,6 +22,14 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   `assert_type` calls check the types inferred for the public API. Unlike the
   `basedpyright src` step, it fails on any error. Included in `basedpyright`,
   `pre-push` (hence `local`), `check` and `ci-quality`. Added with #75.
+- **Concepts: "The Forest of Keys".** A new page defines the forest of keys of
+  a nested dictionary (vertices, edges, roots, depth, leaves, height and
+  levels), matches `len()`, `size()`, `leaves()`, `height()` and
+  `occurrences()` with measures of the forest, explains why the `_HKey` tree
+  operations apply, defines complete, perfect and full trees for an arity n,
+  and states the limits of the model (shared references, cycles). The EN/FR
+  table of tree shapes becomes the translation glossary of `CONTRIBUTING.md`
+  and `CONTRIBUTING.fr.md`. Closes #146.
 
 ### Changed
 

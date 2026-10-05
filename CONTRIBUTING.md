@@ -205,6 +205,19 @@ A translation is published in the GitHub Pages archive, under
 `docs/source/locales/LANGUAGES`. Add the code when the catalog is translated,
 not before.
 
+### Translation glossary
+
+The documentation and the code follow English usage for tree shapes. The
+French terms do not map word for word: a French *arbre complet* is an English
+*perfect tree*. Translations use this table; the definitions are on the
+Concepts page "The Forest of Keys".
+
+| English | French | Meaning |
+|---|---|---|
+| complete tree | arbre quasi complet (*tassé à gauche*) | every level filled except possibly the last, filled left to right |
+| perfect tree | arbre complet | every level filled |
+| full tree | arbre localement complet (*strict*) | every internal node has exactly n children |
+
 ---
 
 ## Commit conventions
