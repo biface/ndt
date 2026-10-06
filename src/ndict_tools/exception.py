@@ -98,7 +98,9 @@ class StackedKeyError(KeyError, StackedDictionaryError):
         ``" (key: <key>)"`` is appended to the message.
     path : list[Any], optional
         Path in the nested dictionary where the error occurred, stored in
-        ``path``. It is not added to the message.
+        ``path``. ``" (at path: k1 | k2)"`` is appended to the message, after
+        any other suffix, or the message becomes ``"Error at path: k1 | k2"``
+        when there is none.
     """
 
     def __init__(
@@ -117,7 +119,6 @@ class StackedKeyError(KeyError, StackedDictionaryError):
             message = f"{message} (key: {key})"
 
         StackedDictionaryError.__init__(self, message, 0, path)
-        KeyError.__init__(self, message)
 
 
 class StackedAttributeError(AttributeError, StackedDictionaryError):
@@ -136,7 +137,9 @@ class StackedAttributeError(AttributeError, StackedDictionaryError):
         ``" (attribute: <attribute>)"`` is appended to the message.
     path : list[Any], optional
         Path in the nested dictionary where the error occurred, stored in
-        ``path``. It is not added to the message.
+        ``path``. ``" (at path: k1 | k2)"`` is appended to the message, after
+        any other suffix, or the message becomes ``"Error at path: k1 | k2"``
+        when there is none.
     """
 
     def __init__(
@@ -155,7 +158,6 @@ class StackedAttributeError(AttributeError, StackedDictionaryError):
             message = f"{message} (attribute: {attribute})"
 
         StackedDictionaryError.__init__(self, message, 0, path)
-        AttributeError.__init__(self, message)
 
 
 class StackedTypeError(TypeError, StackedDictionaryError):
@@ -176,7 +178,9 @@ class StackedTypeError(TypeError, StackedDictionaryError):
         ``" (expected: <name>, got: <name>)"`` is appended to the message.
     path : list[Any], optional
         Path in the nested dictionary where the error occurred, stored in
-        ``path``. It is not added to the message.
+        ``path``. ``" (at path: k1 | k2)"`` is appended to the message, after
+        any other suffix, or the message becomes ``"Error at path: k1 | k2"``
+        when there is none.
     """
 
     def __init__(
@@ -197,7 +201,6 @@ class StackedTypeError(TypeError, StackedDictionaryError):
             message = f"{message} (expected: {expected_type.__name__}, got: {actual_type.__name__})"
 
         StackedDictionaryError.__init__(self, message, 0, path)
-        TypeError.__init__(self, message)
 
 
 class StackedValueError(ValueError, StackedDictionaryError):
@@ -216,7 +219,9 @@ class StackedValueError(ValueError, StackedDictionaryError):
         ``" (value: <value>)"`` is appended to the message.
     path : list[Any], optional
         Path in the nested dictionary where the error occurred, stored in
-        ``path``. It is not added to the message.
+        ``path``. ``" (at path: k1 | k2)"`` is appended to the message, after
+        any other suffix, or the message becomes ``"Error at path: k1 | k2"``
+        when there is none.
     """
 
     def __init__(
@@ -235,7 +240,6 @@ class StackedValueError(ValueError, StackedDictionaryError):
             message = f"{message} (value: {value})"
 
         StackedDictionaryError.__init__(self, message, 0, path)
-        ValueError.__init__(self, message)
 
 
 class StackedIndexError(IndexError, StackedDictionaryError):
@@ -251,7 +255,9 @@ class StackedIndexError(IndexError, StackedDictionaryError):
         Message describing the error.
     path : list[Any], optional
         Path in the nested dictionary where the error occurred, stored in
-        ``path``. It is not added to the message.
+        ``path``. ``" (at path: k1 | k2)"`` is appended to the message, after
+        any other suffix, or the message becomes ``"Error at path: k1 | k2"``
+        when there is none.
     """
 
     def __init__(
@@ -261,4 +267,3 @@ class StackedIndexError(IndexError, StackedDictionaryError):
         Initialize the exception; the parameters are described on the class.
         """
         StackedDictionaryError.__init__(self, message, 0, path)
-        IndexError.__init__(self, message)

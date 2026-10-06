@@ -289,6 +289,14 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   square brackets (`"[42]"`), and a string key that starts with `[` is
   escaped with a backslash, so that collision does not occur. No runtime
   change. Part of #148.
+- **Exception messages** of `StackedKeyError`, `StackedAttributeError`,
+  `StackedTypeError`, `StackedValueError` and `StackedIndexError` did not
+  show the path given to them, although `StackedDictionaryError` appends
+  `" (at path: k1 | k2)"` to its message. Each class called the
+  initialiser of its standard exception a second time, which reset the
+  message without the path. That call is removed: every exception of the
+  family shows the path, for instance the `StackedKeyError` raised by
+  `pop()` on a missing path. Closes #158.
 
 ---
 
