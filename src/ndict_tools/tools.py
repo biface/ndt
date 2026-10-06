@@ -2134,6 +2134,7 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
+        >>> from ndict_tools import NestedDictionary
         >>> nd = NestedDictionary.from_dict({'a': {'b': 1}})
         >>> nd['a']['b']
         1
@@ -2212,8 +2213,16 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
+        >>> from ndict_tools import NestedDictionary
+        >>> import tempfile
+        >>> from pathlib import Path
+        >>> tmp = tempfile.TemporaryDirectory()
+        >>> path = Path(tmp.name) / 'nd.json'
         >>> nd = NestedDictionary({'a': {'b': 1}})
-        >>> nd.to_json('/tmp/nd.json')
+        >>> nd.to_json(path)
+        >>> path.read_text(encoding='utf-8')
+        '{"a": {"b": 1}}'
+        >>> tmp.cleanup()
 
         See Also
         --------
@@ -2257,11 +2266,22 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> nd = NestedDictionary.from_json('/tmp/nd.json')
+        >>> from ndict_tools import NestedDictionary
+        >>> import tempfile
+        >>> from pathlib import Path
+        >>> tmp = tempfile.TemporaryDirectory()
+        >>> path = Path(tmp.name) / 'nd.json'
+        >>> NestedDictionary({'a': {'b': 1}}).to_json(path)
+        >>> nd = NestedDictionary.from_json(path)
+        >>> nd.to_dict()
+        {'a': {'b': 1}}
         >>> strict = NestedDictionary.from_json(
-        ...     '/tmp/nd.json',
+        ...     path,
         ...     default_setup={'indent': 0, 'default_factory': None}
         ... )
+        >>> strict.default_factory is None
+        True
+        >>> tmp.cleanup()
 
         See Also
         --------
@@ -2561,7 +2581,7 @@ class _StackedDict(defaultdict[Any, Any]):
 
     @override
     def __str__(self, padding: int = 0) -> str:
-        """ "
+        """
         Convert to JSON-like formatted string representation.
 
         Creates a human-readable string with proper indentation showing
@@ -2579,11 +2599,15 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> print(sd)
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary(
+        ...     {'a': {'b': 1}},
+        ...     default_setup={'indent': 2, 'default_factory': NestedDictionary},
+        ... )
+        >>> print(nd)
         {
           a : {
-            b : 1,
+              b : 1,
           },
         }
 
@@ -2591,7 +2615,7 @@ class _StackedDict(defaultdict[Any, Any]):
         -----
         - Uses recursive formatting for nested dictionaries
         - Trailing commas are included for consistency
-        - Empty dictionaries shown as {}
+        - An empty dictionary is shown as ``{`` and ``}`` on two lines
         """
 
         d_str = "{\n"
@@ -2626,11 +2650,12 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd2 = sd.__copy__()
-        >>> sd2 is sd
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}})
+        >>> nd2 = nd.__copy__()
+        >>> nd2 is nd
         False
-        >>> sd2['a'] is sd['a']  # Nested dicts are referenced
+        >>> nd2['a'] is nd['a']  # Nested dicts are referenced
         True
 
         See Also
@@ -2667,11 +2692,12 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
+        >>> from ndict_tools import NestedDictionary
         >>> import copy
-        >>> sd = _StackedDict({'a': {'b': [1]}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd2 = copy.deepcopy(sd)
-        >>> sd2['a']['b'].append(2)
-        >>> sd['a']['b']
+        >>> nd = NestedDictionary({'a': {'b': [1]}})
+        >>> nd2 = copy.deepcopy(nd)
+        >>> nd2['a']['b'].append(2)
+        >>> nd['a']['b']
         [1]
 
         Notes
@@ -2720,14 +2746,18 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict(default_setup={'indent': 2, 'default_factory': None})
-        >>> sd['a'] = 1  # Flat key
-        >>> sd[['b', 'c', 'd']] = 2  # Hierarchical key
-        >>> sd['b']['c']['d']
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary()
+        >>> nd['a'] = 1  # Flat key
+        >>> nd[['b', 'c', 'd']] = 2  # Hierarchical key
+        >>> nd['b']['c']['d']
         2
 
         >>> # Nested lists not allowed
-        >>> sd[['a', ['b']]] = 1  # Raises StackedTypeError
+        >>> nd[['a', ['b']]] = 1
+        Traceback (most recent call last):
+            ...
+        ndict_tools.exception.StackedTypeError: Nested lists are not allowed as keys...
 
         Notes
         -----
@@ -2795,10 +2825,11 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd['a']
-        <_StackedDict: {'b': 1}>
-        >>> sd[['a', 'b']]
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}})
+        >>> nd['a'].to_dict()
+        {'b': 1}
+        >>> nd[['a', 'b']]
         1
 
         Notes
@@ -2850,9 +2881,10 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': {'c': 1}}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> del sd[['a', 'b', 'c']]
-        >>> 'b' in sd['a']  # Empty 'b' was removed
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': {'c': 1}}})
+        >>> del nd[['a', 'b', 'c']]
+        >>> 'a' in nd  # 'b', then 'a', were emptied and removed
         False
 
         Notes
@@ -2906,13 +2938,13 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> setup = {'indent': 2, 'default_factory': None}
-        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup=setup)
-        >>> sd == _StackedDict({'a': {'b': 1}}, default_setup=setup)
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}})
+        >>> nd == NestedDictionary({'a': {'b': 1}})
         True
-        >>> sd == {'a': {'b': 1}}
+        >>> nd == {'a': {'b': 1}}
         False
-        >>> sd.similar({'a': {'b': 1}})
+        >>> nd.similar({'a': {'b': 1}})
         True
 
         See Also
@@ -2964,15 +2996,18 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> setup = {'indent': 2, 'default_factory': None}
-        >>> sd1 = _StackedDict({'a': 1}, default_setup=setup)
-        >>> sd2 = _StackedDict({'a': 1}, default_setup=setup)
-        >>> sd1.equal(sd2)
+        >>> from ndict_tools import NestedDictionary
+        >>> nd1 = NestedDictionary({'a': 1})
+        >>> nd2 = NestedDictionary({'a': 1})
+        >>> nd1.equal(nd2)
         True
 
         >>> # Different setup
-        >>> sd3 = _StackedDict({'a': 1}, default_setup={'indent': 4, 'default_factory': None})
-        >>> sd1.equal(sd3)
+        >>> nd3 = NestedDictionary(
+        ...     {'a': 1},
+        ...     default_setup={'indent': 4, 'default_factory': NestedDictionary},
+        ... )
+        >>> nd1.equal(nd3)
         False
 
         See Also
@@ -3014,15 +3049,15 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> setup1 = {'indent': 2, 'default_factory': None}
-        >>> setup2 = {'indent': 4, 'default_factory': _StackedDict}
-        >>> sd1 = _StackedDict({'a': 1}, default_setup=setup1)
-        >>> sd2 = _StackedDict({'a': 1}, default_setup=setup2)
-        >>> sd1.equal(sd2)
+        >>> from ndict_tools import NestedDictionary
+        >>> from ndict_tools import StrictNestedDictionary
+        >>> nd1 = NestedDictionary({'a': 1})
+        >>> nd2 = StrictNestedDictionary({'a': 1})
+        >>> nd1.equal(nd2)
         False
-        >>> sd1.isomorph(sd2)
+        >>> nd1.isomorph(nd2)
         True
-        >>> sd1.isomorph({'a': 1})
+        >>> nd1.isomorph({'a': 1})
         False
 
         See Also
@@ -3056,15 +3091,16 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.similar({'a': {'b': 1}})
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}})
+        >>> nd.similar({'a': {'b': 1}})
         True
-        >>> sd.similar({'a': {'b': 2}})
+        >>> nd.similar({'a': {'b': 2}})
         False
 
         Notes
         -----
-        Checks if sd[k1]...[kn] == other[k1]...[kn] for all paths.
+        Checks if self[k1]...[kn] == other[k1]...[kn] for all paths.
         This is the most permissive comparison method:
         ``equal`` implies ``isomorph``, which implies ``similar``.
 
@@ -3095,14 +3131,15 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}, 'c': 2}, default_setup={'indent': 2, 'default_factory': None})
-        >>> list(sd.unpacked_items())
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}, 'c': 2})
+        >>> list(nd.unpacked_items())
         [(('a', 'b'), 1), (('c',), 2)]
 
         >>> # Empty dict as value
-        >>> sd = _StackedDict({'a': {}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> list(sd.unpacked_items())
-        [(('a',), {})]
+        >>> nd = NestedDictionary({'a': {}})
+        >>> [(path, type(value).__name__) for path, value in nd.unpacked_items()]
+        [(('a',), 'NestedDictionary')]
 
         Notes
         -----
@@ -3134,12 +3171,13 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> list(sd.unpacked_keys())
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}})
+        >>> list(nd.unpacked_keys())
         [('a', 'b')]
 
-        >>> sd = _StackedDict({'a': {'b': 1, 'c': 2}, 'd': 3}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sorted(sd.unpacked_keys())
+        >>> nd = NestedDictionary({'a': {'b': 1, 'c': 2}, 'd': 3})
+        >>> sorted(nd.unpacked_keys())
         [('a', 'b'), ('a', 'c'), ('d',)]
 
         See Also
@@ -3165,14 +3203,15 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}, 'c': 2}, default_setup={'indent': 2, 'default_factory': None})
-        >>> list(sd.unpacked_values())
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}, 'c': 2})
+        >>> list(nd.unpacked_values())
         [1, 2]
 
         >>> # Empty dict is a value
-        >>> sd = _StackedDict({'a': {}, 'b': 1}, default_setup={'indent': 2, 'default_factory': None})
-        >>> list(sd.unpacked_values())
-        [{}, 1]
+        >>> nd = NestedDictionary({'a': {}, 'b': 1})
+        >>> [type(value).__name__ for value in nd.unpacked_values()]
+        ['NestedDictionary', 'int']
 
         See Also
         --------
@@ -3197,8 +3236,9 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> regular = sd.to_dict()
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}})
+        >>> regular = nd.to_dict()
         >>> type(regular)
         <class 'dict'>
         >>> regular
@@ -3236,9 +3276,10 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd2 = sd.copy()
-        >>> sd2['a'] is sd['a']
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}})
+        >>> nd2 = nd.copy()
+        >>> nd2['a'] is nd['a']
         True
 
         See Also
@@ -3264,10 +3305,11 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd2 = sd.deepcopy()
-        >>> sd2['a']['b'] = 999
-        >>> sd['a']['b']
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}})
+        >>> nd2 = nd.deepcopy()
+        >>> nd2['a']['b'] = 999
+        >>> nd['a']['b']
         1
 
         See Also
@@ -3307,22 +3349,23 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}, 'c': 2}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.pop('c')
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}, 'c': 2})
+        >>> nd.pop('c')
         2
-        >>> 'c' in sd
+        >>> 'c' in nd
         False
 
         >>> # Hierarchical key
-        >>> sd.pop(['a', 'b'])
+        >>> nd.pop(['a', 'b'])
         1
-        >>> 'a' in sd  # Empty 'a' was removed
+        >>> 'a' in nd  # Empty 'a' was removed
         False
 
         >>> # With default
-        >>> sd.pop('nonexistent', 'default_value')
+        >>> nd.pop('nonexistent', 'default_value')
         'default_value'
-        >>> sd.pop('nonexistent', None) is None  # None is a valid default
+        >>> nd.pop('nonexistent', None) is None  # None is a valid default
         True
 
         See Also
@@ -3388,21 +3431,30 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1, 'c': 2}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> path, value = sd.popitem()
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1, 'c': 2}})
+        >>> path, value = nd.popitem()
         >>> path
         ['a', 'c']
         >>> value
         2
 
+        >>> nd.popitem()
+        (['a', 'b'], 1)
+        >>> nd.to_dict()  # The emptied parent 'a' stays
+        {'a': {}}
+
         >>> # Empty dictionary
-        >>> sd = _StackedDict(default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.popitem()  # Raises StackedIndexError
+        >>> NestedDictionary().popitem()
+        Traceback (most recent call last):
+            ...
+        ndict_tools.exception.StackedIndexError: popitem(): ...
 
         Notes
         -----
         - Follows DFS to find the last (rightmost, deepest) item
-        - Cleans up empty parent dictionaries automatically
+        - Removes one key at a time: a parent emptied by the removal stays in
+          place, unlike ``del`` and ``pop()``
         - Path is returned as a list of keys
 
         See Also
@@ -3468,26 +3520,27 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': 1}, default_setup={'indent': 2, 'default_factory': None})
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': 1})
 
         >>> # From dict
-        >>> sd.update({'b': 2, 'c': {'d': 3}})
-        >>> sd['c']['d']
+        >>> nd.update({'b': 2, 'c': {'d': 3}})
+        >>> nd['c']['d']
         3
 
         >>> # From iterable
-        >>> sd.update([('e', 4), ('f', {'g': 5})])
-        >>> sd['f']['g']
+        >>> nd.update([('e', 4), ('f', {'g': 5})])
+        >>> nd['f']['g']
         5
 
         >>> # Using kwargs
-        >>> sd.update(h=6, i={'j': 7})
-        >>> sd['i']['j']
+        >>> nd.update(h=6, i={'j': 7})
+        >>> nd['i']['j']
         7
 
         >>> # Combined
-        >>> sd.update({'k': 8}, l=9)
-        >>> sd['k'], sd['l']
+        >>> nd.update({'k': 8}, l=9)
+        >>> nd['k'], nd['l']
         (8, 9)
 
         Notes
@@ -3573,14 +3626,18 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.is_key('b')
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}})
+        >>> nd.is_key('b')
         True
-        >>> sd.is_key('c')
+        >>> nd.is_key('c')
         False
 
         >>> # Lists not allowed
-        >>> sd.is_key(['a', 'b'])  # Raises StackedKeyError
+        >>> nd.is_key(['a', 'b'])
+        Traceback (most recent call last):
+            ...
+        ndict_tools.exception.StackedKeyError: "This function manages only atomic keys...
 
         Notes
         -----
@@ -3620,17 +3677,18 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}, 'c': {'b': 2}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.occurrences('b')
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}, 'c': {'b': 2}})
+        >>> nd.occurrences('b')
         2
-        >>> sd.occurrences('a')
+        >>> nd.occurrences('a')
         1
-        >>> sd.occurrences('z')
+        >>> nd.occurrences('z')
         0
 
         >>> # Key appearing multiple times in same path
-        >>> sd = _StackedDict({'a': {'a': 1}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.occurrences('a')
+        >>> nd = NestedDictionary({'a': {'a': 1}})
+        >>> nd.occurrences('a')
         2
 
         See Also
@@ -3671,14 +3729,18 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}, 'c': {'b': 2}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.key_list('b')
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}, 'c': {'b': 2}})
+        >>> nd.key_list('b')
         [('a', 'b'), ('c', 'b')]
 
-        >>> sd.key_list('a')
+        >>> nd.key_list('a')
         [('a', 'b')]
 
-        >>> sd.key_list('nonexistent')  # Raises StackedKeyError
+        >>> nd.key_list('nonexistent')
+        Traceback (most recent call last):
+            ...
+        ndict_tools.exception.StackedKeyError: 'Cannot find the key: nonexistent...
 
         See Also
         --------
@@ -3724,14 +3786,18 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}, 'c': {'b': 2}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.items_list('b')
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}, 'c': {'b': 2}})
+        >>> nd.items_list('b')
         [1, 2]
 
-        >>> sd.items_list('a')
+        >>> nd.items_list('a')
         [1]
 
-        >>> sd.items_list('nonexistent')  # Raises StackedKeyError
+        >>> nd.items_list('nonexistent')
+        Traceback (most recent call last):
+            ...
+        ndict_tools.exception.StackedKeyError: 'Cannot find the key: nonexistent...
 
         Notes
         -----
@@ -3773,8 +3839,9 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}, 'c': 2}, default_setup={'indent': 2, 'default_factory': None})
-        >>> paths = sd.paths()
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}, 'c': 2})
+        >>> paths = nd.paths()
         >>> len(paths)
         3
         >>> ['a', 'b'] in paths
@@ -3813,8 +3880,9 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1, 'c': 2}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> c_paths = sd.compact_paths()
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1, 'c': 2}})
+        >>> c_paths = nd.compact_paths()
         >>> c_paths.structure
         [['a', 'b', 'c']]
 
@@ -3861,12 +3929,15 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}, 'c': 2}, default_setup={'indent': 2, 'default_factory': None})
-        >>> for path, value in sd.dfs():
-        ...     print(f'{path} -> {value}')
-        ['a'] -> <_StackedDict>
-        ['a', 'b'] -> 1
-        ['c'] -> 2
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}, 'c': 2})
+        >>> for path, value in nd.dfs():
+        ...     if isinstance(value, NestedDictionary):
+        ...         value = value.to_dict()
+        ...     print(path, value)
+        ['a'] {'b': 1}
+        ['a', 'b'] 1
+        ['c'] 2
 
         Notes
         -----
@@ -3912,12 +3983,13 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': {'c': 1}}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> list(sd.bfs())
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': {'c': 1}}})
+        >>> list(nd.bfs())
         [(('a', 'b', 'c'), 1)]
 
-        >>> sd = _StackedDict({'a': {'b': 1, 'c': 2}, 'd': 3}, default_setup={'indent': 2, 'default_factory': None})
-        >>> list(sd.bfs())
+        >>> nd = NestedDictionary({'a': {'b': 1, 'c': 2}, 'd': 3})
+        >>> list(nd.bfs())
         [(('d',), 3), (('a', 'b'), 1), (('a', 'c'), 2)]
 
         Notes
@@ -3963,16 +4035,17 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': 1}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.height()
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': 1})
+        >>> nd.height()
         1
 
-        >>> sd = _StackedDict({'a': {'b': {'c': 1}}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.height()
+        >>> nd = NestedDictionary({'a': {'b': {'c': 1}}})
+        >>> nd.height()
         3
 
-        >>> sd = _StackedDict(default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.height()
+        >>> nd = NestedDictionary()
+        >>> nd.height()
         0
 
         Notes
@@ -4003,17 +4076,18 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.size()
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}})
+        >>> nd.size()
         2
 
-        >>> sd = _StackedDict({'a': {'b': 1, 'c': 2}, 'd': 3}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.size()
+        >>> nd = NestedDictionary({'a': {'b': 1, 'c': 2}, 'd': 3})
+        >>> nd.size()
         4
 
         >>> # A key whose value is an empty dictionary counts
-        >>> sd = _StackedDict({'a': {}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.size()
+        >>> nd = NestedDictionary({'a': {}})
+        >>> nd.size()
         1
 
         Notes
@@ -4044,18 +4118,19 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}, 'c': 2}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.leaves()
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}, 'c': 2})
+        >>> nd.leaves()
         [1, 2]
 
-        >>> sd = _StackedDict({'a': {'b': {'c': 1}}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.leaves()
+        >>> nd = NestedDictionary({'a': {'b': {'c': 1}}})
+        >>> nd.leaves()
         [1]
 
         >>> # Empty dict as leaf value
-        >>> sd = _StackedDict({'a': {}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.leaves()
-        [_StackedDict(None, {})]
+        >>> nd = NestedDictionary({'a': {}})
+        >>> [type(value).__name__ for value in nd.leaves()]
+        ['NestedDictionary']
 
         Notes
         -----
@@ -4090,14 +4165,15 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
+        >>> from ndict_tools import NestedDictionary
         >>> # Balanced
-        >>> sd = _StackedDict({'a': {'b': 1}, 'c': {'d': 2}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.is_balanced()
+        >>> nd = NestedDictionary({'a': {'b': 1}, 'c': {'d': 2}})
+        >>> nd.is_balanced()
         True
 
         >>> # Unbalanced
-        >>> sd = _StackedDict({'a': {'b': {'c': 1}}, 'd': 2}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.is_balanced()
+        >>> nd = NestedDictionary({'a': {'b': {'c': 1}}, 'd': 2})
+        >>> nd.is_balanced()
         False
 
         Notes
@@ -4154,15 +4230,19 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': {'c': 1}}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.ancestors(1)
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': {'c': 1}}})
+        >>> nd.ancestors(1)
         ['a', 'b']
 
-        >>> sd = _StackedDict({'a': {'b': 1}, 'c': {'d': 2}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.ancestors(2)
+        >>> nd = NestedDictionary({'a': {'b': 1}, 'c': {'d': 2}})
+        >>> nd.ancestors(2)
         ['c']
 
-        >>> sd.ancestors(999)  # Raises StackedValueError
+        >>> nd.ancestors(999)
+        Traceback (most recent call last):
+            ...
+        ndict_tools.exception.StackedValueError: Value 999 not found in the dictionary...
 
         Notes
         -----
