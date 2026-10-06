@@ -283,6 +283,7 @@ class PathsView(_Paths):
 
         Examples
         --------
+        >>> nd = NestedDictionary({'a': {'b': 1, 'c': 2}, 'd': 3})
         >>> paths = nd.paths()
         >>> compact = paths.to_compact()
         >>> compact.structure
@@ -387,6 +388,7 @@ class CompactPathsView(_CPaths):
 
         Examples
         --------
+        >>> nd = NestedDictionary({'a': {'b': 1, 'c': 2}, 'd': 3})
         >>> cpaths = nd.compact_paths()
         >>> paths = cpaths.to_paths()
         >>> type(paths).__name__

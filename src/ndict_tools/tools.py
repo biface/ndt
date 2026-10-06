@@ -4297,8 +4297,9 @@ class _Paths:
 
     Examples
     --------
-    >>> data = _StackedDict({'a': {'b': 1}, 'c': 2})
-    >>> paths = _Paths(data)
+    >>> from ndict_tools import NestedDictionary
+    >>> nd = NestedDictionary({'a': {'b': 1}, 'c': 2})
+    >>> paths = nd.paths()
     >>> list(paths)
     [['a'], ['a', 'b'], ['c']]
     >>> ['a', 'b'] in paths
@@ -4350,7 +4351,8 @@ class _Paths:
 
         Examples
         --------
-        >>> paths = _Paths(_StackedDict({'a': {'b': 1}}))
+        >>> from ndict_tools import NestedDictionary
+        >>> paths = NestedDictionary({'a': {'b': 1}}).paths()
         >>> for path in paths:
         ...     print(path)
         ['a']
@@ -4370,7 +4372,8 @@ class _Paths:
 
         Examples
         --------
-        >>> paths = _Paths(_StackedDict({'a': {'b': 1}, 'c': 2}))
+        >>> from ndict_tools import NestedDictionary
+        >>> paths = NestedDictionary({'a': {'b': 1}, 'c': 2}).paths()
         >>> len(paths)
         3
         """
@@ -4396,7 +4399,8 @@ class _Paths:
 
         Examples
         --------
-        >>> paths = _Paths(_StackedDict({'a': {'b': 1}}))
+        >>> from ndict_tools import NestedDictionary
+        >>> paths = NestedDictionary({'a': {'b': 1}}).paths()
         >>> ['a', 'b'] in paths
         True
         >>> ['a', 'c'] in paths
@@ -4422,8 +4426,9 @@ class _Paths:
 
         Examples
         --------
-        >>> paths1 = _Paths(_StackedDict({'a': 1}))
-        >>> paths2 = _Paths(_StackedDict({'a': 1}))
+        >>> from ndict_tools import NestedDictionary
+        >>> paths1 = NestedDictionary({'a': 1}).paths()
+        >>> paths2 = NestedDictionary({'a': 1}).paths()
         >>> paths1 == paths2
         True
         """
@@ -4483,7 +4488,8 @@ class _Paths:
 
         Examples
         --------
-        >>> paths = _Paths(_StackedDict({'a': {'b': 1, 'c': 2}}))
+        >>> from ndict_tools import NestedDictionary
+        >>> paths = NestedDictionary({'a': {'b': 1, 'c': 2}}).paths()
         >>> paths.get_children(['a'])
         ['b', 'c']
         >>> paths.get_children(['a', 'b'])
@@ -4515,7 +4521,8 @@ class _Paths:
 
         Examples
         --------
-        >>> paths = _Paths(_StackedDict({'a': {'b': 1}}))
+        >>> from ndict_tools import NestedDictionary
+        >>> paths = NestedDictionary({'a': {'b': 1}}).paths()
         >>> paths.has_children(['a'])
         True
         >>> paths.has_children(['a', 'b'])
@@ -4543,7 +4550,8 @@ class _Paths:
 
         Examples
         --------
-        >>> paths = _Paths(_StackedDict({'a': {'b': {'c': 1}, 'd': 2}}))
+        >>> from ndict_tools import NestedDictionary
+        >>> paths = NestedDictionary({'a': {'b': {'c': 1}, 'd': 2}}).paths()
         >>> paths.get_subtree_paths(['a'])
         [['a'], ['a', 'b'], ['a', 'b', 'c'], ['a', 'd']]
 
@@ -4574,7 +4582,8 @@ class _Paths:
 
         Examples
         --------
-        >>> paths = _Paths(_StackedDict({'a': {'b': 1}, 'c': 2}))
+        >>> from ndict_tools import NestedDictionary
+        >>> paths = NestedDictionary({'a': {'b': 1}, 'c': 2}).paths()
         >>> # Get paths longer than 1
         >>> paths.filter_paths(lambda p: len(p) > 1)
         [['a', 'b']]
@@ -4600,7 +4609,8 @@ class _Paths:
 
         Examples
         --------
-        >>> paths = _Paths(_StackedDict({'a': {'b': {'c': 1}}}))
+        >>> from ndict_tools import NestedDictionary
+        >>> paths = NestedDictionary({'a': {'b': {'c': 1}}}).paths()
         >>> paths.get_depth()
         3
         """
@@ -4618,7 +4628,8 @@ class _Paths:
 
         Examples
         --------
-        >>> paths = _Paths(_StackedDict({'a': {'b': 1}, 'c': 2}))
+        >>> from ndict_tools import NestedDictionary
+        >>> paths = NestedDictionary({'a': {'b': 1}, 'c': 2}).paths()
         >>> paths.get_leaf_paths()
         [['a', 'b'], ['c']]
         """
@@ -4678,8 +4689,9 @@ class _CPaths(_Paths):
 
     Examples
     --------
-    >>> data = _StackedDict({'a': 1, 'b': {'c': 2, 'd': 3}})
-    >>> c_paths = _CPaths(data)
+    >>> from ndict_tools import NestedDictionary
+    >>> nd = NestedDictionary({'a': 1, 'b': {'c': 2, 'd': 3}})
+    >>> c_paths = nd.compact_paths()
     >>> c_paths.structure
     ['a', ['b', 'c', 'd']]
     >>> list(c_paths)  # Inherited from _Paths
@@ -4799,7 +4811,8 @@ class _CPaths(_Paths):
 
         Examples
         --------
-        >>> c_paths = _CPaths(_StackedDict({'a': {'b': 1, 'c': 2}}))
+        >>> from ndict_tools import NestedDictionary
+        >>> c_paths = NestedDictionary({'a': {'b': 1, 'c': 2}}).compact_paths()
         >>> c_paths.structure
         [['a', 'b', 'c']]
         """
@@ -4834,14 +4847,15 @@ class _CPaths(_Paths):
 
         Examples
         --------
-        >>> c_paths = _CPaths(_StackedDict())
+        >>> from ndict_tools import NestedDictionary
+        >>> c_paths = NestedDictionary().compact_paths()
         >>> # From compact structure (manual)
         >>> c_paths.structure = [['a'], ['d']]
         >>> c_paths.expand()
         [['a'], ['d']]
 
         >>> # From a stacked dict
-        >>> c_paths.structure = _StackedDict({'a': {'b': 1}, 'd': 2})
+        >>> c_paths.structure = NestedDictionary({'a': {'b': 1}, 'd': 2})
         >>> c_paths.expand()
         [['a'], ['a', 'b'], ['d']]
 
@@ -5016,7 +5030,8 @@ class _CPaths(_Paths):
 
         Examples
         --------
-        >>> c_paths = _CPaths(_StackedDict({'a': {'b': 1}}))
+        >>> from ndict_tools import NestedDictionary
+        >>> c_paths = NestedDictionary({'a': {'b': 1}}).compact_paths()
         >>> c_paths.expand()
         [['a'], ['a', 'b']]
 
@@ -5039,10 +5054,10 @@ class _CPaths(_Paths):
 
         Examples
         --------
-        >>> setup = {'indent': 2, 'default_factory': None}
-        >>> c_paths = _CPaths(_StackedDict({'a': 1}, default_setup=setup))
+        >>> from ndict_tools import NestedDictionary
+        >>> c_paths = NestedDictionary({'a': 1}).compact_paths()
         >>> repr(c_paths)
-        "_CPaths(['a'])"
+        "CompactPathsView(['a'])"
         """
         return f"{self.__class__.__name__}({self.structure})"
 
@@ -5061,11 +5076,11 @@ class _CPaths(_Paths):
 
         Examples
         --------
-        >>> setup = {'indent': 2, 'default_factory': None}
-        >>> sd = _StackedDict({'a': {'b': 1}, 'c': 2}, default_setup=setup)
-        >>> c_paths = _CPaths(sd)
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}, 'c': 2})
+        >>> c_paths = nd.compact_paths()
         >>> str(c_paths)
-        "_CPaths(3 paths): [['a', 'b'], 'c']"
+        "CompactPathsView(3 paths): [['a', 'b'], 'c']"
         """
         return f"{self.__class__.__name__}({len(self)} paths): {self.structure}"
 
@@ -5121,19 +5136,20 @@ class _CPaths(_Paths):
 
         Examples
         --------
-        >>> sdict = _StackedDict({'a': {'b': 1}, 'c': 2})
-        >>> c_paths = _CPaths(sdict)
-        >>> c_paths.is_covering(sdict)
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}, 'c': 2})
+        >>> c_paths = nd.compact_paths()
+        >>> c_paths.is_covering(nd)
         True
 
         >>> # Partial coverage
         >>> c_paths.structure = [['a']]  # Only covers 'a', not 'a.b' or 'c'
-        >>> c_paths.is_covering(sdict)
+        >>> c_paths.is_covering(nd)
         False
 
-        >>> # Every path of sdict plus an extra one: full coverage, not equal
+        >>> # Every path of nd plus an extra one: full coverage, not equal
         >>> c_paths.structure = [['a', 'b'], 'c', 'e']
-        >>> c_paths.coverage(sdict), c_paths.is_covering(sdict)
+        >>> c_paths.coverage(nd), c_paths.is_covering(nd)
         (1.0, False)
 
         Notes
@@ -5169,19 +5185,20 @@ class _CPaths(_Paths):
 
         Examples
         --------
-        >>> sdict = _StackedDict({'a': {'b': 1, 'c': 2}, 'd': 3})
-        >>> c_paths = _CPaths(sdict)
-        >>> c_paths.coverage(sdict)
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1, 'c': 2}, 'd': 3})
+        >>> c_paths = nd.compact_paths()
+        >>> c_paths.coverage(nd)
         1.0
 
         >>> # Partial coverage: only 'a' and 'a.b' out of 4 paths
         >>> c_paths.structure = [['a', 'b']]
-        >>> c_paths.coverage(sdict)
+        >>> c_paths.coverage(nd)
         0.5
 
         >>> # Extra paths do not raise the value above 1.0
         >>> c_paths.structure = [['a', 'b', 'c'], ['d'], ['e']]
-        >>> c_paths.coverage(sdict)
+        >>> c_paths.coverage(nd)
         1.0
 
         Notes
@@ -5225,14 +5242,15 @@ class _CPaths(_Paths):
 
         Examples
         --------
-        >>> sdict = _StackedDict({'a': {'b': 1}})
-        >>> c_paths = _CPaths(sdict)
-        >>> c_paths.missing_paths(sdict)
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}})
+        >>> c_paths = nd.compact_paths()
+        >>> c_paths.missing_paths(nd)
         []
 
         >>> # Add extra paths
         >>> c_paths.structure = [['a', 'b', 'c'], ['d']]
-        >>> c_paths.missing_paths(sdict)
+        >>> c_paths.missing_paths(nd)
         [['a', 'c'], ['d']]
 
         Notes
@@ -5275,14 +5293,15 @@ class _CPaths(_Paths):
 
         Examples
         --------
-        >>> sdict = _StackedDict({'a': {'b': 1, 'c': 2}, 'd': 3})
-        >>> c_paths = _CPaths(sdict)
-        >>> c_paths.uncovered_paths(sdict)
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1, 'c': 2}, 'd': 3})
+        >>> c_paths = nd.compact_paths()
+        >>> c_paths.uncovered_paths(nd)
         []
 
         >>> # Partial structure
         >>> c_paths.structure = [['a', 'b']]
-        >>> c_paths.uncovered_paths(sdict)
+        >>> c_paths.uncovered_paths(nd)
         [['a', 'c'], ['d']]
 
         Notes
