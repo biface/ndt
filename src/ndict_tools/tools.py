@@ -1968,7 +1968,8 @@ class _StackedDict(defaultdict[Any, Any]):
     Key features:
 
     * **Hierarchical keys**: Use lists as keys to access nested values: ``d[['a', 'b', 'c']]``
-    * **Automatic nesting**: Missing intermediate levels are created automatically
+    * **Automatic nesting**: Writing through a path creates the missing
+      intermediate levels
     * **Path views**: Access all paths via ``paths()`` and ``compact_paths()``
     * **Tree traversal**: DFS and BFS algorithms for navigation
     * **Deep operations**: Specialized copy, equality, and conversion methods
@@ -1982,44 +1983,67 @@ class _StackedDict(defaultdict[Any, Any]):
 
     Parameters
     ----------
-    *args : Mapping or iterable of (key, value) pairs, optional
-        Dictionaries or iterables to initialize from
+    *args : Mapping or iterable of (key, value) pairs
+        Dictionaries, ``_StackedDict`` instances, or iterables of
+        (key, value) pairs. They are processed in order; later values
+        override earlier ones.
     default_setup : Mapping[str, Any]
-        Configuration (keyword-only), see ``__init__``
-    **kwargs : Any, optional
-        Initialization data
+        Configuration with at least 'indent' and 'default_factory' keys.
+        Keyword-only and required: ``_StackedDict`` has no default
+        configuration. The mapping is copied, never modified; subclasses
+        complete it through ``_normalize_setup``.
+    **kwargs : Any
+        Direct key-value pairs, added after ``args``.
+
+    Raises
+    ------
+    StackedKeyError
+        If ``default_setup`` is missing, or if 'indent' or 'default_factory'
+        is missing from it
+    StackedAttributeError
+        If ``default_setup`` contains keys that aren't valid attributes
 
     Attributes
     ----------
     indent : int
-        Indentation level for string representation (default: 2)
+        Indentation step of the string representation, set by
+        ``default_setup``
     default_factory : callable or None
-        Factory function for missing keys (inherited from defaultdict)
+        Factory called for a missing key (inherited from ``defaultdict``).
+        With None, reading a missing key raises ``KeyError``.
     _default_setup : set
-        Internal storage for configuration as set of (key, value) tuples
+        Internal storage for configuration as set of (key, value) tuples;
+        read it through the ``default_setup`` property
 
     Examples
     --------
     >>> setup = {'indent': 2, 'default_factory': None}
     >>> sd = _StackedDict(default_setup=setup)
-    >>> sd['a']['b']['c'] = 1  # Automatic nesting
-    >>> sd[['a', 'b', 'c']]
+    >>> sd[['a', 'b', 'c']] = 1  # The path creates 'a' and 'b'
+    >>> sd['a']['b']['c']
     1
-    >>> # Initialize with data
+    >>> # Initialize with data: nested dicts become _StackedDict
     >>> sd = _StackedDict({'a': {'b': 1}}, default_setup=setup)
+    >>> type(sd['a']).__name__
+    '_StackedDict'
     >>> list(sd.paths())
     [['a'], ['a', 'b']]
-    >>> # Hierarchical key access
-    >>> sd[['a', 'b']] = 2
-    >>> sd['a']['b']
-    2
+    >>> # Copy another _StackedDict
+    >>> sd2 = _StackedDict(sd, default_setup=setup)
+    >>> sd2 == sd, sd2['a'] is sd['a']
+    (True, False)
+    >>> # The configuration is required
+    >>> _StackedDict({'a': 1})
+    Traceback (most recent call last):
+        ...
+    ndict_tools.exception.StackedKeyError: "Missing 'default_setup' argument...
 
     Notes
     -----
-    The class maintains two key invariants:
-
-    1. All nested dictionaries are _StackedDict instances (or subclass)
-    2. All instances share the same default_setup configuration
+    - Every argument is copied: an instance of the same class is
+      deep-copied, any other mapping or iterable is converted level by level
+    - The levels built by the constructor receive the configuration of the
+      instance
 
     See Also
     --------
@@ -2035,45 +2059,7 @@ class _StackedDict(defaultdict[Any, Any]):
         **kwargs: Any,
     ) -> None:
         """
-        Initialize a new _StackedDict with configuration and optional data.
-
-        The constructor requires configuration via the 'default_setup' parameter,
-        which must contain at least 'indent' and 'default_factory' keys. Additional
-        initialization data can be provided through args or kwargs.
-
-        Parameters
-        ----------
-        *args : Mapping or iterable of (key, value) pairs
-            Dictionaries, _StackedDict instances, or iterables of (key, value) pairs
-        default_setup : Mapping[str, Any]
-            Configuration with at least 'indent' and 'default_factory' keys.
-            Keyword-only. The mapping is copied, never modified; subclasses
-            complete it through ``_normalize_setup``.
-        **kwargs : Any
-            Direct key-value pairs to initialize
-
-        Raises
-        ------
-        StackedKeyError
-            If 'indent' or 'default_factory' is missing from configuration
-        StackedAttributeError
-            If default_setup contains keys that aren't valid attributes
-
-        Examples
-        --------
-        >>> setup = {'indent': 2, 'default_factory': None}
-        >>> sd = _StackedDict(default_setup=setup)
-        >>> # Initialize with data
-        >>> sd = _StackedDict({'a': 1}, default_setup=setup)
-        >>> # Copy another _StackedDict
-        >>> sd2 = _StackedDict(sd, default_setup=setup)
-
-        Notes
-        -----
-        - Args are processed sequentially, later values override earlier ones
-        - _StackedDict args are deep-copied
-        - Regular dicts are converted to _StackedDict recursively
-        - All configuration is propagated to nested instances
+        Initialize the dictionary; the parameters are described on the class.
         """
 
         # Initialize instance attributes

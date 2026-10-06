@@ -1,7 +1,8 @@
 """
 This module provides specific exception classes for nested dictionaries.
-These exceptions extend the standard **Exception**, **KeyError** and **AttributeError** classes
-to provide more context and better error handling for nested dictionary operations.
+These exceptions extend the standard **Exception**, **KeyError**, **AttributeError**,
+**TypeError**, **ValueError** and **IndexError** classes to provide more context and
+better error handling for nested dictionary operations.
 """
 
 from typing import Any
@@ -13,6 +14,17 @@ class StackedDictionaryError(Exception):
 
     This is the parent class for all exceptions related to stacked dictionaries.
     It provides context about the error including an optional error code.
+
+    Parameters
+    ----------
+    message : str, optional
+        Message describing the error.
+    error_code : int, optional
+        Integer code identifying the error type, 0 by default.
+    path : list[Any], optional
+        Path in the nested dictionary where the error occurred, stored in
+        ``path``. ``" (at path: k1 | k2)"`` is appended to the message, or
+        the message becomes ``"Error at path: k1 | k2"`` when there is none.
     """
 
     def __init__(
@@ -22,14 +34,7 @@ class StackedDictionaryError(Exception):
         path: list[Any] | None = None,
     ) -> None:
         """
-        Initialize a StackedDictionaryError.
-
-        :param message: A message describing the error.
-        :type message: str
-        :param error_code: An integer code identifying the error type.
-        :type error_code: int
-        :param path: The path in the nested dictionary where the error occurred.
-        :type path: list[Any]
+        Initialize the exception; the parameters are described on the class.
         """
         self.error_code: int = error_code
         self.path: list[Any] = path or []
@@ -52,6 +57,17 @@ class NestedDictionaryException(StackedDictionaryError):
 
     This exception is raised when a nested dictionary operation fails
     but doesn't fall into a more specific error category.
+
+    Parameters
+    ----------
+    message : str, optional
+        Message describing the error.
+    error_code : int, optional
+        Integer code identifying the error type, 0 by default.
+    path : list[Any], optional
+        Path in the nested dictionary where the error occurred, stored in
+        ``path``. ``" (at path: k1 | k2)"`` is appended to the message, or
+        the message becomes ``"Error at path: k1 | k2"`` when there is none.
     """
 
     def __init__(
@@ -61,14 +77,7 @@ class NestedDictionaryException(StackedDictionaryError):
         path: list[Any] | None = None,
     ) -> None:
         """
-        Initialize a NestedDictionaryException.
-
-        :param message: A message describing the error.
-        :type message: str
-        :param error_code: An integer code identifying the error type.
-        :type error_code: int
-        :param path: The path in the nested dictionary where the error occurred.
-        :type path: list[Any]
+        Initialize the exception; the parameters are described on the class.
         """
         super().__init__(message, error_code, path)
 
@@ -79,6 +88,17 @@ class StackedKeyError(KeyError, StackedDictionaryError):
 
     This exception is raised for key-related errors such as missing keys,
     invalid key types, or operations that cannot be performed on certain keys.
+
+    Parameters
+    ----------
+    message : str, optional
+        Message describing the error.
+    key : Any, optional
+        Key that caused the error. When given with a message,
+        ``" (key: <key>)"`` is appended to the message.
+    path : list[Any], optional
+        Path in the nested dictionary where the error occurred, stored in
+        ``path``. It is not added to the message.
     """
 
     def __init__(
@@ -88,14 +108,7 @@ class StackedKeyError(KeyError, StackedDictionaryError):
         path: list[Any] | None = None,
     ) -> None:
         """
-        Initialize a StackedKeyError.
-
-        :param message: A message describing the error.
-        :type message: str
-        :param key: The key that caused the error.
-        :type key: Any
-        :param path: The path in the nested dictionary where the error occurred.
-        :type path: list[Any]
+        Initialize the exception; the parameters are described on the class.
         """
         self.key: Any = key
 
@@ -113,6 +126,17 @@ class StackedAttributeError(AttributeError, StackedDictionaryError):
 
     This exception is raised when attempting to access or modify attributes
     that don't exist or cannot be modified in the current context.
+
+    Parameters
+    ----------
+    message : str, optional
+        Message describing the error.
+    attribute : str, optional
+        Attribute that caused the error. When given with a message,
+        ``" (attribute: <attribute>)"`` is appended to the message.
+    path : list[Any], optional
+        Path in the nested dictionary where the error occurred, stored in
+        ``path``. It is not added to the message.
     """
 
     def __init__(
@@ -122,14 +146,7 @@ class StackedAttributeError(AttributeError, StackedDictionaryError):
         path: list[Any] | None = None,
     ) -> None:
         """
-        Initialize a StackedAttributeError.
-
-        :param message: A message describing the error.
-        :type message: str
-        :param attribute: The attribute that caused the error.
-        :type attribute: str
-        :param path: The path in the nested dictionary where the error occurred.
-        :type path: list[Any]
+        Initialize the exception; the parameters are described on the class.
         """
         self.attribute: str | None = attribute
 
@@ -147,6 +164,19 @@ class StackedTypeError(TypeError, StackedDictionaryError):
 
     This exception is raised when an operation receives an argument of the wrong type,
     such as using nested lists as keys or attempting to perform operations on incompatible types.
+
+    Parameters
+    ----------
+    message : str, optional
+        Message describing the error.
+    expected_type : type, optional
+        Type expected by the operation.
+    actual_type : type, optional
+        Type actually provided. When both types are given with a message,
+        ``" (expected: <name>, got: <name>)"`` is appended to the message.
+    path : list[Any], optional
+        Path in the nested dictionary where the error occurred, stored in
+        ``path``. It is not added to the message.
     """
 
     def __init__(
@@ -157,16 +187,7 @@ class StackedTypeError(TypeError, StackedDictionaryError):
         path: list[Any] | None = None,
     ) -> None:
         """
-        Initialize a StackedTypeError.
-
-        :param message: A message describing the error.
-        :type message: str
-        :param expected_type: The expected type for the operation.
-        :type expected_type: type | None
-        :param actual_type: The actual type that was provided.
-        :type actual_type: type | None
-        :param path: The path in the nested dictionary where the error occurred.
-        :type path: list[Any]
+        Initialize the exception; the parameters are described on the class.
         """
         self.expected_type: type | None = expected_type
         self.actual_type: type | None = actual_type
@@ -185,6 +206,17 @@ class StackedValueError(ValueError, StackedDictionaryError):
 
     This exception is raised when an operation receives a value that is semantically
     inappropriate, such as a value that cannot be found in the dictionary.
+
+    Parameters
+    ----------
+    message : str, optional
+        Message describing the error.
+    value : Any, optional
+        Value that caused the error. When given with a message,
+        ``" (value: <value>)"`` is appended to the message.
+    path : list[Any], optional
+        Path in the nested dictionary where the error occurred, stored in
+        ``path``. It is not added to the message.
     """
 
     def __init__(
@@ -194,14 +226,7 @@ class StackedValueError(ValueError, StackedDictionaryError):
         path: list[Any] | None = None,
     ) -> None:
         """
-        Initialize a StackedValueError.
-
-        :param message: A message describing the error.
-        :type message: str
-        :param value: The value that caused the error.
-        :type value: Any
-        :param path: The path in the nested dictionary where the error occurred.
-        :type path: list[Any]
+        Initialize the exception; the parameters are described on the class.
         """
         self.value: Any = value
 
@@ -219,18 +244,21 @@ class StackedIndexError(IndexError, StackedDictionaryError):
 
     This exception is raised when attempting to access an empty dictionary
     or when an operation cannot be performed due to the dictionary being empty.
+
+    Parameters
+    ----------
+    message : str, optional
+        Message describing the error.
+    path : list[Any], optional
+        Path in the nested dictionary where the error occurred, stored in
+        ``path``. It is not added to the message.
     """
 
     def __init__(
         self, message: str | None = None, path: list[Any] | None = None
     ) -> None:
         """
-        Initialize a StackedIndexError.
-
-        :param message: A message describing the error.
-        :type message: str
-        :param path: The path in the nested dictionary where the error occurred.
-        :type path: list[Any]
+        Initialize the exception; the parameters are described on the class.
         """
         StackedDictionaryError.__init__(self, message, 0, path)
         IndexError.__init__(self, message)

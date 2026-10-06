@@ -35,7 +35,9 @@ templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # autodoc
-autoclass_content = "both"
+# Class docstrings only: each class documents its parameters, so the private
+# __init__ of _StackedDict does not appear on the pages of the public classes.
+autoclass_content = "class"
 autodoc_member_order = "bysource"
 autosummary_generate = True
 
