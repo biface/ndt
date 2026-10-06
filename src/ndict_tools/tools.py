@@ -200,6 +200,10 @@ def from_dict(
     """
     Recursively convert a standard dictionary to a _StackedDict or subclass.
 
+    .. deprecated:: 1.1.0
+       Removed in 1.5.0. Use the class method instead:
+       ``NestedDictionary.from_dict(dictionary, default_setup={...})``.
+
     This function transforms a regular nested dictionary into a _StackedDict-based
     structure, preserving the hierarchical organization while adding the enhanced
     functionality of _StackedDict. It can instantiate any _StackedDict subclass
@@ -232,10 +236,13 @@ def from_dict(
 
     Examples
     --------
+    >>> import warnings
     >>> setup = {'default_setup': {'indent': 2, 'default_factory': None}}
-    >>> sdict = from_dict({'a': {'b': 1}}, _StackedDict, **setup)
-    >>> type(sdict)
-    <class '_StackedDict'>
+    >>> with warnings.catch_warnings():
+    ...     warnings.simplefilter('ignore', DeprecationWarning)
+    ...     sdict = from_dict({'a': {'b': 1}}, _StackedDict, **setup)
+    >>> type(sdict).__name__
+    '_StackedDict'
     >>> sdict['a']['b']
     1
 
@@ -483,7 +490,8 @@ class _HKey:
         Examples
         --------
         >>> node = _HKey('parent')
-        >>> node.add_child('child')
+        >>> node.add_child('child')  # Returns the new node
+        _HKey(key='child', children=0)
         >>> child = node.get_child('child')
         >>> child.key
         'child'
@@ -508,7 +516,9 @@ class _HKey:
         --------
         >>> node = _HKey('parent')
         >>> node.add_child('a')
+        _HKey(key='a', children=0)
         >>> node.add_child('b')
+        _HKey(key='b', children=0)
         >>> sorted(node.get_child_keys())
         ['a', 'b']
         """
@@ -1747,7 +1757,9 @@ class _HKey:
         >>> root = _HKey('a')
         >>> b = root.add_child('b')
         >>> b.add_child('c').add_child('d').add_child('e')
+        _HKey(key='e', children=0)
         >>> root.add_child('f')
+        _HKey(key='f', children=0)
         >>> root.is_balanced(threshold=1)
         False
 
@@ -1798,6 +1810,7 @@ class _HKey:
         >>> b = root.add_child('b')
         >>> c = root.add_child('c')
         >>> b.add_child('d').add_child('e')  # Deep subtree
+        _HKey(key='e', children=0)
         >>> root.get_balance_factor()
         2
 
@@ -1823,8 +1836,9 @@ class _HKey:
         Examples
         --------
         >>> root = _HKey.build_forest({'a': {'b': 1, 'c': 2}})
+        >>> # One node with two children, two nodes without children
         >>> root.count_nodes_by_degree()
-        {2: 1, 0: 2}  # One node with 2 children, two nodes with 0 children
+        {2: 1, 0: 2}
 
         Notes
         -----
