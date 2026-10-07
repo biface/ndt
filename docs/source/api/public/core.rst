@@ -11,7 +11,6 @@ Dictionary classes
 .. autoclass:: ndict_tools.NestedDictionary
    :members:
    :inherited-members: defaultdict, dict
-   :show-inheritance:
 
 .. autoclass:: ndict_tools.StrictNestedDictionary
    :members:
@@ -37,12 +36,10 @@ Path views
 .. autoclass:: ndict_tools.PathsView
    :members:
    :inherited-members: object
-   :show-inheritance:
 
 .. autoclass:: ndict_tools.CompactPathsView
    :members:
    :inherited-members: object
-   :show-inheritance:
 
    Iteration, membership, filtering and navigation work as on
    :class:`~ndict_tools.PathsView`. The members specific to the compact

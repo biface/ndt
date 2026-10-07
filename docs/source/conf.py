@@ -4,6 +4,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 import os
+import re
 import sys
 
 # -- Path setup --------------------------------------------------------------
@@ -40,6 +41,35 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 autoclass_content = "class"
 autodoc_member_order = "bysource"
 autosummary_generate = True
+
+# Public pages show public class names in signatures. The code keeps its
+# annotations on the private base classes, which accept every class of the
+# family, including a future one that does not derive from NestedDictionary.
+# The rewrite applies to objects documented under ``ndict_tools.<Name>`` only;
+# the internal pages (``ndict_tools.tools...``) keep the real annotations.
+_PUBLIC_NAMES = [
+    (re.compile(r"\b(?:ndict_tools\.tools\.)?_StackedDict\b"), "NestedDictionary"),
+    (re.compile(r"\b(?:ndict_tools\.tools\.)?_CPaths\b"), "CompactPathsView"),
+    (re.compile(r"\b(?:ndict_tools\.tools\.)?_Paths\b"), "PathsView"),
+]
+_INTERNAL_MODULES = {"tools", "core", "serialize", "exception", "_compat"}
+
+
+def _public_signature(app, what, name, obj, options, signature, return_annotation):
+    parts = name.split(".")
+    if len(parts) < 2 or parts[0] != "ndict_tools" or parts[1] in _INTERNAL_MODULES:
+        return None
+    for pattern, public in _PUBLIC_NAMES:
+        if signature:
+            signature = pattern.sub(public, signature)
+        if return_annotation:
+            return_annotation = pattern.sub(public, return_annotation)
+    return signature, return_annotation
+
+
+def setup(app):
+    app.connect("autodoc-process-signature", _public_signature)
+
 
 # napoleon (NumPy-style docstrings)
 napoleon_google_docstring = False
