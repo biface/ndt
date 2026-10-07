@@ -21,11 +21,14 @@ msgstr ""
 "Generated-By: Babel 2.18.0\n"
 
 msgid "Concepts"
-msgstr ""
+msgstr "Concepts"
 
 msgid ""
 "This section explains the core ideas behind **ndict-tools** without going"
 " into API details. Each page focuses on a single concept and uses "
 "runnable examples to illustrate it."
 msgstr ""
+"Cette section présente les idées de base de **ndict-tools** sans entrer "
+"dans le détail de l'API. Chaque page traite d'un seul concept et "
+"l'illustre par des exemples exécutables."
 

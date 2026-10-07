@@ -21,19 +21,19 @@ msgstr ""
 "Generated-By: Babel 2.18.0\n"
 
 msgid "Concepts"
-msgstr ""
+msgstr "Concepts"
 
 msgid "Guide"
-msgstr ""
+msgstr "Guide"
 
 msgid "Changelog"
-msgstr ""
+msgstr "Historique des versions"
 
 msgid "API Reference"
-msgstr ""
+msgstr "Référence de l'API"
 
 msgid "Nested Dictionary Tools"
-msgstr ""
+msgstr "Nested Dictionary Tools"
 
 msgid ""
 "**ndict-tools** is a Python library for managing nested dictionaries. It "
@@ -41,4 +41,9 @@ msgid ""
 "representation, and coverage analysis — all absent from the standard "
 ":class:`dict` and :class:`collections.defaultdict`."
 msgstr ""
+"**ndict-tools** est une bibliothèque Python de gestion des dictionnaires "
+"imbriqués. Elle offre l'accès par clé hiérarchique, l'énumération des "
+"chemins, la représentation compacte des chemins et l'analyse de "
+"couverture, que ne proposent ni le :class:`dict` standard ni "
+":class:`collections.defaultdict`."
 
