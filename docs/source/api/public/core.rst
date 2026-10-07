@@ -36,13 +36,16 @@ Path views
 
 .. autoclass:: ndict_tools.PathsView
    :members:
-   :inherited-members: _Paths
+   :inherited-members: object
    :show-inheritance:
 
 .. autoclass:: ndict_tools.CompactPathsView
    :members:
+   :inherited-members: object
    :show-inheritance:
 
-   Methods inherited from :class:`~ndict_tools.PathsView` (iteration,
-   membership, filtering…) are documented on that class. Only the members
-   specific to compact representation are listed here.
+   Iteration, membership, filtering and navigation work as on
+   :class:`~ndict_tools.PathsView`. The members specific to the compact
+   representation are :attr:`structure`, :meth:`expand`,
+   :meth:`expand_structure`, :meth:`is_covering`, :meth:`coverage`,
+   :meth:`missing_paths` and :meth:`uncovered_paths`.

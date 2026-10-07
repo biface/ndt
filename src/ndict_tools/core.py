@@ -220,14 +220,14 @@ class PathsView(_Paths):
     hierarchical paths in nested dictionaries. Provides lazy iteration over all
     paths without storing them in memory.
 
-    This is the public API for working with paths. It inherits all functionality
-    from the internal ``_Paths`` class and ensures that conversions return public
-    class instances.
+    This is the public API for working with paths: its conversions return
+    public class instances.
 
     Parameters
     ----------
-    stacked_dict : NestedDictionary or _StackedDict
-        The nested dictionary to create a view for
+    stacked_dict : NestedDictionary
+        The nested dictionary to create a view for (any class of the
+        NestedDictionary family)
 
     Examples
     --------
@@ -311,13 +311,9 @@ class CompactPathsView(_CPaths):
 
     Parameters
     ----------
-    stacked_dict : NestedDictionary or _StackedDict
-        The nested dictionary to create a compact view for
-
-    Attributes
-    ----------
-    structure : List[Any]
-        The compact representation as nested lists (lazy-built, read/write)
+    stacked_dict : NestedDictionary
+        The nested dictionary to create a compact view for (any class of the
+        NestedDictionary family)
 
     Examples
     --------
@@ -334,7 +330,7 @@ class CompactPathsView(_CPaths):
     >>> cpaths.expand()
     [['a'], ['a', 'b'], ['a', 'c'], ['d']]
 
-    >>> # Can still iterate (inherited from PathsView)
+    >>> # Iterate over the expanded paths, as with PathsView
     >>> list(cpaths)
     [['a'], ['a', 'b'], ['a', 'c'], ['d']]
 
