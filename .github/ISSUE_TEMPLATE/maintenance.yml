@@ -44,9 +44,9 @@ body:
       placeholder: |
         - [ ] `pytest --tb=short` passes
         - [ ] `tox -e ci-quality`: 0 errors (basedpyright, flake8, black, isort, bandit)
-        - [ ] Coverage ≥ threshold defined in `tox.ini`
+        - [ ] Coverage ≥ target defined in `.codecov.yml`
         - [ ] `CHANGELOG.md` updated if necessary
-        - [ ] `requirements*.txt` or `pyproject.toml` committed if a dependency was updated
+        - [ ] `pyproject.toml`, `.tox-config/requirements/` or `docs/source/requirements.txt` committed if a dependency was updated
       render: markdown
     validations:
       required: true

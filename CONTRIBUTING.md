@@ -23,7 +23,7 @@ Maintainers will review your application and contact you to discuss next steps.
 
 ## Prerequisites
 
-- Python 3.10 (baseline version)
+- Python 3.11 (baseline version)
 - [uv](https://docs.astral.sh/uv/) installed system-wide
 - Git
 
@@ -41,7 +41,7 @@ cd ndt
 ### 2. Create the virtual environment
 
 ```bash
-uv venv --python 3.10
+uv venv --python 3.11
 source .venv/bin/activate       # Linux / macOS
 # .venv\Scripts\activate        # Windows
 ```
@@ -111,7 +111,7 @@ feature/*  ──PR──▶  update/X.Y.Z  ──PR──▶  staging/X.Y.Z  �
 | `tox -e basedpyright` | Type checking only |
 | `tox -e flake8` | Linting only |
 | `tox -e bandit` | Security analysis only |
-| `tox -e py310` | Run tests on Python 3.10 |
+| `tox -e py311` | Run tests on Python 3.11 |
 | `tox -e coverage` | Generate coverage report |
 | `tox -e pre-push` | Full workflow before push |
 | `tox -e local` | Alias for `pre-push` |
@@ -121,7 +121,7 @@ feature/*  ──PR──▶  update/X.Y.Z  ──PR──▶  staging/X.Y.Z  �
 | Environment | Purpose |
 |---|---|
 | `ci-quality` | Quality gate (format + lint + type + security) |
-| `ci-tests` | Test matrix runner (Python 3.10–3.14) |
+| `ci-tests` | Test matrix runner (Python 3.11–3.14; 3.15 and 3.14t best effort) |
 
 > **Important:** `ci-quality` and `ci-tests` are designed for GitHub Actions.
 > Use `tox -e pre-push` or `tox -e check` for local verification.
@@ -133,7 +133,7 @@ feature/*  ──PR──▶  update/X.Y.Z  ──PR──▶  staging/X.Y.Z  �
 | Event | Workflow triggered | Outcome |
 |---|---|---|
 | Push to any branch | Python CI - Quality | Quality checks |
-| Quality succeeded | Python CI - Tests | Multi-version tests (3.10–3.14) |
+| Quality succeeded | Python CI - Tests | Multi-version tests (3.11–3.14; 3.15 and 3.14t best effort) |
 | Tests succeeded (staging/**, master) | Python CI - Coverage | Codecov upload |
 | Push tag `vX.Y.Zrc1` | Python CI - Build → Publish TestPyPI | RC on TestPyPI |
 | Push tag `vX.Y.Z` | Python CI - Build → Publish PyPI | Final release on PyPI |

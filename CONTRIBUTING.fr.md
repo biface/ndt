@@ -24,7 +24,7 @@ prochaines étapes.
 
 ## Prérequis
 
-- Python 3.10 (version de référence)
+- Python 3.11 (version de référence)
 - [uv](https://docs.astral.sh/uv/) installé sur le système
 - Git
 
@@ -42,7 +42,7 @@ cd ndt
 ### 2. Créer l'environnement virtuel
 
 ```bash
-uv venv --python 3.10
+uv venv --python 3.11
 source .venv/bin/activate       # Linux / macOS
 # .venv\Scripts\activate        # Windows
 ```
@@ -113,7 +113,7 @@ feature/*  ──PR──▶  update/X.Y.Z  ──PR──▶  staging/X.Y.Z  �
 | `tox -e basedpyright` | Vérification de types uniquement |
 | `tox -e flake8` | Analyse statique uniquement |
 | `tox -e bandit` | Analyse de sécurité uniquement |
-| `tox -e py310` | Tests sur Python 3.10 |
+| `tox -e py311` | Tests sur Python 3.11 |
 | `tox -e coverage` | Génération du rapport de couverture |
 | `tox -e pre-push` | Workflow complet avant push |
 | `tox -e local` | Alias de `pre-push` |
@@ -123,7 +123,7 @@ feature/*  ──PR──▶  update/X.Y.Z  ──PR──▶  staging/X.Y.Z  �
 | Environnement | Usage |
 |---|---|
 | `ci-quality` | Contrôle qualité (format + lint + types + sécurité) |
-| `ci-tests` | Exécution de la matrice de tests (Python 3.10–3.14) |
+| `ci-tests` | Exécution de la matrice de tests (Python 3.11–3.14 ; 3.15 et 3.14t sans garantie) |
 
 > **Important :** `ci-quality` et `ci-tests` sont conçus pour GitHub Actions.
 > Utilisez `tox -e pre-push` ou `tox -e check` pour les vérifications locales.
@@ -135,7 +135,7 @@ feature/*  ──PR──▶  update/X.Y.Z  ──PR──▶  staging/X.Y.Z  �
 | Événement | Workflow déclenché | Résultat |
 |---|---|---|
 | Push sur n'importe quelle branche | Python CI - Quality | Contrôles qualité |
-| Quality réussie | Python CI - Tests | Tests multi-versions (3.10–3.14) |
+| Quality réussie | Python CI - Tests | Tests multi-versions (3.11–3.14 ; 3.15 et 3.14t sans garantie) |
 | Tests réussis (staging/**, master) | Python CI - Coverage | Upload Codecov |
 | Push tag `vX.Y.Zrc1` | Python CI - Build → Publish TestPyPI | RC sur TestPyPI |
 | Push tag `vX.Y.Z` | Python CI - Build → Publish PyPI | Release finale sur PyPI |
