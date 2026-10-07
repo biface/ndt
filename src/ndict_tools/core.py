@@ -34,13 +34,23 @@ class NestedDictionary(_StackedDict):
 
     Examples
     --------
-    >>> NestedDictionary({'first': 1,'second': {'1': "2:1", '2': "2:2", '3': "3:2"}, 'third': 3, 'fourth': 4})
+    >>> from ndict_tools import NestedDictionary
+    >>> # From a dictionary
+    >>> nd1 = NestedDictionary({'first': 1, 'second': {'1': "2:1", '2': "2:2"}, 'third': 3})
+    >>> nd1['second']['2']
+    '2:2'
 
-    >>> NestedDictionary(zip(['first','second', 'third', 'fourth'],
-    ...                  [1, {'1': "2:1", '2': "2:2", '3': "3:2"}, 3, 4]))
+    >>> # From an iterable of (key, value) pairs
+    >>> nd2 = NestedDictionary(zip(['first', 'second', 'third'],
+    ...                            [1, {'1': "2:1", '2': "2:2"}, 3]))
+    >>> nd3 = NestedDictionary([('first', 1), ('second', {'1': "2:1", '2': "2:2"}),
+    ...                         ('third', 3)])
+    >>> nd1 == nd2 == nd3
+    True
 
-    >>> NestedDictionary([('first', 1), ('second', {'1': "2:1", '2': "2:2", '3': "3:2"}),
-    ...                   ('third', 3), ('fourth', 4)])
+    >>> # Nested plain dictionaries become NestedDictionary levels
+    >>> type(nd1['second']).__name__
+    'NestedDictionary'
     """
 
     @classmethod
@@ -75,6 +85,7 @@ class NestedDictionary(_StackedDict):
 
         Examples
         --------
+        >>> from ndict_tools import NestedDictionary
         >>> nd = NestedDictionary({'a': {'b': 1, 'c': 2}, 'd': 3})
         >>> paths = nd.paths()
         >>> list(paths)
@@ -114,6 +125,7 @@ class NestedDictionary(_StackedDict):
 
         Examples
         --------
+        >>> from ndict_tools import NestedDictionary
         >>> nd = NestedDictionary({'a': {'b': 1, 'c': 2}, 'd': 3})
         >>> cpaths = nd.compact_paths()
         >>> cpaths.structure
@@ -231,6 +243,7 @@ class PathsView(_Paths):
 
     Examples
     --------
+    >>> from ndict_tools import NestedDictionary
     >>> nd = NestedDictionary({'a': {'b': 1, 'c': 2}, 'd': 3})
     >>> paths = nd.paths()
     >>> type(paths).__name__
@@ -283,6 +296,7 @@ class PathsView(_Paths):
 
         Examples
         --------
+        >>> from ndict_tools import NestedDictionary
         >>> nd = NestedDictionary({'a': {'b': 1, 'c': 2}, 'd': 3})
         >>> paths = nd.paths()
         >>> compact = paths.to_compact()
@@ -317,6 +331,7 @@ class CompactPathsView(_CPaths):
 
     Examples
     --------
+    >>> from ndict_tools import NestedDictionary, PathsView
     >>> nd = NestedDictionary({'a': {'b': 1, 'c': 2}, 'd': 3})
     >>> cpaths = nd.compact_paths()
     >>> type(cpaths).__name__
@@ -384,6 +399,7 @@ class CompactPathsView(_CPaths):
 
         Examples
         --------
+        >>> from ndict_tools import NestedDictionary
         >>> nd = NestedDictionary({'a': {'b': 1, 'c': 2}, 'd': 3})
         >>> cpaths = nd.compact_paths()
         >>> paths = cpaths.to_paths()

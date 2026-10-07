@@ -2117,10 +2117,10 @@ class _StackedDict(defaultdict[Any, Any]):
     @classmethod
     def from_dict(cls, dictionary: dict[Any, Any], **class_options: Any) -> Self:
         """
-        Recursively convert a standard dictionary to a ``_StackedDict`` or subclass.
+        Recursively convert a standard dictionary to a nested dictionary of this class.
 
-        Alternative constructor that transforms a regular nested dictionary into a
-        ``_StackedDict``-based structure. The target class is ``cls`` itself,
+        Alternative constructor that transforms a regular nested dictionary into
+        an instance of the class it is called on. The target class is ``cls`` itself,
         eliminating the need to pass the class explicitly and preventing errors
         in recursive calls.
 
@@ -2144,7 +2144,7 @@ class _StackedDict(defaultdict[Any, Any]):
         ------
         StackedKeyError
             If ``default_setup`` is missing and ``cls`` defines no default
-            configuration (the base ``_StackedDict`` does not).
+            configuration.
 
         Examples
         --------
@@ -2159,7 +2159,8 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Notes
         -----
-        - Already-instantiated ``_StackedDict`` values are preserved as-is.
+        - Values that are already nested dictionaries of the family are
+          preserved as-is.
         - Regular ``dict`` values are recursively converted using ``cls``.
         - Non-dict values are assigned directly.
 
@@ -2251,7 +2252,7 @@ class _StackedDict(defaultdict[Any, Any]):
     @classmethod
     def from_json(cls, path: str | Path, **class_options: Any) -> Self:
         """
-        Reconstruct a ``_StackedDict`` (or subclass) from a JSON file.
+        Reconstruct a nested dictionary of this class from a JSON file.
 
         Keys written in square brackets by ``to_json`` are decoded back to
         their original Python types; escaped string keys lose their escape.
@@ -2347,7 +2348,7 @@ class _StackedDict(defaultdict[Any, Any]):
         **class_options: Any,
     ) -> Self:
         """
-        Reconstruct a ``_StackedDict`` (or subclass) from a pickle file.
+        Reconstruct a nested dictionary of this class from a pickle file.
 
         Parameters
         ----------
@@ -2536,9 +2537,10 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict(default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.default_setup
-        [('indent', 2), ('default_factory', None)]
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary()
+        >>> nd.default_setup
+        [('indent', 0), ('default_factory', <class 'ndict_tools.core.NestedDictionary'>)]
 
         See Also
         --------
@@ -2568,8 +2570,7 @@ class _StackedDict(defaultdict[Any, Any]):
         Replace the configuration and propagate it to every nested level.
 
         The new configuration is validated and normalized as in ``__init__``,
-        then applied to this instance and to all nested ``_StackedDict``
-        levels, which keeps the invariant that all levels share the same
+        then applied to this instance and to all its nested levels, which keeps the invariant that all levels share the same
         configuration. Each level normalizes it through its own class.
 
         Parameters
@@ -2586,9 +2587,10 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.default_setup = {'indent': 4, 'default_factory': None}
-        >>> sd.indent, sd['a'].indent
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}})
+        >>> nd.default_setup = {'indent': 4, 'default_factory': NestedDictionary}
+        >>> nd.indent, nd['a'].indent
         (4, 4)
         """
         self._propagate_setup(type(self)._normalize_setup(value), set())
@@ -2651,7 +2653,7 @@ class _StackedDict(defaultdict[Any, Any]):
     @override
     def __copy__(self) -> Self:
         """
-        Create a shallow copy of the _StackedDict.
+        Create a shallow copy of the nested dictionary.
 
         Creates a new _StackedDict with the same keys and values, but values
         are not recursively copied. Nested _StackedDict instances are referenced,
@@ -2685,7 +2687,7 @@ class _StackedDict(defaultdict[Any, Any]):
 
     def __deepcopy__(self, memo: dict[int, object] | None = None) -> Self:
         """
-        Create a deep copy of the _StackedDict.
+        Create a deep copy of the nested dictionary.
 
         Implements the ``copy.deepcopy`` protocol. Every key and value is
         copied recursively, including mutable leaf values such as lists, so
@@ -2991,7 +2993,7 @@ class _StackedDict(defaultdict[Any, Any]):
         """
         Check equality: same class, configuration, and content.
 
-        Two _StackedDict instances are equal if they have:
+        Two nested dictionaries are equal if they have:
         1. Identical class type (exact match, not subclasses)
         2. Identical default_setup configuration
         3. Identical dictionary structure and values
@@ -3043,7 +3045,7 @@ class _StackedDict(defaultdict[Any, Any]):
         Check if two nested dictionaries are isomorphic.
 
         Two structures are isomorphic if they:
-        1. Are both _StackedDict instances (any class of the family)
+        1. Are both nested dictionaries (any class of the family)
         2. Have identical dictionary content (keys and values)
 
         They describe the same nested structure, up to the choice of class:
@@ -3059,7 +3061,7 @@ class _StackedDict(defaultdict[Any, Any]):
         Returns
         -------
         bool
-            True if both are _StackedDict with same content
+            True if both are nested dictionaries with the same content
 
         Examples
         --------
@@ -3090,8 +3092,8 @@ class _StackedDict(defaultdict[Any, Any]):
         Check if two structures have the same content, whatever holds it.
 
         Two structures are similar if they represent the same nested
-        dictionary content, regardless of whether they are _StackedDict
-        instances or plain dicts. Class and configuration are ignored.
+        dictionary content, regardless of whether they are nested
+        dictionaries of the family or plain dicts. Class and configuration are ignored.
 
         Parameters
         ----------
@@ -3197,7 +3199,7 @@ class _StackedDict(defaultdict[Any, Any]):
         See Also
         --------
         unpacked_items : Get (path, value) pairs
-        paths : Get paths as _Paths view object
+        paths : Get the paths as a view object
         """
 
         for key, value in unpack_items(self):
@@ -3239,8 +3241,8 @@ class _StackedDict(defaultdict[Any, Any]):
         """
         Convert to a standard nested dictionary.
 
-        Recursively converts the _StackedDict and all nested _StackedDict
-        instances to regular Python dictionaries, removing all special
+        Recursively converts the nested dictionary and all its nested levels
+        to regular Python dictionaries, removing all special
         functionality but preserving the structure.
 
         Returns
@@ -3260,14 +3262,14 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Notes
         -----
-        - All _StackedDict instances are converted recursively
+        - All nested levels are converted recursively
         - Other value types are preserved as-is
         - Inverse operation of from_dict()
 
         See Also
         --------
-        from_dict : Convert dict to _StackedDict
-        __deepcopy__ : Create _StackedDict copy
+        from_dict : Convert a dict to a nested dictionary
+        deepcopy : Create a deep copy
         """
 
         unpacked_dict = {}
@@ -3281,7 +3283,7 @@ class _StackedDict(defaultdict[Any, Any]):
     @override
     def copy(self) -> Self:
         """
-        Create a shallow copy of the _StackedDict.
+        Create a shallow copy of the nested dictionary.
 
         Returns
         -------
@@ -3306,7 +3308,7 @@ class _StackedDict(defaultdict[Any, Any]):
 
     def deepcopy(self) -> Self:
         """
-        Create a deep copy of the _StackedDict.
+        Create a deep copy of the nested dictionary.
 
         Creates a completely independent copy where all nested structures
         and mutable leaf values are recursively duplicated. Equivalent to
@@ -3514,18 +3516,18 @@ class _StackedDict(defaultdict[Any, Any]):
         **kwargs: Any,
     ) -> None:
         """
-        Update _StackedDict with key/value pairs from mapping, iterable, or kwargs.
+        Update the nested dictionary with key/value pairs from mapping, iterable, or kwargs.
 
         Merges the provided mapping, iterable of key-value pairs, or keyword
-        arguments into this _StackedDict, converting regular dicts to _StackedDict
-        instances recursively while preserving existing _StackedDict values.
-        Inserted _StackedDict values keep their identity and receive this
-        instance's configuration through the ``default_setup`` setter.
+        arguments into this nested dictionary, converting regular dicts to
+        nested levels recursively while preserving the nested dictionaries
+        already given. Those keep their identity and receive this instance's
+        configuration through the ``default_setup`` setter.
 
         Parameters
         ----------
         m : SupportsKeysAndGetItem or Iterable[tuple[Any, Any]], optional
-            Positional-only. A mapping (dict, _StackedDict), any object with
+            Positional-only. A mapping (dict, nested dictionary), any object with
             ``keys()`` and ``__getitem__``, or an iterable of (key, value)
             tuples to merge, as accepted by ``dict.update``. If None, only
             kwargs are used.
@@ -3559,12 +3561,12 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Notes
         -----
-        - Accepts mappings (dict, _StackedDict, etc.) and any object with
+        - Accepts mappings (dict, nested dictionary, etc.) and any object with
           ``keys()`` and ``__getitem__``
         - Accepts iterables of (key, value) tuples
         - Accepts keyword arguments
-        - Regular dicts are converted to _StackedDict recursively
-        - _StackedDict values are accepted directly with synchronized config
+        - Regular dicts are converted to nested levels recursively
+        - Nested dictionaries are accepted directly with synchronized config
         - Configuration is synchronized across all nested instances
         - Later values override earlier ones for duplicate keys
 
@@ -3572,7 +3574,7 @@ class _StackedDict(defaultdict[Any, Any]):
         --------
         __init__ : Initialization with data
         __setitem__ : set individual items
-        from_dict : Convert dict to _StackedDict
+        from_dict : Convert a dict to a nested dictionary
         """
 
         # Handle mapping or iterable argument
@@ -4015,7 +4017,6 @@ class _StackedDict(defaultdict[Any, Any]):
         See Also
         --------
         dfs : Depth-first traversal
-        _HKey.bfs : Tree-based BFS traversal
         """
 
         queue: deque[tuple[tuple[Any, ...], _StackedDict]] = deque(
@@ -4150,7 +4151,7 @@ class _StackedDict(defaultdict[Any, Any]):
         -----
         - Returns values in DFS order
         - Empty dictionaries are considered leaf values
-        - Plain dicts (not _StackedDict) are also leaves
+        - Plain dicts (not nested dictionaries of the family) are also leaves
 
         See Also
         --------
@@ -4200,7 +4201,6 @@ class _StackedDict(defaultdict[Any, Any]):
         See Also
         --------
         height : Get maximum depth
-        _HKey.is_balanced : Tree-based balance check
         """
 
         def check_balance(node: Any) -> tuple[int, bool]:
@@ -4842,15 +4842,16 @@ class _CPaths(_Paths):
         set or build the compact structure representation.
 
         Accepts the following input types:
-        - _StackedDict (or dict): the source nested mapping to analyze
-        - _HKey: an already-built hierarchical key tree
+
+        - a nested dictionary or a plain dict: the source nested mapping to
+          analyze
         - list[Any]: a compact structure as nested lists
 
         Parameters
         ----------
-        value : _StackedDict, dict, _HKey or list[Any]
-            Input used to define the structure. A plain dict is wrapped in a
-            _StackedDict with ``{'indent': 0, 'default_factory': None}``.
+        value : nested dictionary, dict or list[Any]
+            Input used to define the structure. A plain dict is analyzed as a
+            nested dictionary that creates no level on read.
 
         Raises
         ------
@@ -4868,16 +4869,10 @@ class _CPaths(_Paths):
         >>> c_paths.expand()
         [['a'], ['d']]
 
-        >>> # From a stacked dict
+        >>> # From a nested dictionary
         >>> c_paths.structure = NestedDictionary({'a': {'b': 1}, 'd': 2})
         >>> c_paths.expand()
         [['a'], ['a', 'b'], ['d']]
-
-        >>> # From an _HKey
-        >>> hk = _HKey.build_forest({'x': {'y': {'z': 1}}})
-        >>> c_paths.structure = hk
-        >>> c_paths.expand()
-        [['x'], ['x', 'y'], ['x', 'y', 'z']]
         """
         # Case 1: _StackedDict or dict
         if isinstance(value, _StackedDict) or isinstance(value, dict):
@@ -4985,16 +4980,17 @@ class _CPaths(_Paths):
 
         Examples
         --------
+        >>> from ndict_tools import CompactPathsView
         >>> structure = ['a', ['b', 'c', 'd']]
-        >>> _CPaths.expand_structure(structure)
+        >>> CompactPathsView.expand_structure(structure)
         [['a'], ['b'], ['b', 'c'], ['b', 'd']]
 
         >>> # Inside a node list, a nested list is a chain, not siblings
-        >>> _CPaths.expand_structure([['b', ['c', 'd']]])
+        >>> CompactPathsView.expand_structure([['b', ['c', 'd']]])
         [['b'], ['b', 'c'], ['b', 'c', 'd']]
 
         >>> structure = [['x', ['y', 'z1', 'z2'], 'a']]
-        >>> _CPaths.expand_structure(structure)
+        >>> CompactPathsView.expand_structure(structure)
         [['x'], ['x', 'y'], ['x', 'y', 'z1'], ['x', 'y', 'z2'], ['x', 'a']]
         """
         all_paths = []
@@ -5130,7 +5126,7 @@ class _CPaths(_Paths):
 
     def is_covering(self, stacked_dict: "_StackedDict") -> bool:
         """
-        Check if this _CPaths describes exactly the paths of a _StackedDict.
+        Check if this view describes exactly the paths of a nested dictionary.
 
         With S the set of paths expanded from this structure and T the set of
         paths of ``stacked_dict``, the result is ``S == T``. It is stricter
@@ -5140,8 +5136,8 @@ class _CPaths(_Paths):
 
         Parameters
         ----------
-        stacked_dict : _StackedDict
-            The _StackedDict to compare against
+        stacked_dict : NestedDictionary
+            The nested dictionary to compare against (any class of the family)
 
         Returns
         -------
@@ -5168,9 +5164,9 @@ class _CPaths(_Paths):
 
         Notes
         -----
-        For a _CPaths created directly from a _StackedDict:
-        _CPaths(sdict).is_covering(sdict) will ALWAYS return True
-        because the compact structure is built from all paths in sdict.
+        For a view created from the nested dictionary it is compared with:
+        ``nd.compact_paths().is_covering(nd)`` always returns True
+        because the compact structure is built from all paths in nd.
         """
         target_paths = list(_Paths(stacked_dict))
         expanded_paths = self.expand()
@@ -5179,7 +5175,7 @@ class _CPaths(_Paths):
 
     def coverage(self, stacked_dict: "_StackedDict") -> float:
         """
-        Calculate the share of the paths of a _StackedDict found in this _CPaths.
+        Calculate the share of the paths of a nested dictionary found in this view.
 
         With S the set of paths expanded from this structure and T the set of
         paths of ``stacked_dict``, coverage is ``len(S & T) / len(T)``. Paths
@@ -5189,8 +5185,8 @@ class _CPaths(_Paths):
 
         Parameters
         ----------
-        stacked_dict : _StackedDict
-            The _StackedDict to compare against
+        stacked_dict : NestedDictionary
+            The nested dictionary to compare against (any class of the family)
 
         Returns
         -------
@@ -5217,9 +5213,9 @@ class _CPaths(_Paths):
 
         Notes
         -----
-        For a _CPaths created directly from a _StackedDict:
-        _CPaths(sdict).coverage(sdict) will ALWAYS return 1.0
-        because all paths from sdict are included.
+        For a view created from the nested dictionary it is compared with:
+        ``nd.compact_paths().coverage(nd)`` always returns 1.0
+        because all paths from nd are included.
 
         Use ``missing_paths()`` to list the extra paths and ``is_covering()``
         to check that the two sets are equal.
@@ -5238,21 +5234,21 @@ class _CPaths(_Paths):
 
     def missing_paths(self, stacked_dict: "_StackedDict") -> list[list[Any]]:
         """
-        Get paths from this _CPaths that are NOT in the _StackedDict.
+        Get paths from this view that are NOT in the nested dictionary.
 
-        Returns the list of paths that exist in this _CPaths's expanded form
-        but do not exist in the target _StackedDict. Useful for identifying
+        Returns the list of paths that exist in this view's expanded form
+        but do not exist in the target nested dictionary. Useful for identifying
         extra or invalid paths.
 
         Parameters
         ----------
-        stacked_dict : _StackedDict
-            The _StackedDict to compare against
+        stacked_dict : NestedDictionary
+            The nested dictionary to compare against (any class of the family)
 
         Returns
         -------
         list[list[Any]]
-            list of paths in _CPaths but not in stacked_dict
+            list of paths in this view but not in stacked_dict
 
         Examples
         --------
@@ -5269,13 +5265,13 @@ class _CPaths(_Paths):
 
         Notes
         -----
-        For a _CPaths created directly from a _StackedDict:
-        _CPaths(sdict).missing_paths(sdict) will ALWAYS return []
-        because all paths are derived from sdict.
+        For a view created from the nested dictionary it is compared with:
+        ``nd.compact_paths().missing_paths(nd)`` always returns []
+        because all paths are derived from nd.
 
         See Also
         --------
-        uncovered_paths : Get paths in _StackedDict not covered by _CPaths
+        uncovered_paths : Get paths in the nested dictionary not covered by this view
         """
         target_paths = list(_Paths(stacked_dict))
         expanded_paths = self.expand()
@@ -5289,21 +5285,21 @@ class _CPaths(_Paths):
 
     def uncovered_paths(self, stacked_dict: "_StackedDict") -> list[list[Any]]:
         """
-        Get paths from _StackedDict that are NOT covered by this _CPaths.
+        Get paths from the nested dictionary that are NOT covered by this view.
 
-        Returns the list of paths that exist in the target _StackedDict but
-        are not present in this _CPaths's expanded form. Useful for identifying
+        Returns the list of paths that exist in the target nested dictionary but
+        are not present in this view's expanded form. Useful for identifying
         gaps in coverage.
 
         Parameters
         ----------
-        stacked_dict : _StackedDict
-            The _StackedDict to compare against
+        stacked_dict : NestedDictionary
+            The nested dictionary to compare against (any class of the family)
 
         Returns
         -------
         list[list[Any]]
-            list of paths in stacked_dict but not in _CPaths
+            list of paths in stacked_dict but not in this view
 
         Examples
         --------
@@ -5320,13 +5316,13 @@ class _CPaths(_Paths):
 
         Notes
         -----
-        For a _CPaths created directly from a _StackedDict:
-        _CPaths(sdict).uncovered_paths(sdict) will ALWAYS return []
-        because all paths from sdict are included.
+        For a view created from the nested dictionary it is compared with:
+        ``nd.compact_paths().uncovered_paths(nd)`` always returns []
+        because all paths from nd are included.
 
         See Also
         --------
-        missing_paths : Get paths in _CPaths not in _StackedDict
+        missing_paths : Get paths in this view not in the nested dictionary
         coverage : Get coverage ratio
         """
         target_paths = list(_Paths(stacked_dict))
