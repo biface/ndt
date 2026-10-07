@@ -194,7 +194,15 @@ Untranslated strings fall back to English.
 3. Fill in the `msgstr` entries of the `.po` files and commit them. The `.mo`
    files are compiled by Sphinx at build time and are not committed.
 
-4. Build the translated documentation:
+4. Check what remains to translate. `-d` is required when the command runs
+   from the repository root: without it, sphinx-intl looks for `conf.py` in
+   the current directory and fails with a `TypeError`.
+
+   ```bash
+   sphinx-intl stat -d docs/source/locales -l fr
+   ```
+
+5. Build the translated documentation:
 
    ```bash
    sphinx-build -W -b html -D language=fr docs/source docs/build/html-fr

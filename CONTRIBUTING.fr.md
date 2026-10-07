@@ -198,7 +198,15 @@ s'affichent en anglais.
    fichiers `.mo` sont compilés par Sphinx au moment du build et ne sont pas
    commités.
 
-4. Construire la documentation traduite :
+4. Vérifier ce qu'il reste à traduire. L'option `-d` est obligatoire depuis la
+   racine du dépôt : sans elle, sphinx-intl cherche `conf.py` dans le
+   répertoire courant et échoue avec une `TypeError`.
+
+   ```bash
+   sphinx-intl stat -d docs/source/locales -l fr
+   ```
+
+5. Construire la documentation traduite :
 
    ```bash
    sphinx-build -W -b html -D language=fr docs/source docs/build/html-fr
