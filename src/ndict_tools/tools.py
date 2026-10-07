@@ -4438,12 +4438,12 @@ class _Paths:
     @override
     def __eq__(self, other: Any) -> bool:
         """
-        Compare two DictPaths for set-wise equality (order-independent).
+        Compare two path views for set-wise equality (order-independent).
 
         Parameters
         ----------
         other : Any
-            Another DictPaths or iterable of paths
+            Another path view, or an iterable of paths
 
         Returns
         -------
@@ -4469,12 +4469,12 @@ class _Paths:
     @override
     def __ne__(self, other: Any) -> bool:
         """
-        Check inequality between DictPaths objects.
+        Check inequality between path views.
 
         Parameters
         ----------
         other : Any
-            Another DictPaths or iterable
+            Another path view, or an iterable of paths
 
         Returns
         -------

@@ -84,7 +84,7 @@ compact structure:
     [['a'], ['a', 'b'], ['a', 'c'], ['d']]
 
 Iterating a :class:`~ndict_tools.CompactPathsView` directly yields the same
-result (inherited from :class:`~ndict_tools.PathsView`):
+paths, in the same order as a :class:`~ndict_tools.PathsView`:
 
 .. doctest::
 
