@@ -100,13 +100,24 @@ class StackedKeyError(
         :type path: list[Any]
         """
         self.key: Any = key
+        self.error_code: int = 0
+        self.path: list[Any] = path or []
 
-        # Add key information to the message if available
-        if key is not None and message:
-            message = f"{message} (key: {key})"
+        # Build the child-suffix message
+        child_msg = f"{message} (key: {key})" if key is not None and message else message
+        # Append path (same logic as StackedDictionaryError)
+        if path:
+            path_str = " | ".join(str(k) for k in path)
+            final_msg = (
+                f"{child_msg} (at path: {path_str})"
+                if child_msg
+                else f"Error at path: {path_str}"
+            )
+        else:
+            final_msg = child_msg
 
-        StackedDictionaryError.__init__(self, message, 0, path)
-        KeyError.__init__(self, message)
+        # Bypass builtins' __init__ to avoid overwriting self.args with pre-path message
+        Exception.__init__(self, final_msg)
 
 
 class StackedAttributeError(
@@ -136,13 +147,24 @@ class StackedAttributeError(
         :type path: list[Any]
         """
         self.attribute: str | None = attribute
+        self.error_code: int = 0
+        self.path: list[Any] = path or []
 
-        # Add attribute information to the message if available
-        if attribute and message:
-            message = f"{message} (attribute: {attribute})"
+        # Build the child-suffix message
+        child_msg = f"{message} (attribute: {attribute})" if attribute and message else message
+        # Append path (same logic as StackedDictionaryError)
+        if path:
+            path_str = " | ".join(str(k) for k in path)
+            final_msg = (
+                f"{child_msg} (at path: {path_str})"
+                if child_msg
+                else f"Error at path: {path_str}"
+            )
+        else:
+            final_msg = child_msg
 
-        StackedDictionaryError.__init__(self, message, 0, path)
-        AttributeError.__init__(self, message)
+        # Bypass builtins' __init__ to avoid overwriting self.args with pre-path message
+        Exception.__init__(self, final_msg)
 
 
 class StackedTypeError(
@@ -176,13 +198,24 @@ class StackedTypeError(
         """
         self.expected_type: type | None = expected_type
         self.actual_type: type | None = actual_type
+        self.error_code: int = 0
+        self.path: list[Any] = path or []
 
-        # Add type information to the message if available (Python 3.9+ compatible)
-        if expected_type and actual_type and message:
-            message = f"{message} (expected: {expected_type.__name__}, got: {actual_type.__name__})"
+        # Build the child-suffix message
+        child_msg = f"{message} (expected: {expected_type.__name__}, got: {actual_type.__name__})" if expected_type and actual_type and message else message
+        # Append path (same logic as StackedDictionaryError)
+        if path:
+            path_str = " | ".join(str(k) for k in path)
+            final_msg = (
+                f"{child_msg} (at path: {path_str})"
+                if child_msg
+                else f"Error at path: {path_str}"
+            )
+        else:
+            final_msg = child_msg
 
-        StackedDictionaryError.__init__(self, message, 0, path)
-        TypeError.__init__(self, message)
+        # Bypass builtins' __init__ to avoid overwriting self.args with pre-path message
+        Exception.__init__(self, final_msg)
 
 
 class StackedValueError(
@@ -212,13 +245,24 @@ class StackedValueError(
         :type path: list[Any]
         """
         self.value: Any = value
+        self.error_code: int = 0
+        self.path: list[Any] = path or []
 
-        # Add value information to the message if available
-        if value is not None and message:
-            message = f"{message} (value: {value})"
+        # Build the child-suffix message
+        child_msg = f"{message} (value: {value})" if value is not None and message else message
+        # Append path (same logic as StackedDictionaryError)
+        if path:
+            path_str = " | ".join(str(k) for k in path)
+            final_msg = (
+                f"{child_msg} (at path: {path_str})"
+                if child_msg
+                else f"Error at path: {path_str}"
+            )
+        else:
+            final_msg = child_msg
 
-        StackedDictionaryError.__init__(self, message, 0, path)
-        ValueError.__init__(self, message)
+        # Bypass builtins' __init__ to avoid overwriting self.args with pre-path message
+        Exception.__init__(self, final_msg)
 
 
 class StackedIndexError(
@@ -242,5 +286,19 @@ class StackedIndexError(
         :param path: The path in the nested dictionary where the error occurred.
         :type path: list[Any]
         """
-        StackedDictionaryError.__init__(self, message, 0, path)
-        IndexError.__init__(self, message)
+        self.error_code: int = 0
+        self.path: list[Any] = path or []
+
+        # Append path (same logic as StackedDictionaryError)
+        if path:
+            path_str = " | ".join(str(k) for k in path)
+            final_msg = (
+                f"{message} (at path: {path_str})"
+                if message
+                else f"Error at path: {path_str}"
+            )
+        else:
+            final_msg = message
+
+        # Bypass builtins' __init__ to avoid overwriting self.args with pre-path message
+        Exception.__init__(self, final_msg)
