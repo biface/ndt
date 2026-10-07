@@ -209,7 +209,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   `default_setup` dict passed by the caller. They now work on a copy.
 - **`str(CompactPathsView)`** showed the private class name
   (`_CPaths(3 paths): ...`): the prefix was hard-coded. It now uses the name
-  of the actual class, like `repr()`. Closes #138.
+  of the actual class, like `repr()`. The same defect elsewhere in the public
+  API is corrected: the error messages of `popitem()` on an empty dictionary
+  and of a nested list in a key name the class of the instance
+  (`popitem(): NestedDictionary is empty`), so they follow every subclass;
+  the error of the `structure` setter lists what it accepts in public terms;
+  and `CompactPathsView.to_compact()` returns a `CompactPathsView`, as
+  `PathsView.to_compact()` does, instead of the private class. Closes #138.
 - **`PathsView.get_subtree_paths()`** returned wrong paths for any non-empty
   prefix: the key of the prefix node appeared twice
   (`[['a'], ['a', 'a'], ['a', 'a', 'b'], ...]`). The cause was
@@ -277,7 +283,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   private sentinel now marks the missing default: without a default, a
   missing key or path raises `StackedKeyError` (a `KeyError`); an explicit
   `None` is returned. The test named after the flat case tested a path; it is
-  renamed and the flat case is tested. Closes #155.
+  renamed and the flat case is tested. The sentinel has a readable `repr`, so
+  the documented signature shows `default=<no default>` instead of an object
+  address. Closes #155.
 - **`equal()`** accepted an instance of a subclass in one direction only:
   for a subclass `Inventory` of `NestedDictionary` with the same
   configuration and content, `NestedDictionary(d).equal(Inventory(d))` was

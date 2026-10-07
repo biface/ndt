@@ -55,8 +55,20 @@ T = TypeVar("T", bound="_StackedDict")
 _SetupSource: TypeAlias = Mapping[str, Any] | Iterable[tuple[str, Any]]
 "Accepted by the default_setup setter: a mapping or (key, value) pairs."
 
+
+class _NoDefault:
+    """Type of the sentinel that marks a missing ``default`` argument."""
+
+    __slots__: tuple[()] = ()
+
+    @override
+    def __repr__(self) -> str:
+        return "<no default>"
+
+
 # Marks a missing ``default`` argument, so that ``None`` stays a valid default.
-_MISSING: Any = object()
+# Its repr keeps the documented signature of ``pop()`` readable.
+_MISSING: Any = _NoDefault()
 
 
 def _reconstruct(
@@ -2773,7 +2785,7 @@ class _StackedDict(defaultdict[Any, Any]):
         >>> nd[['a', ['b']]] = 1
         Traceback (most recent call last):
             ...
-        ndict_tools.exception.StackedTypeError: Nested lists are not allowed as keys...
+        ndict_tools.exception.StackedTypeError: Nested lists are not allowed as keys in NestedDictionary. (expected: str, got: list) (at path: a)
 
         Notes
         -----
@@ -2792,7 +2804,7 @@ class _StackedDict(defaultdict[Any, Any]):
             for sub_key in key:
                 if isinstance(sub_key, list):
                     raise StackedTypeError(
-                        "Nested lists are not allowed as keys in _StackedDict.",
+                        f"Nested lists are not allowed as keys in {type(self).__name__}.",
                         expected_type=str,
                         actual_type=list,
                         path=key[: key.index(sub_key)],
@@ -2864,7 +2876,7 @@ class _StackedDict(defaultdict[Any, Any]):
             for sub_key in key:
                 if isinstance(sub_key, list):
                     raise StackedTypeError(
-                        "Nested lists are not allowed as keys in _StackedDict.",
+                        f"Nested lists are not allowed as keys in {type(self).__name__}.",
                         expected_type=str,
                         actual_type=list,
                         path=key[: key.index(sub_key)],
@@ -3464,7 +3476,7 @@ class _StackedDict(defaultdict[Any, Any]):
         >>> NestedDictionary().popitem()
         Traceback (most recent call last):
             ...
-        ndict_tools.exception.StackedIndexError: popitem(): ...
+        ndict_tools.exception.StackedIndexError: popitem(): NestedDictionary is empty
 
         Notes
         -----
@@ -3480,7 +3492,7 @@ class _StackedDict(defaultdict[Any, Any]):
         """
 
         if not self:  # Handle empty dictionary
-            raise StackedIndexError("popitem(): _StackedDict is empty")
+            raise StackedIndexError(f"popitem(): {type(self).__name__} is empty")
 
         # Initialize a stack to traverse the dictionary
         path: list[Any] = []
@@ -4906,7 +4918,7 @@ class _CPaths(_Paths):
             return
 
         raise TypeError(
-            f"Unsupported type for structure: {type(value).__name__}. Expected _StackedDict, _HKey or list."
+            f"Unsupported type for structure: {type(value).__name__}. Expected a nested dictionary, a dict or a list."
         )
 
     def _build_compact_structure(self) -> list[Any]:

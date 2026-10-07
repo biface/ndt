@@ -121,7 +121,7 @@ class TestKeysStrictND:
             (
                 [1, [1, 2]],
                 StackedTypeError,
-                "Nested lists are not allowed as keys in _StackedDict. (expected: str, got: list)",
+                "Nested lists are not allowed as keys in NestedDictionary. (expected: str, got: list)",
             ),
         ],
     )
@@ -755,7 +755,7 @@ class TestKeysSmoothND:
             (
                 [1, [1, 2]],
                 StackedTypeError,
-                "Nested lists are not allowed as keys in _StackedDict. (expected: str, got: list)",
+                "Nested lists are not allowed as keys in NestedDictionary. (expected: str, got: list)",
             ),
         ],
     )

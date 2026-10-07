@@ -1032,7 +1032,7 @@ class TestCPathsInit:
                 "[this [is not [a list]]]",
                 "Structure must be a list, got str",
                 TypeError,
-                "Unsupported type for structure: str. Expected _StackedDict, _HKey or list.",
+                "Unsupported type for structure: str. Expected a nested dictionary, a dict or a list.",
             ),
             (
                 [[1, [2, [3, []]]]],

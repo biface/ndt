@@ -407,3 +407,25 @@ class CompactPathsView(_CPaths):
         'PathsView'
         """
         return PathsView(self._stacked_dict)
+
+    @override
+    def to_compact(self) -> "CompactPathsView":
+        """
+        Return a new CompactPathsView on the same nested dictionary.
+
+        Returns
+        -------
+        CompactPathsView
+            Compact representation with the same paths
+
+        Examples
+        --------
+        >>> from ndict_tools import NestedDictionary
+        >>> cpaths = NestedDictionary({'a': {'b': 1}, 'c': 2}).compact_paths()
+        >>> compact = cpaths.to_compact()
+        >>> type(compact).__name__
+        'CompactPathsView'
+        >>> compact.structure == cpaths.structure
+        True
+        """
+        return CompactPathsView(self._stacked_dict)

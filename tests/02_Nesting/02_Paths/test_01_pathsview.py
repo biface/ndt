@@ -125,7 +125,7 @@ class TestPathStrictSD:
             (
                 [frozenset(["cache", "redis"]), ["config", "memory"]],
                 StackedTypeError,
-                "Nested lists are not allowed as keys in _StackedDict. (expected: str, got: list)",
+                "Nested lists are not allowed as keys in NestedDictionary. (expected: str, got: list)",
             ),
         ],
     )
@@ -140,7 +140,7 @@ class TestPathStrictSD:
             (
                 [1, [1, 2]],
                 StackedTypeError,
-                "Nested lists are not allowed as keys in _StackedDict. (expected: str, got: list)",
+                "Nested lists are not allowed as keys in NestedDictionary. (expected: str, got: list)",
             ),
         ],
     )
@@ -263,7 +263,7 @@ class TestPathSmoothSD:
             (
                 [frozenset(["cache", "redis"]), ["config", "memory"]],
                 StackedTypeError,
-                "Nested lists are not allowed as keys in _StackedDict. (expected: str, got: list)",
+                "Nested lists are not allowed as keys in NestedDictionary. (expected: str, got: list)",
             )
         ],
     )
@@ -278,7 +278,7 @@ class TestPathSmoothSD:
             (
                 [1, [1, 2]],
                 StackedTypeError,
-                "Nested lists are not allowed as keys in _StackedDict. (expected: str, got: list)",
+                "Nested lists are not allowed as keys in NestedDictionary. (expected: str, got: list)",
             ),
         ],
     )

@@ -91,7 +91,7 @@ class TestKeysSmoothNestedDictionary:
             (
                 [1, [1, 2]],
                 StackedTypeError,
-                "Nested lists are not allowed as keys in _StackedDict. (expected: str, got: list)",
+                "Nested lists are not allowed as keys in SmoothNestedDictionary. (expected: str, got: list)",
             ),
         ],
     )
