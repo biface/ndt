@@ -14,7 +14,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **Inline type information (PEP 561).** The package ships a `py.typed`
   marker, so type checkers use its inline annotations instead of treating
   it as untyped. Downstream stubs for `ndict_tools` are no longer needed.
-  Closes #129 (DD-027).
+  Closes #129 ([DD-027](https://github.com/biface/ndt/issues/125)).
 - **`verifytypes` tox environment.** Runs `basedpyright --verifytypes` on the
   installed package; the type completeness of the exported API must stay at
   100%. Included in `pre-push` (hence `local`), `check` and `ci-quality`.
@@ -74,7 +74,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   still raises `StackedKeyError`, now with the message of `_normalize_setup`.
   The deprecated `from_dict()` free function follows the same rule.
   Closes #151.
-- **Type annotations completed on the exported API** (part of #129, DD-027).
+- **Type annotations completed on the exported API** (part of #129, [DD-027](https://github.com/biface/ndt/issues/125)).
   These signatures are now part of the public contract:
   - constructors: `*args: Mapping[Any, Any] | Iterable[tuple[Any, Any]]`,
     `**kwargs: Any`;
@@ -113,7 +113,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   another variant or a non-dictionary object, or a JSON document whose root
   is not an object. Before, the object was returned as is. Instances of a
   subclass are accepted: `NestedDictionary.from_pickle` still returns a
-  pickled `StrictNestedDictionary`. Closes #75 (DD-022 amendment).
+  pickled `StrictNestedDictionary`. Closes #75 ([DD-022](https://github.com/biface/ndt/issues/94) amendment).
 - **`_HKey` tree predicates take an arity `n`, binary by default.**
   `is_complete_tree(n=2)`, `is_perfect_tree(n=2)` and `is_full_tree(n=2)`.
   `is_complete_tree` no longer hard-codes arity 2, and `is_perfect_tree` and
@@ -139,12 +139,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   myst-parser 5.1.0, furo 2025.12.19; `sphinx-intl` 2.4.0 added for the
   translation catalogs. `sphinx-multiversion-contrib` is removed, with its
   extension, its `smv_*` settings and the `versioning.html` sidebar template;
-  versioned builds move to a per-tag archive (DD-028). The build runs without
+  versioned builds move to a per-tag archive ([DD-028](https://github.com/biface/ndt/issues/126)). The build runs without
   warnings. Closes #130.
 - **Read the Docs configuration** moves from `docs/conf/.readthedocs.yaml` to
   `.readthedocs.yaml` at the repository root, the location Read the Docs reads
   by default, and builds with Python 3.11. Read the Docs serves `stable` and
-  `latest` only (DD-028). Part of #132.
+  `latest` only ([DD-028](https://github.com/biface/ndt/issues/126)). Part of #132.
 - **GitHub Pages archive.** `docs-ghpages.yml` no longer runs
   sphinx-multiversion on every push to `master`. It runs when a final
   release tag `vX.Y.Z` is pushed, like the package build and publication
@@ -156,7 +156,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   `docs/source/locales/LANGUAGES` go under `/<lang>/vX.Y.Z/`. The landing
   page lists the archived versions and links to Read the Docs `stable` and
   `latest`, replacing the hard-coded redirect to a `v1.2.0/` build that was
-  never produced (DD-028). Closes #131.
+  never produced ([DD-028](https://github.com/biface/ndt/issues/126)). Closes #131.
 - **Documentation translations (infrastructure).** Sphinx gettext catalogs,
   one per source page, in `docs/source/locales/<lang>/LC_MESSAGES/`
   (`locale_dirs`, `gettext_compact = False`, `gettext_location = False`). A
@@ -164,7 +164,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   back to English. `docs/source/locales/LANGUAGES`, empty for now, lists the
   translations published in the GitHub Pages archive. The extraction, update
   and build steps are documented in `CONTRIBUTING.md` and
-  `CONTRIBUTING.fr.md` (DD-028). Closes #133.
+  `CONTRIBUTING.fr.md` ([DD-028](https://github.com/biface/ndt/issues/126)). Closes #133.
 - **Comparisons (breaking).** `==` is now strict, like `equal()`: same
   class, same `default_setup` and same content. A nested dictionary is no
   longer equal to a plain `dict` with the same content, in either order;
@@ -174,13 +174,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   never true for a plain `dict`; `similar()` compares the content alone and
   accepts a plain `dict`. `equal()` implies `isomorph()`, which implies
   `similar()`. To compare a nested dictionary with a plain `dict`, use
-  `similar()` or `to_dict() ==` (DD-031). Closes #157.
+  `similar()` or `to_dict() ==` ([DD-031](https://github.com/biface/ndt/issues/156)). Closes #157.
 
 ### Removed
 
 - **Root `requirements.txt`, `requirements.dev.txt` and
   `requirements.test.txt`.** No tool or workflow read them; development
-  dependencies are in `.tox-config/requirements/` (DD-025). Part of #130.
+  dependencies are in `.tox-config/requirements/` ([DD-025](https://github.com/biface/ndt/issues/116)). Part of #130.
 
 ### Fixed
 
@@ -314,7 +314,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 - `.tox-config/` — fragmented requirements by role (`base`, `format`, `linter`,
   `security`, `type-check`, `full`) with dedicated scripts `test.sh` and
-  `coverage.sh` for sequential multi-version execution (DD-025).
+  `coverage.sh` for sequential multi-version execution ([DD-025](https://github.com/biface/ndt/issues/116)).
 - `pyproject.toml` — `[project.optional-dependencies]` groups `dev` and `docs`
   enabling `uv sync --extra dev --extra docs` for environment bootstrap.
 - `PUBLISHING.md` — bilingual (FR/EN) publication procedure covering the full
@@ -329,9 +329,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **Build tooling:** virtualenv + pip replaced by
   [uv](https://docs.astral.sh/uv/) for virtual environment management,
   dependency installation, and CI. `tox-uv` adopted as tox provisioner
-  (DD-024). Closes #109.
+  ([DD-024](https://github.com/biface/ndt/issues/115)). Closes #109.
 - **Type checking:** mypy replaced by basedpyright as the sole type checker.
-  `pyrightconfig.json` is the single source of configuration (DD-026).
+  `pyrightconfig.json` is the single source of configuration ([DD-026](https://github.com/biface/ndt/issues/117)).
 - **`tox.ini`** rewritten: new environments `ci-quality`, `ci-tests`,
   `pre-push`, `basedpyright`, `black-check`, `isort-check`, `format`,
   `check`, `coverage`. `local` kept as alias for `pre-push`. `gh-ci`
@@ -371,7 +371,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - `serialize.py` — new private module providing the serialization
   infrastructure (not part of the public API):
   - `_encode_key` / `_decode_key`: JSON key encoding for non-string keys
-    per DD-021 (supports `int`, `float`, `bool`, flat `tuple`,
+    per [DD-021](https://github.com/biface/ndt/issues/87) (supports `int`, `float`, `bool`, flat `tuple`,
     flat `frozenset`).
   - `NestedDictionaryEncoder`: `json.JSONEncoder` subclass used by
     `to_json`.
@@ -386,7 +386,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   `SmoothNestedDictionary.from_dict(...)` are all available without any
   wrapper in `core.py`. Closes #42.
 - `_StackedDict.to_json(path, indent=None)`: serialize to a JSON file.
-  Non-string keys are encoded per DD-021. Closes #43.
+  Non-string keys are encoded per [DD-021](https://github.com/biface/ndt/issues/87). Closes #43.
 - `_StackedDict.from_json(cls, path, **class_options)`: reconstruct from a
   JSON file. `@classmethod`, returns an instance of the calling class.
   Closes #43.
@@ -468,10 +468,16 @@ First stable release.
 
 ---
 
-## [0.8.0] — EoL
+## [0.9.0] — 2025-11-04
 
-End-of-life milestone. Removed deprecated `indent=` and `strict=`
-attributes from `NestedDictionary.__init__`. Use `default_setup=` instead.
+First version kept in the documentation archive; it gathers the work of the
+earlier 0.x releases, which are no longer documented.
+
+- **`default_setup` generalised.** The configuration is given through
+  `default_setup=`; the specific `indent=` and `strict=` attributes of
+  `NestedDictionary.__init__` are removed. Started in 0.8.0, stabilised in
+  0.9.0.
+- **Python versions earlier than 3.9 are no longer supported.**
 
 ---
 
