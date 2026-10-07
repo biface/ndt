@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Nested Dictionary Tools 1.3.0b1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 08:15+0000\n"
+"POT-Creation-Date: 2026-10-07 10:11+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -326,12 +326,13 @@ msgstr ""
 msgid "Node at end of path, or None if path doesn't exist"
 msgstr ""
 
-msgid "Get all paths from this node to all descendants."
+msgid "Get the full paths of every node in the subtree rooted at this node."
 msgstr ""
 
 msgid ""
-"Recursively collects paths to every node in the subtree, including "
-"intermediate nodes and leaves."
+"Paths start at the root of the tree, in depth-first pre-order. On a non-"
+"root node, the first path is the path of the node itself; on the root, "
+"which has no key, only its descendants are listed."
 msgstr ""
 
 msgid "list of all paths in the subtree"
@@ -343,16 +344,30 @@ msgstr ""
 msgid "list of all descendant nodes in DFS order"
 msgstr ""
 
-msgid "Get the depth of this node (distance from root)."
+msgid "Get the depth of this node in the forest of keys."
 msgstr ""
 
-msgid "Depth level (0 for direct children of root)"
+msgid ""
+"A top-level key is the root of its tree and has depth 0; each level below"
+" adds 1. The node returned by :meth:`build_forest`, which holds no key, "
+"also returns 0."
 msgstr ""
 
-msgid "Get the maximum depth of the subtree rooted at this node."
+msgid "Number of edges between this node and the root of its tree"
 msgstr ""
 
-msgid "Maximum depth (0 for leaf nodes)"
+msgid "Get the height of the subtree rooted at this node."
+msgstr ""
+
+msgid ""
+"On a key node, this is the number of edges on the longest path from the "
+"node down to a leaf: 0 for a leaf. On the node returned by "
+":meth:`build_forest`, which holds no key and sits above the top-level "
+"keys, the extra edge makes the result the number of levels of the forest,"
+" that is the greatest depth of a key plus 1 (0 for an empty dictionary)."
+msgstr ""
+
+msgid "Height of the subtree, or number of levels on the forest root"
 msgstr ""
 
 msgid "Iterate over direct child nodes."
@@ -633,10 +648,50 @@ msgstr ""
 msgid "Get all paths in the tree"
 msgstr ""
 
-msgid "Get comprehensive statistics about the tree."
+msgid "Get statistics about the subtree rooted at this node."
 msgstr ""
 
-msgid "Dictionary containing various tree statistics"
+msgid ""
+"Dictionary with the following entries:  - ``total_nodes``: nodes of the "
+"subtree, this node included. On   the node returned by "
+":meth:`build_forest`, the count includes   that node, which holds no key,"
+" so it is the number of keys   plus 1. - ``leaf_count``: nodes without "
+"children. - ``max_depth``: result of :meth:`get_max_depth`, so the number"
+"   of levels of the forest when called on the forest root. - "
+"``avg_branching_factor``: mean number of children of the nodes   that "
+"have children, rounded to 2 decimals. - ``total_paths``: number of paths "
+"returned by   :meth:`get_all_paths`, one per key of the subtree. - "
+"``levels``: number of levels of keys in the subtree."
+msgstr ""
+
+msgid "Dictionary with the following entries:"
+msgstr ""
+
+msgid ""
+"``total_nodes``: nodes of the subtree, this node included. On the node "
+"returned by :meth:`build_forest`, the count includes that node, which "
+"holds no key, so it is the number of keys plus 1."
+msgstr ""
+
+msgid "``leaf_count``: nodes without children."
+msgstr ""
+
+msgid ""
+"``max_depth``: result of :meth:`get_max_depth`, so the number of levels "
+"of the forest when called on the forest root."
+msgstr ""
+
+msgid ""
+"``avg_branching_factor``: mean number of children of the nodes that have "
+"children, rounded to 2 decimals."
+msgstr ""
+
+msgid ""
+"``total_paths``: number of paths returned by :meth:`get_all_paths`, one "
+"per key of the subtree."
+msgstr ""
+
+msgid "``levels``: number of levels of keys in the subtree."
 msgstr ""
 
 msgid "Check if the tree contains cycles (should not in a proper tree)."
@@ -872,7 +927,7 @@ msgstr ""
 msgid "Check if this is a binary tree (all nodes have at most 2 children)."
 msgstr ""
 
-msgid "True if all nodes have 0, 1, or 2 children"
+msgid "True if every node other than the root has 0, 1, or 2 children"
 msgstr ""
 
 msgid "Check if this is a full n-ary tree (binary by default)."
@@ -931,8 +986,8 @@ msgid ""
 msgstr ""
 
 msgid ""
-"**Automatic nesting**: Missing intermediate levels are created "
-"automatically"
+"**Automatic nesting**: Writing through a path creates the missing "
+"intermediate levels"
 msgstr ""
 
 msgid "**Path views**: Access all paths via ``paths()`` and ``compact_paths()``"
@@ -955,40 +1010,59 @@ msgid ""
 " as described in the usage documentation."
 msgstr ""
 
-msgid "Dictionaries or iterables to initialize from"
+msgid ""
+"Dictionaries, ``_StackedDict`` instances, or iterables of (key, value) "
+"pairs. They are processed in order; later values override earlier ones."
 msgstr ""
 
-msgid "Configuration (keyword-only), see ``__init__``"
+msgid ""
+"Configuration with at least 'indent' and 'default_factory' keys. Keyword-"
+"only and required: ``_StackedDict`` has no default configuration. The "
+"mapping is copied, never modified; subclasses complete it through "
+"``_normalize_setup``."
 msgstr ""
 
-msgid "Initialization data"
+msgid "Direct key-value pairs, added after ``args``."
 msgstr ""
 
-msgid "Indentation level for string representation (default: 2)"
+msgid ""
+"If ``default_setup`` is missing, or if 'indent' or 'default_factory'     "
+"is missing from it"
+msgstr ""
+
+msgid "If ``default_setup`` contains keys that aren't valid attributes"
+msgstr ""
+
+msgid "Indentation step of the string representation, set by ``default_setup``"
 msgstr ""
 
 msgid "int"
 msgstr ""
 
-msgid "Factory function for missing keys (inherited from defaultdict)"
+msgid ""
+"Factory called for a missing key (inherited from ``defaultdict``). With "
+"None, reading a missing key raises ``KeyError``."
 msgstr ""
 
 msgid "callable or None"
 msgstr ""
 
-msgid "Internal storage for configuration as set of (key, value) tuples"
+msgid ""
+"Internal storage for configuration as set of (key, value) tuples; read it"
+" through the ``default_setup`` property"
 msgstr ""
 
 msgid "set"
 msgstr ""
 
-msgid "The class maintains two key invariants:"
+msgid ""
+"Every argument is copied: an instance of the same class is deep-copied, "
+"any other mapping or iterable is converted level by level"
 msgstr ""
 
-msgid "All nested dictionaries are _StackedDict instances (or subclass)"
-msgstr ""
-
-msgid "All instances share the same default_setup configuration"
+msgid ""
+"The levels built by the constructor receive the configuration of the "
+"instance"
 msgstr ""
 
 msgid ":py:obj:`_Paths`"
@@ -1006,70 +1080,39 @@ msgstr ""
 msgid "Internal tree structure for path operations"
 msgstr ""
 
-msgid "Initialize a new _StackedDict with configuration and optional data."
-msgstr ""
-
 msgid ""
-"The constructor requires configuration via the 'default_setup' parameter,"
-" which must contain at least 'indent' and 'default_factory' keys. "
-"Additional initialization data can be provided through args or kwargs."
-msgstr ""
-
-msgid "Dictionaries, _StackedDict instances, or iterables of (key, value) pairs"
-msgstr ""
-
-msgid ""
-"Configuration with at least 'indent' and 'default_factory' keys. Keyword-"
-"only. The mapping is copied, never modified; subclasses complete it "
-"through ``_normalize_setup``."
-msgstr ""
-
-msgid "Direct key-value pairs to initialize"
-msgstr ""
-
-msgid "If 'indent' or 'default_factory' is missing from configuration"
-msgstr ""
-
-msgid "If default_setup contains keys that aren't valid attributes"
-msgstr ""
-
-msgid "Args are processed sequentially, later values override earlier ones"
-msgstr ""
-
-msgid "_StackedDict args are deep-copied"
-msgstr ""
-
-msgid "Regular dicts are converted to _StackedDict recursively"
-msgstr ""
-
-msgid "All configuration is propagated to nested instances"
-msgstr ""
-
-msgid ""
-"Recursively convert a standard dictionary to a ``_StackedDict`` or "
-"subclass."
+"Recursively convert a standard dictionary to a nested dictionary of this "
+"class."
 msgstr ""
 
 msgid ""
 "Alternative constructor that transforms a regular nested dictionary into "
-"a ``_StackedDict``-based structure. The target class is ``cls`` itself, "
-"eliminating the need to pass the class explicitly and preventing errors "
-"in recursive calls."
+"an instance of the class it is called on. The target class is ``cls`` "
+"itself, eliminating the need to pass the class explicitly and preventing "
+"errors in recursive calls."
 msgstr ""
 
 msgid "The dictionary to transform (may be nested)."
 msgstr ""
 
-msgid "Initialization options. Must contain ``default_setup`` key."
+msgid ""
+"Initialization options, passed to ``cls`` at every level. "
+"``default_setup`` is optional: as for the constructor, the configuration "
+"is resolved by ``cls._normalize_setup``, which supplies the default of "
+"the class when none is given."
 msgstr ""
 
 msgid "New instance of the calling class containing the dictionary structure."
 msgstr ""
 
-msgid "If ``default_setup`` is missing from ``class_options``."
+msgid ""
+"If ``default_setup`` is missing and ``cls`` defines no default     "
+"configuration."
 msgstr ""
 
-msgid "Already-instantiated ``_StackedDict`` values are preserved as-is."
+msgid ""
+"Values that are already nested dictionaries of the family are preserved "
+"as-is."
 msgstr ""
 
 msgid "Regular ``dict`` values are recursively converted using ``cls``."
@@ -1088,11 +1131,11 @@ msgid "Serialize this dictionary to a JSON file."
 msgstr ""
 
 msgid ""
-"Non-string keys are encoded as type-tagged strings of the form "
-"``__type__:value`` (e.g., integer key ``42`` → ``\"__int__:42\"``, tuple "
-"key ``(1, 2)`` → ``\"__tuple__:(1, 2)\"``). Round-trips are lossless for "
-"supported types: ``str``, ``int``, ``float``, ``bool``, flat ``tuple``, "
-"flat ``frozenset``. File I/O is delegated to ``json.dump``."
+"Non-string keys are written in square brackets (e.g., integer key ``42`` "
+"→ ``\"[42]\"``, tuple key ``(1, 2)`` → ``\"[(1, 2)]\"``); a string key "
+"that starts with ``[`` is escaped with a backslash. Round-trips are "
+"lossless for supported types: ``str``, ``int``, ``float``, ``bool``, flat"
+" ``tuple``, flat ``frozenset``. File I/O is delegated to ``json.dump``."
 msgstr ""
 
 msgid "Destination file path."
@@ -1107,20 +1150,23 @@ msgstr ""
 msgid "Reconstruct from a JSON file."
 msgstr ""
 
-msgid "Reconstruct a ``_StackedDict`` (or subclass) from a JSON file."
+msgid "Reconstruct a nested dictionary of this class from a JSON file."
 msgstr ""
 
 msgid ""
-"Non-string keys stored as ``__type__:value`` tagged strings are decoded "
-"back to their original Python types. Round-trips are lossless for "
-"supported types: ``str``, ``int``, ``float``, ``bool``, flat ``tuple``, "
-"flat ``frozenset``."
+"Keys written in square brackets by ``to_json`` are decoded back to their "
+"original Python types; escaped string keys lose their escape. Round-trips"
+" are lossless for supported types: ``str``, ``int``, ``float``, ``bool``,"
+" flat ``tuple``, flat ``frozenset``."
 msgstr ""
 
 msgid "Path to the JSON file."
 msgstr ""
 
-msgid "Passed to ``cls.from_dict``; must include ``default_setup``."
+msgid ""
+"Passed to ``cls.from_dict``. The JSON file carries no configuration: "
+"``default_setup`` gives it, and when it is absent "
+"``cls._normalize_setup`` supplies the default of the class."
 msgstr ""
 
 msgid "Reconstructed instance of the calling class."
@@ -1158,7 +1204,7 @@ msgstr ""
 msgid "Reconstruct from a pickle file."
 msgstr ""
 
-msgid "Reconstruct a ``_StackedDict`` (or subclass) from a pickle file."
+msgid "Reconstruct a nested dictionary of this class from a pickle file."
 msgstr ""
 
 msgid "Path to the pickle file."
@@ -1213,9 +1259,12 @@ msgid "Check equality: same class, configuration, and content."
 msgstr ""
 
 msgid ""
-"Two _StackedDict instances are equal if they have: 1. Identical class "
-"type (exact match, not subclasses) 2. Identical default_setup "
-"configuration 3. Identical dictionary structure and values"
+"Two nested dictionaries are equal if they have: 1. Identical class type "
+"(exact match, not subclasses) 2. Identical default_setup configuration 3."
+" Identical dictionary structure and values"
+msgstr ""
+
+msgid "This is the strictest comparison, and the one used by ``==``."
 msgstr ""
 
 msgid "Object to compare with"
@@ -1227,7 +1276,7 @@ msgstr ""
 msgid ":py:obj:`__eq__`"
 msgstr ""
 
-msgid "dictionaries equalities"
+msgid "Same as equal"
 msgstr ""
 
 msgid ":py:obj:`__ne__`"
@@ -1236,62 +1285,68 @@ msgstr ""
 msgid "Inequality check"
 msgstr ""
 
-msgid ":py:obj:`similar`"
-msgstr ""
-
-msgid "Compare content only (ignore class/setup)"
-msgstr ""
-
 msgid ":py:obj:`isomorph`"
 msgstr ""
 
-msgid "Compare as plain dicts"
+msgid "Same content, any class of the family"
 msgstr ""
 
-msgid "Check if two structures share the same content (ignoring setup)."
+msgid ":py:obj:`similar`"
+msgstr ""
+
+msgid "Same content only"
+msgstr ""
+
+msgid "Check if two nested dictionaries are isomorphic."
 msgstr ""
 
 msgid ""
-"Two structures are similar if they: 1. Are both _StackedDict instances "
-"(any subclass) 2. Have identical dictionary content (keys and values)"
+"Two structures are isomorphic if they: 1. Are both nested dictionaries "
+"(any class of the family) 2. Have identical dictionary content (keys and "
+"values)"
 msgstr ""
 
-msgid "Configuration differences are ignored."
+msgid ""
+"They describe the same nested structure, up to the choice of class: a "
+"NestedDictionary and a StrictNestedDictionary with the same content "
+"differ only in what reading a missing key does. Configuration differences"
+" are ignored. A plain dict is never isomorphic."
 msgstr ""
 
-msgid "True if both are _StackedDict with same content"
+msgid "True if both are nested dictionaries with the same content"
 msgstr ""
 
 msgid ":py:obj:`equal`"
 msgstr ""
 
-msgid "Strict equality (includes setup)"
+msgid "Strict equality (includes class and setup)"
 msgstr ""
 
-msgid "Check if structures are isomorphic (same keys/values, any dict type)."
+msgid "Same content only, plain dicts accepted"
+msgstr ""
+
+msgid "Check if two structures have the same content, whatever holds it."
 msgstr ""
 
 msgid ""
-"Two structures are isomorphic if they represent the same nested "
-"dictionary structure, regardless of whether they're _StackedDict, plain "
-"dict, or any other dict-like type."
+"Two structures are similar if they represent the same nested dictionary "
+"content, regardless of whether they are nested dictionaries of the family"
+" or plain dicts. Class and configuration are ignored."
 msgstr ""
 
 msgid "Dictionary to compare with"
 msgstr ""
 
-msgid "True if structure-preserving mapping exists"
+msgid "True if ``other`` is a dict with the same content"
 msgstr ""
 
 msgid ""
-"Checks if sd[k1]...[kn] == other[k1]...[kn] for all paths. This is the "
-"most permissive comparison method."
+"Checks if self[k1]...[kn] == other[k1]...[kn] for all paths. This is the "
+"most permissive comparison method: ``equal`` implies ``isomorph``, which "
+"implies ``similar``."
 msgstr ""
 
 msgid "Strict equality"
-msgstr ""
-
-msgid "Compare _StackedDict instances"
 msgstr ""
 
 msgid "Generate all (path, value) pairs from nested structure."
@@ -1346,7 +1401,7 @@ msgstr ""
 msgid ":py:obj:`paths`"
 msgstr ""
 
-msgid "Get paths as _Paths view object"
+msgid "Get the paths as a view object"
 msgstr ""
 
 msgid "Generate all terminal values from nested structure."
@@ -1370,15 +1425,15 @@ msgid "Convert to a standard nested dictionary."
 msgstr ""
 
 msgid ""
-"Recursively converts the _StackedDict and all nested _StackedDict "
-"instances to regular Python dictionaries, removing all special "
-"functionality but preserving the structure."
+"Recursively converts the nested dictionary and all its nested levels to "
+"regular Python dictionaries, removing all special functionality but "
+"preserving the structure."
 msgstr ""
 
 msgid "Regular nested dictionary with same structure"
 msgstr ""
 
-msgid "All _StackedDict instances are converted recursively"
+msgid "All nested levels are converted recursively"
 msgstr ""
 
 msgid "Other value types are preserved as-is"
@@ -1390,16 +1445,16 @@ msgstr ""
 msgid ":py:obj:`from_dict`"
 msgstr ""
 
-msgid "Convert dict to _StackedDict"
+msgid "Convert a dict to a nested dictionary"
 msgstr ""
 
-msgid ":py:obj:`__deepcopy__`"
+msgid ":py:obj:`deepcopy`"
 msgstr ""
 
-msgid "Create _StackedDict copy"
+msgid "Create a deep copy"
 msgstr ""
 
-msgid "Create a shallow copy of the _StackedDict."
+msgid "Create a shallow copy of the nested dictionary."
 msgstr ""
 
 msgid "Shallow copy of the same class, with the same configuration"
@@ -1411,13 +1466,10 @@ msgstr ""
 msgid "Internal implementation"
 msgstr ""
 
-msgid ":py:obj:`deepcopy`"
-msgstr ""
-
 msgid "Create independent copy"
 msgstr ""
 
-msgid "Create a deep copy of the _StackedDict."
+msgid "Create a deep copy of the nested dictionary."
 msgstr ""
 
 msgid ""
@@ -1427,6 +1479,9 @@ msgid ""
 msgstr ""
 
 msgid "Complete independent copy of the same class"
+msgstr ""
+
+msgid ":py:obj:`__deepcopy__`"
 msgstr ""
 
 msgid ":py:obj:`copy`"
@@ -1441,7 +1496,8 @@ msgstr ""
 msgid ""
 "Removes the specified key (flat or hierarchical) and returns its value. "
 "Automatically cleans up empty parent dictionaries after removal. If the "
-"key doesn't exist, returns the default value or raises an error."
+"key doesn't exist, returns the default value, ``None`` included, or "
+"raises an error when no default is given, as ``dict.pop`` does."
 msgstr ""
 
 msgid "Single key or hierarchical path to remove"
@@ -1486,7 +1542,9 @@ msgstr ""
 msgid "Follows DFS to find the last (rightmost, deepest) item"
 msgstr ""
 
-msgid "Cleans up empty parent dictionaries automatically"
+msgid ""
+"Removes one key at a time: a parent emptied by the removal stays in "
+"place, unlike ``del`` and ``pop()``"
 msgstr ""
 
 msgid "Path is returned as a list of keys"
@@ -1502,20 +1560,20 @@ msgid "View all (path, value) pairs"
 msgstr ""
 
 msgid ""
-"Update _StackedDict with key/value pairs from mapping, iterable, or "
-"kwargs."
+"Update the nested dictionary with key/value pairs from mapping, iterable,"
+" or kwargs."
 msgstr ""
 
 msgid ""
 "Merges the provided mapping, iterable of key-value pairs, or keyword "
-"arguments into this _StackedDict, converting regular dicts to "
-"_StackedDict instances recursively while preserving existing _StackedDict"
-" values. Inserted _StackedDict values keep their identity and receive "
-"this instance's configuration through the ``default_setup`` setter."
+"arguments into this nested dictionary, converting regular dicts to nested"
+" levels recursively while preserving the nested dictionaries already "
+"given. Those keep their identity and receive this instance's "
+"configuration through the ``default_setup`` setter."
 msgstr ""
 
 msgid ""
-"Positional-only. A mapping (dict, _StackedDict), any object with "
+"Positional-only. A mapping (dict, nested dictionary), any object with "
 "``keys()`` and ``__getitem__``, or an iterable of (key, value) tuples to "
 "merge, as accepted by ``dict.update``. If None, only kwargs are used."
 msgstr ""
@@ -1524,7 +1582,7 @@ msgid "Additional key/value pairs to merge"
 msgstr ""
 
 msgid ""
-"Accepts mappings (dict, _StackedDict, etc.) and any object with "
+"Accepts mappings (dict, nested dictionary, etc.) and any object with "
 "``keys()`` and ``__getitem__``"
 msgstr ""
 
@@ -1534,7 +1592,10 @@ msgstr ""
 msgid "Accepts keyword arguments"
 msgstr ""
 
-msgid "_StackedDict values are accepted directly with synchronized config"
+msgid "Regular dicts are converted to nested levels recursively"
+msgstr ""
+
+msgid "Nested dictionaries are accepted directly with synchronized config"
 msgstr ""
 
 msgid "Configuration is synchronized across all nested instances"
@@ -1714,7 +1775,9 @@ msgstr ""
 msgid "Compact view with factorized path structure"
 msgstr ""
 
-msgid "Provides bijective mapping between expanded and compact forms"
+msgid ""
+"The structure built from a dictionary is the canonical compact form of "
+"its paths; expanding it gives those paths back"
 msgstr ""
 
 msgid "Useful for path coverage analysis"
@@ -1762,45 +1825,40 @@ msgstr ""
 msgid "Similar but only terminal values"
 msgstr ""
 
-msgid "Breadth-First Search traversal of the nested dictionary."
+msgid "Breadth-first traversal of the terminal values."
 msgstr ""
 
 msgid ""
-"Iteratively traverses the dictionary level by level, visiting all nodes "
-"at depth N before moving to depth N+1. Uses a queue (deque) for efficient"
-" FIFO operations."
+"Walks the dictionary level by level with a queue, and yields the keys "
+"whose value is not a nested dictionary, with their path: all those of "
+"depth N before those of depth N+1. Keys whose value is a nested "
+"dictionary are traversed but not yielded, so an empty nested dictionary "
+"yields nothing."
 msgstr ""
 
-msgid "*tuple* -- (path_tuple, value) for each node in BFS order"
+msgid ""
+"*tuple* -- (path_tuple, value) for each terminal value, in breadth-first "
+"order"
 msgstr ""
 
-msgid "Visits all nodes at same depth before going deeper"
+msgid ""
+"Yields terminal values only, unlike :meth:`dfs`, which also yields the "
+"keys whose value is a nested dictionary"
 msgstr ""
 
 msgid "Returns paths as immutable tuples"
 msgstr ""
 
-msgid "Includes all nodes (intermediate and terminal)"
-msgstr ""
-
-msgid "More memory efficient than collecting all paths first"
-msgstr ""
-
-msgid ":py:obj:`_HKey.bfs`"
-msgstr ""
-
-msgid "Tree-based BFS traversal"
-msgstr ""
-
-msgid "Compute the height (maximum depth) of the nested structure."
+msgid "Compute the number of levels of the nested structure."
 msgstr ""
 
 msgid ""
-"The height is defined as the length of the longest path from root to any "
-"leaf node. An empty dictionary has height 0."
+"This is the number of keys on the longest path. Top-level keys have depth"
+" 0, so the result is the greatest depth of a key plus 1. An empty "
+"dictionary has height 0."
 msgstr ""
 
-msgid "Maximum path length in the dictionary"
+msgid "Number of keys on the longest path"
 msgstr ""
 
 msgid "Empty dictionary has height 0"
@@ -1815,7 +1873,7 @@ msgstr ""
 msgid ":py:obj:`size`"
 msgstr ""
 
-msgid "Count total number of keys"
+msgid "Count every key"
 msgstr ""
 
 msgid "Get all leaf values"
@@ -1844,7 +1902,7 @@ msgstr ""
 msgid ":py:obj:`height`"
 msgstr ""
 
-msgid "Get maximum depth"
+msgid "Get the number of levels"
 msgstr ""
 
 msgid ":py:obj:`__len__`"
@@ -1853,12 +1911,12 @@ msgstr ""
 msgid "Get top-level key count"
 msgstr ""
 
-msgid "Extract all leaf (terminal) values from the nested structure."
+msgid "Extract the values of all leaf keys from the nested structure."
 msgstr ""
 
 msgid ""
-"Returns a list of all values that are not themselves nested dictionaries,"
-" i.e., all terminal nodes in the tree structure."
+"A leaf is a key without children: its value is either not a nested "
+"dictionary, or an empty one. Returns the values of these keys."
 msgstr ""
 
 msgid "list of all leaf values"
@@ -1870,7 +1928,7 @@ msgstr ""
 msgid "Empty dictionaries are considered leaf values"
 msgstr ""
 
-msgid "Plain dicts (not _StackedDict) are also leaves"
+msgid "Plain dicts (not nested dictionaries of the family) are also leaves"
 msgstr ""
 
 msgid "Generator alternative"
@@ -1903,10 +1961,7 @@ msgstr ""
 msgid "Useful for identifying skewed structures"
 msgstr ""
 
-msgid ":py:obj:`_HKey.is_balanced`"
-msgstr ""
-
-msgid "Tree-based balance check"
+msgid "Get maximum depth"
 msgstr ""
 
 msgid "Find the hierarchical path (ancestors) leading to a specific value."
@@ -2034,10 +2089,12 @@ msgstr ""
 msgid "Filter by prefix"
 msgstr ""
 
-msgid "Get the maximum depth of paths."
+msgid "Get the number of levels of the paths."
 msgstr ""
 
-msgid "Maximum path length"
+msgid ""
+"This is the number of keys on the longest path, that is the greatest "
+"depth of a key plus 1, since top-level keys have depth 0."
 msgstr ""
 
 msgid "Get all leaf paths (paths with no children)."
@@ -2065,8 +2122,21 @@ msgid ""
 msgstr ""
 
 msgid ""
-"The compact structure uses a bijective mapping: - Paths → Compact "
-"structure (factorization) - Compact structure → Paths (expansion)"
+"Inside a node list, every element after the first is a child of the "
+"first: ``['b', 'c', 'd']`` is ``b`` with two children, while ``['b', "
+"['c', 'd']]`` is the chain ``b``, ``c``, ``d``."
+msgstr ""
+
+msgid ""
+"Paths and compact structure are converted both ways: - Paths → Compact "
+"structure (factorization), which gives the canonical form - Compact "
+"structure → Paths (expansion)"
+msgstr ""
+
+msgid ""
+"Each set of paths has exactly one canonical form. Other structures are "
+"accepted and can expand to the same paths, such as ``['a']`` for the leaf"
+" ``'a'``."
 msgstr ""
 
 msgid ""
@@ -2114,97 +2184,101 @@ msgid ""
 "should give the same result as list(self) from the parent class."
 msgstr ""
 
-msgid "Check if this _CPaths covers all paths in the given _StackedDict."
+msgid "Check if this view describes exactly the paths of a nested dictionary."
 msgstr ""
 
 msgid ""
-"A _CPaths is \"covering\" if its expanded paths exactly match all paths "
-"in the target _StackedDict."
+"With S the set of paths expanded from this structure and T the set of "
+"paths of ``stacked_dict``, the result is ``S == T``. It is stricter than "
+"full coverage: ``coverage()`` returns ``1.0`` as soon as T is included in"
+" S, while ``is_covering()`` also requires S to hold no other path."
 msgstr ""
 
-msgid "The _StackedDict to compare against"
+msgid "The nested dictionary to compare against (any class of the family)"
 msgstr ""
 
-msgid "True if all paths in stacked_dict are present in this _CPaths"
-msgstr ""
-
-msgid ""
-"For a _CPaths created directly from a _StackedDict: "
-"_CPaths(sdict).is_covering(sdict) will ALWAYS return True because the "
-"compact structure is built from all paths in sdict."
-msgstr ""
-
-msgid "Calculate the coverage percentage of this _CPaths over a _StackedDict."
+msgid "True if both sets of paths are equal"
 msgstr ""
 
 msgid ""
-"Coverage is defined as the ratio of paths in this _CPaths that exist in "
-"the target _StackedDict, divided by the total number of paths in the "
-"_StackedDict."
+"For a view created from the nested dictionary it is compared with: "
+"``nd.compact_paths().is_covering(nd)`` always returns True because the "
+"compact structure is built from all paths in nd."
 msgstr ""
 
 msgid ""
-"Coverage percentage between 0.0 and 1.0 (or > 1.0 if _CPaths contains "
-"paths not in stacked_dict)"
+"Calculate the share of the paths of a nested dictionary found in this "
+"view."
 msgstr ""
 
 msgid ""
-"For a _CPaths created directly from a _StackedDict: "
-"_CPaths(sdict).coverage(sdict) will ALWAYS return 1.0 because all paths "
-"from sdict are included."
+"With S the set of paths expanded from this structure and T the set of "
+"paths of ``stacked_dict``, coverage is ``len(S & T) / len(T)``. Paths of "
+"S that are not in T do not change it, so the value stays between 0.0 and "
+"1.0. When T is empty, the result is 1.0 if S is empty too and 0.0 "
+"otherwise."
+msgstr ""
+
+msgid "Coverage between 0.0 and 1.0"
 msgstr ""
 
 msgid ""
-"The coverage can be > 1.0 if the _CPaths contains more paths than the "
-"_StackedDict (e.g., manually set structure)."
-msgstr ""
-
-msgid "Get paths from this _CPaths that are NOT in the _StackedDict."
-msgstr ""
-
-msgid ""
-"Returns the list of paths that exist in this _CPaths's expanded form but "
-"do not exist in the target _StackedDict. Useful for identifying extra or "
-"invalid paths."
-msgstr ""
-
-msgid "list of paths in _CPaths but not in stacked_dict"
+"For a view created from the nested dictionary it is compared with: "
+"``nd.compact_paths().coverage(nd)`` always returns 1.0 because all paths "
+"from nd are included."
 msgstr ""
 
 msgid ""
-"For a _CPaths created directly from a _StackedDict: "
-"_CPaths(sdict).missing_paths(sdict) will ALWAYS return [] because all "
-"paths are derived from sdict."
+"Use ``missing_paths()`` to list the extra paths and ``is_covering()`` to "
+"check that the two sets are equal."
+msgstr ""
+
+msgid "Get paths from this view that are NOT in the nested dictionary."
+msgstr ""
+
+msgid ""
+"Returns the list of paths that exist in this view's expanded form but do "
+"not exist in the target nested dictionary. Useful for identifying extra "
+"or invalid paths."
+msgstr ""
+
+msgid "list of paths in this view but not in stacked_dict"
+msgstr ""
+
+msgid ""
+"For a view created from the nested dictionary it is compared with: "
+"``nd.compact_paths().missing_paths(nd)`` always returns [] because all "
+"paths are derived from nd."
 msgstr ""
 
 msgid ":py:obj:`uncovered_paths`"
 msgstr ""
 
-msgid "Get paths in _StackedDict not covered by _CPaths"
+msgid "Get paths in the nested dictionary not covered by this view"
 msgstr ""
 
-msgid "Get paths from _StackedDict that are NOT covered by this _CPaths."
-msgstr ""
-
-msgid ""
-"Returns the list of paths that exist in the target _StackedDict but are "
-"not present in this _CPaths's expanded form. Useful for identifying gaps "
-"in coverage."
-msgstr ""
-
-msgid "list of paths in stacked_dict but not in _CPaths"
+msgid "Get paths from the nested dictionary that are NOT covered by this view."
 msgstr ""
 
 msgid ""
-"For a _CPaths created directly from a _StackedDict: "
-"_CPaths(sdict).uncovered_paths(sdict) will ALWAYS return [] because all "
-"paths from sdict are included."
+"Returns the list of paths that exist in the target nested dictionary but "
+"are not present in this view's expanded form. Useful for identifying gaps"
+" in coverage."
+msgstr ""
+
+msgid "list of paths in stacked_dict but not in this view"
+msgstr ""
+
+msgid ""
+"For a view created from the nested dictionary it is compared with: "
+"``nd.compact_paths().uncovered_paths(nd)`` always returns [] because all "
+"paths from nd are included."
 msgstr ""
 
 msgid ":py:obj:`missing_paths`"
 msgstr ""
 
-msgid "Get paths in _CPaths not in _StackedDict"
+msgid "Get paths in this view not in the nested dictionary"
 msgstr ""
 
 msgid ":py:obj:`coverage`"

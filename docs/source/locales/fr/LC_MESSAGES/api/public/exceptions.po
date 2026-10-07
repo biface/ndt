@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Nested Dictionary Tools 1.3.0b1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 08:15+0000\n"
+"POT-Creation-Date: 2026-10-07 10:11+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -25,9 +25,10 @@ msgstr ""
 
 msgid ""
 "This module provides specific exception classes for nested dictionaries. "
-"These exceptions extend the standard **Exception**, **KeyError** and "
-"**AttributeError** classes to provide more context and better error "
-"handling for nested dictionary operations."
+"These exceptions extend the standard **Exception**, **KeyError**, "
+"**AttributeError**, **TypeError**, **ValueError** and **IndexError** "
+"classes to provide more context and better error handling for nested "
+"dictionary operations."
 msgstr ""
 
 msgid ""
@@ -49,19 +50,19 @@ msgid ""
 "error code."
 msgstr ""
 
-msgid "Initialize a StackedDictionaryError."
-msgstr ""
-
 msgid "Parameters"
 msgstr ""
 
-msgid "A message describing the error."
+msgid "Message describing the error."
 msgstr ""
 
-msgid "An integer code identifying the error type."
+msgid "Integer code identifying the error type, 0 by default."
 msgstr ""
 
-msgid "The path in the nested dictionary where the error occurred."
+msgid ""
+"Path in the nested dictionary where the error occurred, stored in "
+"``path``. ``\" (at path: k1 | k2)\"`` is appended to the message, or the "
+"message becomes ``\"Error at path: k1 | k2\"`` when there is none."
 msgstr ""
 
 msgid "Specialisations"
@@ -76,10 +77,16 @@ msgid ""
 "keys."
 msgstr ""
 
-msgid "Initialize a StackedKeyError."
+msgid ""
+"Key that caused the error. When given with a message, ``\" (key: "
+"<key>)\"`` is appended to the message."
 msgstr ""
 
-msgid "The key that caused the error."
+msgid ""
+"Path in the nested dictionary where the error occurred, stored in "
+"``path``. ``\" (at path: k1 | k2)\"`` is appended to the message, after "
+"any other suffix, or the message becomes ``\"Error at path: k1 | k2\"`` "
+"when there is none."
 msgstr ""
 
 msgid ""
@@ -92,10 +99,9 @@ msgid ""
 "that don't exist or cannot be modified in the current context."
 msgstr ""
 
-msgid "Initialize a StackedAttributeError."
-msgstr ""
-
-msgid "The attribute that caused the error."
+msgid ""
+"Attribute that caused the error. When given with a message, ``\" "
+"(attribute: <attribute>)\"`` is appended to the message."
 msgstr ""
 
 msgid ""
@@ -109,13 +115,12 @@ msgid ""
 "operations on incompatible types."
 msgstr ""
 
-msgid "Initialize a StackedTypeError."
+msgid "Type expected by the operation."
 msgstr ""
 
-msgid "The expected type for the operation."
-msgstr ""
-
-msgid "The actual type that was provided."
+msgid ""
+"Type actually provided. When both types are given with a message, ``\" "
+"(expected: <name>, got: <name>)\"`` is appended to the message."
 msgstr ""
 
 msgid ""
@@ -129,10 +134,9 @@ msgid ""
 "dictionary."
 msgstr ""
 
-msgid "Initialize a StackedValueError."
-msgstr ""
-
-msgid "The value that caused the error."
+msgid ""
+"Value that caused the error. When given with a message, ``\" (value: "
+"<value>)\"`` is appended to the message."
 msgstr ""
 
 msgid ""
@@ -145,17 +149,11 @@ msgid ""
 " when an operation cannot be performed due to the dictionary being empty."
 msgstr ""
 
-msgid "Initialize a StackedIndexError."
-msgstr ""
-
 msgid "General exception for nested dictionary operations."
 msgstr ""
 
 msgid ""
 "This exception is raised when a nested dictionary operation fails but "
 "doesn't fall into a more specific error category."
-msgstr ""
-
-msgid "Initialize a NestedDictionaryException."
 msgstr ""
 

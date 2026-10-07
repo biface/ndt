@@ -1,0 +1,240 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2024-2026, biface
+# This file is distributed under the same license as the Nested Dictionary
+# Tools package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Nested Dictionary Tools 1.3.0b1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-07 10:11+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+msgid "Part 2 — Exploring a Nested Dictionary"
+msgstr ""
+
+msgid ""
+"Part 1 built a nested dictionary and changed it key by key. This part "
+"looks at a whole house at once: finding where a key or a value is, "
+"walking through every key, measuring the structure, comparing two houses,"
+" and copying one. Apart from the last section, nothing here changes the "
+"dictionary."
+msgstr ""
+
+msgid ""
+"The house has two floors and a garden. Every room has lights and heating,"
+" the kitchen has appliances, and the garage is still empty:"
+msgstr ""
+
+msgid ""
+"The methods below describe the keys of the house as the "
+":doc:`/concepts/key_forest` does: every key is a node, identified by its "
+"path, and a key without children is a leaf. A leaf holds a value, or an "
+"empty dictionary like the garage."
+msgstr ""
+
+msgid "Searching across levels"
+msgstr ""
+
+msgid ""
+":meth:`~ndict_tools.NestedDictionary.is_key` tells whether a key appears "
+"at any level. It looks at keys only, never at values:"
+msgstr ""
+
+msgid ""
+":meth:`~ndict_tools.NestedDictionary.key_list` returns the full paths "
+"that go through a key, as tuples, and "
+":meth:`~ndict_tools.NestedDictionary.items_list` the values at the end of"
+" these paths. Which rooms have a heating power, and how much?"
+msgstr ""
+
+msgid ""
+"These paths always go down to a leaf. For a key that holds a dictionary, "
+"such as ``heating``, there is one path per leaf below it, not one per "
+"``heating`` key:"
+msgstr ""
+
+msgid ""
+":meth:`~ndict_tools.NestedDictionary.occurrences` counts in the same way:"
+" it counts the paths of leaves in which the key appears. Each of the four"
+" rooms has its lights as a leaf, so ``lights`` appears 4 times. There are"
+" also four ``heating`` keys, but the kitchen and the bedroom have two "
+"settings each under theirs, so ``heating`` appears in 6 paths:"
+msgstr ""
+
+msgid ""
+"To count rooms that have heating, count the ``heating`` keys rather than "
+"their occurrences, for instance with the paths of the house (see "
+":doc:`paths`):"
+msgstr ""
+
+msgid ""
+":meth:`~ndict_tools.NestedDictionary.ancestors` works the other way "
+"round: given a value, it returns the path of the dictionary that holds "
+"it, without the key of the value itself. Where is the fireplace?"
+msgstr ""
+
+msgid ""
+"When a value appears more than once, ``ancestors`` returns the first one,"
+" in the order of the keys. There are two radiators; the kitchen comes "
+"first:"
+msgstr ""
+
+msgid ""
+"A value that is not in the house raises "
+":class:`~ndict_tools.StackedValueError`:"
+msgstr ""
+
+msgid "Walking through every key"
+msgstr ""
+
+msgid ""
+"Several methods go through the whole dictionary. The examples use the "
+"living room, which is small enough to show every step:"
+msgstr ""
+
+msgid ""
+":meth:`~ndict_tools.NestedDictionary.unpacked_items` yields every leaf "
+"with its path, as a tuple, in the order of the keys. "
+":meth:`~ndict_tools.NestedDictionary.unpacked_keys` and "
+":meth:`~ndict_tools.NestedDictionary.unpacked_values` yield the paths and"
+" the values alone:"
+msgstr ""
+
+msgid ""
+":meth:`~ndict_tools.NestedDictionary.dfs`, depth first, also yields the "
+"keys that hold a dictionary. Their value is that nested dictionary; here "
+"it is converted for display:"
+msgstr ""
+
+msgid ""
+":meth:`~ndict_tools.NestedDictionary.bfs`, breadth first, yields the "
+"values that are not dictionaries, level by level: all those near the top "
+"before the deeper ones. On the ground floor, the lights of both rooms "
+"come first:"
+msgstr ""
+
+msgid ""
+"``bfs`` skips the garage, which holds no value. The garage is still a "
+"leaf: :meth:`~ndict_tools.NestedDictionary.unpacked_keys` lists its path,"
+" and :meth:`~ndict_tools.NestedDictionary.leaves`, which returns the "
+"values of all leaves, ends with its empty dictionary:"
+msgstr ""
+
+msgid "Measuring the structure"
+msgstr ""
+
+msgid ""
+"``len`` counts the top-level keys only, as for a :class:`dict`: two "
+"floors and a garden. :meth:`~ndict_tools.NestedDictionary.size` counts "
+"every key at every level, and "
+":meth:`~ndict_tools.NestedDictionary.height` the number of levels:"
+msgstr ""
+
+msgid ""
+"The four levels are the floor, the room, the equipment and its settings, "
+"as in ``ground floor → kitchen → heating → power``."
+msgstr ""
+
+msgid ""
+":meth:`~ndict_tools.NestedDictionary.is_balanced` tells whether the "
+"branches of the dictionary have about the same depth. The house is not "
+"balanced: the garden is two levels deep, the ground floor four. The first"
+" floor is: both rooms go down to their heating settings."
+msgstr ""
+
+msgid ""
+"The :doc:`/concepts/key_forest` page gives the exact definitions of these"
+" measures."
+msgstr ""
+
+msgid "Comparing two dictionaries"
+msgstr ""
+
+msgid ""
+"The package offers three comparisons, from the strictest to the most "
+"lenient:"
+msgstr ""
+
+msgid "Comparison"
+msgstr ""
+
+msgid "True when both have the same content and..."
+msgstr ""
+
+msgid "``==``, :meth:`~ndict_tools.NestedDictionary.equal`"
+msgstr ""
+
+msgid "the same class and the same ``default_setup``."
+msgstr ""
+
+msgid ":meth:`~ndict_tools.NestedDictionary.isomorph`"
+msgstr ""
+
+msgid ""
+"both are nested dictionaries of the package, whatever their class and "
+"configuration."
+msgstr ""
+
+msgid ":meth:`~ndict_tools.NestedDictionary.similar`"
+msgstr ""
+
+msgid "nothing more: the other one can even be a plain :class:`dict`."
+msgstr ""
+
+msgid ""
+"Take the living room again, and the same room read from a validated "
+"inventory, as a :class:`~ndict_tools.StrictNestedDictionary`:"
+msgstr ""
+
+msgid ""
+"The two rooms have the same content, but their classes differ in what "
+"reading a missing key does, so they are not equal. Compared with the "
+"plain dictionary they were built from, only ``similar`` holds:"
+msgstr ""
+
+msgid ""
+"Unlike a :class:`dict`, a nested dictionary is never ``==`` to a plain "
+"dictionary. To compare its content with one, use "
+":meth:`~ndict_tools.NestedDictionary.similar`, or convert it first:"
+msgstr ""
+
+msgid "Copying and merging"
+msgstr ""
+
+msgid ""
+":meth:`~ndict_tools.NestedDictionary.to_dict` returns plain dictionaries "
+"at every level, ready for any code that expects a :class:`dict`:"
+msgstr ""
+
+msgid ""
+":meth:`~ndict_tools.NestedDictionary.copy` makes a shallow copy, as for a"
+" :class:`dict`: a new top level, with the same nested dictionaries "
+"inside. Changing a room through the copy changes the original:"
+msgstr ""
+
+msgid ""
+":meth:`~ndict_tools.NestedDictionary.deepcopy`, like "
+":func:`copy.deepcopy`, copies every level. The copy can change without "
+"touching the original:"
+msgstr ""
+
+msgid ""
+":meth:`~ndict_tools.NestedDictionary.update` works on the top-level keys,"
+" like :meth:`dict.update`: a key it receives replaces the whole value. "
+"Here the new garden replaces the old one, shed included:"
+msgstr ""
+
+msgid "To change one key deep inside, assign through its path, as in Part 1:"
+msgstr ""
+

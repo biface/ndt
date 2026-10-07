@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Nested Dictionary Tools 1.3.0b1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 08:15+0000\n"
+"POT-Creation-Date: 2026-10-07 10:11+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -20,157 +20,155 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-msgid "Part 3 — Serialisation"
+msgid "Part 4 — Serialisation"
 msgstr ""
 
 msgid ""
-"**ndict-tools** provides built-in serialisation to JSON and pickle for "
-"all three public classes. Both formats support a full round-trip: the "
-"reconstructed object is an instance of the same class with the same "
-"``default_setup``."
+"A nested dictionary can be saved to a file and read back, in JSON or with"
+" pickle. This part saves the heating schedule of the house, which maps an"
+" hour of the day to a temperature, and explains what each format keeps."
 msgstr ""
 
 msgid ""
-"Pickle files are unsafe when loaded from untrusted sources. Only unpickle"
-" files you created yourself or received from a trusted party. A "
-":class:`UserWarning` is always emitted on both ``to_pickle`` and "
-"``from_pickle`` to remind you of this."
-msgstr ""
-
-msgid "JSON round-trip"
-msgstr ""
-
-msgid ""
-"Use :meth:`~ndict_tools.NestedDictionary.to_json` to write and "
-":meth:`~ndict_tools.NestedDictionary.from_json` to reconstruct:"
-msgstr ""
-
-msgid ""
-"The ``default_setup`` parameter in ``from_json`` is required for the same"
-" reason as in :meth:`~ndict_tools.NestedDictionary.from_dict` — the JSON "
-"file carries no information about the target class behaviour."
-msgstr ""
-
-msgid "Non-string keys"
-msgstr ""
-
-msgid ""
-"JSON mandates string keys. **ndict-tools** encodes all non-string keys "
-"automatically using a reversible convention (DD-021) — you do not need to"
-" handle this yourself:"
-msgstr ""
-
-msgid ""
-"Supported key types for JSON encoding: :class:`str`, :class:`int`, "
-":class:`float`, :class:`bool`, flat :class:`tuple`, flat "
-":class:`frozenset`."
-msgstr ""
-
-msgid "Pickle round-trip"
-msgstr ""
-
-msgid ""
-"Use :meth:`~ndict_tools.NestedDictionary.to_pickle` and "
-":meth:`~ndict_tools.NestedDictionary.from_pickle`:"
-msgstr ""
-
-msgid ""
-"A ``.sha256`` sidecar file is written alongside the pickle file. By "
-"default, ``from_pickle`` reads the sidecar and raises "
-":class:`~ndict_tools.StackedValueError` if the digest does not match or "
-"the sidecar is absent. To skip the check:"
-msgstr ""
-
-msgid ""
-"Pickle preserves the full object state, including ``default_setup`` and "
-"``default_factory``, without any extra arguments on load."
-msgstr ""
-
-msgid ""
-"The pickled object keeps its own class. ``from_pickle`` checks that it is"
-" an instance of the class it is called on (a subclass is accepted) and "
-"raises :class:`~ndict_tools.StackedTypeError` otherwise. For example, "
-"``StrictNestedDictionary.from_pickle`` refuses a file that holds a "
-"``NestedDictionary``, while ``NestedDictionary.from_pickle`` accepts a "
-"file that holds a ``StrictNestedDictionary`` and returns it unchanged."
-msgstr ""
-
-msgid "JSON vs pickle — when to use which"
+"The thermostat of each room switches at given hours. The hours are "
+"integers, not strings:"
 msgstr ""
 
 msgid "JSON"
 msgstr ""
 
+msgid ""
+":meth:`~ndict_tools.NestedDictionary.to_json` writes the dictionary to a "
+"JSON file. ``indent`` makes the file easier to read:"
+msgstr ""
+
+msgid ""
+"JSON only allows string keys, so the hours are written as ``\"[7]\"``, "
+"``\"[22]\"`` and so on. :meth:`~ndict_tools.NestedDictionary.from_json` "
+"reads them back as integers:"
+msgstr ""
+
+msgid ""
+"The file holds the content only: neither the class nor the "
+"``default_setup``. The result has the class on which ``from_json`` is "
+"called and, unless ``default_setup`` is given, the default configuration "
+"of that class, as with :meth:`~ndict_tools.NestedDictionary.from_dict`. "
+"The same file can give a :class:`~ndict_tools.StrictNestedDictionary`, or"
+" a dictionary printed with an indentation:"
+msgstr ""
+
+msgid ""
+"Keys of type :class:`str`, :class:`int`, :class:`float` and "
+":class:`bool`, and tuples and frozensets of such values, survive the "
+"round trip. A string key that looks like an encoded key is escaped, so it"
+" stays a string:"
+msgstr ""
+
+msgid ""
+"A key of another type raises :class:`~ndict_tools.StackedTypeError`. The "
+"values must be types that JSON can write: strings, numbers, booleans, "
+"``None``, lists and dictionaries."
+msgstr ""
+
 msgid "Pickle"
 msgstr ""
 
-msgid "**Key types**"
+msgid ""
+"Loading a pickle file can run arbitrary code. Only load files that you "
+"wrote yourself or that come from a source you trust. ``to_pickle`` and "
+"``from_pickle`` emit a :class:`UserWarning` as a reminder; the examples "
+"below hide it."
 msgstr ""
 
-msgid "``str``, ``int``, ``float``, ``bool``, flat ``tuple``, flat ``frozenset``"
+msgid ""
+":meth:`~ndict_tools.NestedDictionary.to_pickle` writes the whole object, "
+"and next to it a ``.sha256`` file that holds the digest of the pickle "
+"file:"
 msgstr ""
 
-msgid "Any hashable type"
+msgid ""
+":meth:`~ndict_tools.NestedDictionary.from_pickle` checks the digest, then"
+" returns the object with its class and its ``default_setup``, with no "
+"argument to give:"
 msgstr ""
 
-msgid "**Values**"
+msgid ""
+"If the file was changed after it was written, or if the ``.sha256`` file "
+"is missing, ``from_pickle`` raises "
+":class:`~ndict_tools.StackedValueError` before loading anything:"
 msgstr ""
 
-msgid "JSON-serialisable only (str, int, float, bool, list, dict, None)"
+msgid ""
+"``verify=False`` skips the check, for a file whose origin you trust and "
+"whose digest file was not kept."
 msgstr ""
 
-msgid "Any picklable Python object"
+msgid ""
+"The object in the file must be an instance of the class on which "
+"``from_pickle`` is called, or of a subclass. Otherwise "
+":class:`~ndict_tools.StackedTypeError` is raised:"
 msgstr ""
 
-msgid "**Interoperability**"
+msgid "Choosing a format"
 msgstr ""
 
-msgid "Any language, any tool"
+msgid "Keys"
+msgstr ""
+
+msgid "``str``, ``int``, ``float``, ``bool``, and tuples or frozensets of these"
+msgstr ""
+
+msgid "Any hashable value"
+msgstr ""
+
+msgid "Values"
+msgstr ""
+
+msgid "Strings, numbers, booleans, ``None``, lists, dictionaries"
+msgstr ""
+
+msgid "Any value pickle can write"
+msgstr ""
+
+msgid "Class and ``default_setup``"
+msgstr ""
+
+msgid "Chosen when reading"
+msgstr ""
+
+msgid "Kept"
+msgstr ""
+
+msgid "Readable by"
+msgstr ""
+
+msgid "Any language and tool"
 msgstr ""
 
 msgid "Python only"
 msgstr ""
 
-msgid "**Readability**"
+msgid "Loading from an untrusted source"
 msgstr ""
 
-msgid "Human-readable text"
+msgid "Safe"
 msgstr ""
 
-msgid "Binary"
+msgid "Never"
 msgstr ""
 
-msgid "**Security**"
+msgid "Integrity check"
 msgstr ""
 
-msgid "Safe to load from untrusted sources"
+msgid "None"
 msgstr ""
 
-msgid "**Never** load from untrusted sources"
-msgstr ""
-
-msgid "**Integrity check**"
-msgstr ""
-
-msgid "None built-in"
-msgstr ""
-
-msgid "SHA-256 sidecar (automatic)"
-msgstr ""
-
-msgid "**``default_setup`` on load**"
-msgstr ""
-
-msgid "Required"
-msgstr ""
-
-msgid "Preserved automatically"
+msgid "SHA-256 digest file"
 msgstr ""
 
 msgid ""
-"**Rule of thumb:** use JSON for configuration files, data exchange, and "
-"anything that crosses a trust boundary. Use pickle for local persistence "
-"of complex objects (non-string keys, custom value types) within a trusted"
-" environment."
+"Use JSON for configuration files, data exchanged with other programs, and"
+" anything that comes from outside. Use pickle to keep Python objects "
+"between two runs of your own program."
 msgstr ""
 
