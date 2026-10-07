@@ -105,6 +105,12 @@ class StackedKeyError(
         if key is not None and message:
             message = f"{message} (key: {key})"
 
+        # Add path information (must be done before KeyError.__init__ resets args)
+        path = path or []
+        if path:
+            path_str = " | ".join(str(k) for k in path)
+            message = f"{message} (at path: {path_str})" if message else f"Error at path: {path_str}"
+
         StackedDictionaryError.__init__(self, message, 0, path)
         KeyError.__init__(self, message)
 
@@ -140,6 +146,12 @@ class StackedAttributeError(
         # Add attribute information to the message if available
         if attribute and message:
             message = f"{message} (attribute: {attribute})"
+
+        # Add path information (must be done before AttributeError.__init__ resets args)
+        path = path or []
+        if path:
+            path_str = " | ".join(str(k) for k in path)
+            message = f"{message} (at path: {path_str})" if message else f"Error at path: {path_str}"
 
         StackedDictionaryError.__init__(self, message, 0, path)
         AttributeError.__init__(self, message)
@@ -181,6 +193,12 @@ class StackedTypeError(
         if expected_type and actual_type and message:
             message = f"{message} (expected: {expected_type.__name__}, got: {actual_type.__name__})"
 
+        # Add path information (must be done before TypeError.__init__ resets args)
+        path = path or []
+        if path:
+            path_str = " | ".join(str(k) for k in path)
+            message = f"{message} (at path: {path_str})" if message else f"Error at path: {path_str}"
+
         StackedDictionaryError.__init__(self, message, 0, path)
         TypeError.__init__(self, message)
 
@@ -217,6 +235,12 @@ class StackedValueError(
         if value is not None and message:
             message = f"{message} (value: {value})"
 
+        # Add path information (must be done before ValueError.__init__ resets args)
+        path = path or []
+        if path:
+            path_str = " | ".join(str(k) for k in path)
+            message = f"{message} (at path: {path_str})" if message else f"Error at path: {path_str}"
+
         StackedDictionaryError.__init__(self, message, 0, path)
         ValueError.__init__(self, message)
 
@@ -242,5 +266,11 @@ class StackedIndexError(
         :param path: The path in the nested dictionary where the error occurred.
         :type path: list[Any]
         """
+        # Add path information (must be done before IndexError.__init__ resets args)
+        path = path or []
+        if path:
+            path_str = " | ".join(str(k) for k in path)
+            message = f"{message} (at path: {path_str})" if message else f"Error at path: {path_str}"
+
         StackedDictionaryError.__init__(self, message, 0, path)
         IndexError.__init__(self, message)
