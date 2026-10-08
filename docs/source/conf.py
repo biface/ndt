@@ -84,7 +84,10 @@ todo_include_todos = True
 # the pages only. Docstring examples rendered by autodoc are not collected.
 doctest_test_doctest_blocks = ""
 
-language = "en"
+# Read the Docs builds each translation as a separate project and sets
+# READTHEDOCS_LANGUAGE (e.g. "fr"); local and GitHub Pages builds pass
+# -D language=<lang>. English otherwise.
+language = os.environ.get("READTHEDOCS_LANGUAGE", "en").replace("-", "_")
 
 # -- Internationalisation (DD-028) -------------------------------------------
 # Catalogs live in docs/source/locales/<lang>/LC_MESSAGES/, one per source

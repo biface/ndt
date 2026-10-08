@@ -21,78 +21,91 @@ msgstr ""
 "Generated-By: Babel 2.18.0\n"
 
 msgid "Deprecation Notices"
-msgstr ""
+msgstr "Avis de dépréciation"
 
 msgid "This page tracks all active and resolved deprecations in **ndict-tools**."
 msgstr ""
+"Cette page recense toutes les dépréciations, en cours et résolues, de "
+"**ndict-tools**."
 
 msgid "Symbol"
-msgstr ""
+msgstr "Symbole"
 
 msgid "Deprecated in"
-msgstr ""
+msgstr "Déprécié en"
 
 msgid "Removed in"
-msgstr ""
+msgstr "Supprimé en"
 
 msgid "Migration"
-msgstr ""
+msgstr "Migration"
 
 msgid "``DictPaths``"
-msgstr ""
+msgstr "``DictPaths``"
 
 msgid "1.0.0"
-msgstr ""
+msgstr "1.0.0"
 
 msgid "1.2.0"
-msgstr ""
+msgstr "1.2.0"
 
 msgid "Use :class:`~ndict_tools.CompactPathsView` or ``nd.compact_paths()``."
-msgstr ""
+msgstr "Utilisez :class:`~ndict_tools.CompactPathsView` ou ``nd.compact_paths()``."
 
 msgid "``from_dict`` *(free function)*"
-msgstr ""
+msgstr "``from_dict`` *(fonction libre)*"
 
 msgid "1.1.0"
-msgstr ""
+msgstr "1.1.0"
 
 msgid "1.5.0 *(planned)*"
-msgstr ""
+msgstr "1.5.0 *(prévue)*"
 
 #, python-brace-format
 msgid "Use ``NestedDictionary.from_dict(data, default_setup={...})``."
-msgstr ""
+msgstr "Utilisez ``NestedDictionary.from_dict(data, default_setup={...})``."
 
 msgid "Active deprecations"
-msgstr ""
+msgstr "Dépréciations en cours"
 
 msgid "``from_dict`` free function"
-msgstr ""
+msgstr "Fonction libre ``from_dict``"
 
 msgid ""
 "The free function ``from_dict`` (importable from ``ndict_tools.tools``) "
 "is deprecated. It will be **removed in 1.5.0** (issue :issue:`81`)."
 msgstr ""
+"La fonction libre ``from_dict`` (importable depuis ``ndict_tools.tools``)"
+" est dépréciée. Elle sera **supprimée en 1.5.0** (issue :issue:`81`)."
 
 msgid ""
 "Calling it emits a :class:`DeprecationWarning` with an explicit removal "
 "notice."
 msgstr ""
+"Son appel émet un :class:`DeprecationWarning` avec un avis explicite de "
+"suppression."
 
 msgid "Migrate to the classmethod available on all three public classes:"
 msgstr ""
+"Migrez vers la méthode de classe disponible sur les trois classes "
+"publiques :"
 
 msgid "Resolved deprecations"
-msgstr ""
+msgstr "Dépréciations résolues"
 
 msgid ""
 "``DictPaths`` was deprecated in 1.0.0 and **removed in 1.2.0** (issue "
 ":issue:`49`)."
 msgstr ""
+"``DictPaths`` a été déprécié en 1.0.0 et **supprimé en 1.2.0** (issue "
+":issue:`49`)."
 
 msgid ""
 "Use :class:`~ndict_tools.CompactPathsView` or call "
 ":meth:`~ndict_tools.NestedDictionary.compact_paths` on any "
 ":class:`~ndict_tools.NestedDictionary` instance."
 msgstr ""
+"Utilisez :class:`~ndict_tools.CompactPathsView` ou appelez "
+":meth:`~ndict_tools.NestedDictionary.compact_paths` sur n'importe quelle "
+"instance de :class:`~ndict_tools.NestedDictionary`."
 
