@@ -3881,7 +3881,8 @@ class _StackedDict(defaultdict[Any, Any]):
         -----
         - Paths are generated lazily during iteration
         - Internal _HKey tree is built on first access
-        - View updates automatically if dictionary changes
+        - The view reads the dictionary on first access and keeps that
+          state; call paths() again after a change
         - More efficient than unpacked_keys() for large structures
 
         See Also
@@ -4977,8 +4978,10 @@ class _CPaths(_Paths):
         """
         Expand compact structure back to full paths.
 
-        This is the inverse operation of compactification, establishing
-        the bijection between compact and expanded representations.
+        This is the inverse operation of compactification. Several
+        structures can expand to the same paths; the structure built from a
+        dictionary is the canonical one, and each set of paths has exactly
+        one canonical structure.
 
         Parameters
         ----------

@@ -379,7 +379,8 @@ class CompactPathsView(_CPaths):
 
     - ``[['a'], ['b']]`` → two independent paths: ``['a']`` and ``['b']``
     - ``[['a', 'b', 'c']]`` → paths: ``['a']``, ``['a', 'b']``, ``['a', 'c']``
-    - ``[['a', ['b', 'c']]]`` → equivalent to the above (explicit nesting)
+    - ``[['a', ['b', 'c']]]`` → paths: ``['a']``, ``['a', 'b']``, ``['a', 'b', 'c']``
+      (a nested list is a child that has children of its own)
 
     See Also
     --------
