@@ -198,6 +198,12 @@ s'affichent en anglais.
    fichiers `.mo` sont compilés par Sphinx au moment du build et ne sont pas
    commités.
 
+   Les blocs de code et de doctest sont extraits eux aussi. N'y traduire que
+   les commentaires et les annotations des schémas en texte ; recopier le
+   code et sa sortie sans changement, car le build traduit n'exécute pas les
+   doctests. `sphinx.po` contient les chaînes du thème et de Sphinx lui-même :
+   il n'a pas de modèle et se tient à la main.
+
 4. Vérifier ce qu'il reste à traduire. L'option `-d` est obligatoire depuis la
    racine du dépôt : sans elle, sphinx-intl cherche `conf.py` dans le
    répertoire courant et échoue avec une `TypeError`.

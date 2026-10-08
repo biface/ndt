@@ -21,15 +21,15 @@ drawn with rounded corners:
 .. mermaid::
 
     flowchart TD
-        subgraph ta [tree a]
+        subgraph ta [" "]
             a[a] --> ab[b]
             ab --> abc([c])
             a --> ad([d])
         end
-        subgraph te [tree e]
+        subgraph te [" "]
             e([e])
         end
-        subgraph tf [tree f]
+        subgraph tf [" "]
             f([f])
         end
 

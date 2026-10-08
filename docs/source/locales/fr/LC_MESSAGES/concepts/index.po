@@ -29,6 +29,6 @@ msgid ""
 "runnable examples to illustrate it."
 msgstr ""
 "Cette section présente les idées de base de **ndict-tools** sans entrer "
-"dans le détail de l'API. Chaque page traite d'un seul concept et "
-"l'illustre par des exemples exécutables."
+"dans le détail de l’API. Chaque page traite d’un seul concept et "
+"l’illustre par des exemples exécutables."
 

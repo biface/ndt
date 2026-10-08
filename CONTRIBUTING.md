@@ -194,6 +194,12 @@ Untranslated strings fall back to English.
 3. Fill in the `msgstr` entries of the `.po` files and commit them. The `.mo`
    files are compiled by Sphinx at build time and are not committed.
 
+   Code and doctest blocks are extracted too. Translate only their comments
+   and the annotations of text diagrams; copy the code and its output
+   unchanged, since the translated build does not run the doctests.
+   `sphinx.po` holds the strings of the theme and of Sphinx itself: it has
+   no template and is kept by hand.
+
 4. Check what remains to translate. `-d` is required when the command runs
    from the repository root: without it, sphinx-intl looks for `conf.py` in
    the current directory and fails with a `TypeError`.

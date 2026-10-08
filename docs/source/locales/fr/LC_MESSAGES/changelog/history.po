@@ -747,6 +747,16 @@ msgid ""
 "explicit removal notice. Migrate to the `classmethod`:"
 msgstr ""
 
+#, python-brace-format
+msgid ""
+"# Before (deprecated since 1.1.0, removed in 1.5.0)\n"
+"from ndict_tools.tools import from_dict\n"
+"nd = from_dict(data, NestedDictionary, default_setup={...})\n"
+"\n"
+"# After\n"
+"nd = NestedDictionary.from_dict(data, default_setup={...})\n"
+msgstr ""
+
 msgid "Closes #47."
 msgstr ""
 

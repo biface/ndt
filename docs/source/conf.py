@@ -96,6 +96,10 @@ language = os.environ.get("READTHEDOCS_LANGUAGE", "en").replace("-", "_")
 locale_dirs = ["locales/"]
 gettext_compact = False
 gettext_location = False
+# Code and doctest blocks are extracted too, so that their comments can be
+# translated. Their code is copied unchanged: only comments and the
+# annotations of text diagrams are translated, never code or output.
+gettext_additional_targets = ["literal-block", "doctest-block"]
 
 # -- Options for HTML output -------------------------------------------------
 html_theme = "furo"
