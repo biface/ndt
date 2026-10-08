@@ -44,6 +44,6 @@ msgstr ""
 "**ndict-tools** est une bibliothèque Python de gestion des dictionnaires "
 "imbriqués. Elle offre l'accès par clé hiérarchique, l'énumération des "
 "chemins, la représentation compacte des chemins et l'analyse de "
-"couverture, que ne proposent ni le :class:`dict` standard ni "
+"couverture, que ne proposent ni un :class:`dict` standard ni un "
 ":class:`collections.defaultdict`."
 
