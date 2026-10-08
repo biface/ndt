@@ -218,6 +218,11 @@ s'affichent en anglais.
    sphinx-build -W -b html -D language=fr docs/source docs/build/html-fr
    ```
 
+Le journal complet des modifications (`changelog/history.po`) reste en
+anglais : seuls le titre et l'introduction de la page sont traduits, si bien
+que `sphinx-intl stat` signale toujours des chaînes non traduites pour ce
+catalogue.
+
 Une traduction est publiée dans l'archive GitHub Pages, sous
 `/<langue>/vX.Y.Z/`, dès que son code de langue figure dans
 `docs/source/locales/LANGUAGES`. N'y ajouter le code qu'une fois le catalogue
@@ -235,6 +240,11 @@ les définitions sont sur la page Concepts « The Forest of Keys ».
 | complete tree | arbre quasi complet (*tassé à gauche*) | tous les niveaux remplis sauf peut-être le dernier, rempli de gauche à droite |
 | perfect tree | arbre complet | tous les niveaux remplis |
 | full tree | arbre localement complet (*strict*) | chaque nœud interne a exactement n enfants |
+
+En français, un nom de classe qui désigne un objet est masculin (*un
+`PathsView`*). Les exceptions prennent le genre d'*une exception* (*lève une
+`KeyError`*) et les avertissements celui d'*un avertissement* (*émet un
+`UserWarning`*).
 
 ---
 

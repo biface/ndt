@@ -214,6 +214,10 @@ Untranslated strings fall back to English.
    sphinx-build -W -b html -D language=fr docs/source docs/build/html-fr
    ```
 
+The full change log (`changelog/history.po`) stays in English: only the
+title and introduction of the page are translated, so `sphinx-intl stat`
+always reports untranslated strings for this catalog.
+
 A translation is published in the GitHub Pages archive, under
 `/<lang>/vX.Y.Z/`, once its language code is listed in
 `docs/source/locales/LANGUAGES`. Add the code when the catalog is translated,
@@ -231,6 +235,11 @@ Concepts page "The Forest of Keys".
 | complete tree | arbre quasi complet (*tassé à gauche*) | every level filled except possibly the last, filled left to right |
 | perfect tree | arbre complet | every level filled |
 | full tree | arbre localement complet (*strict*) | every internal node has exactly n children |
+
+In French, a class name that stands for an object is masculine (*un
+`PathsView`*). Exceptions take the gender of *une exception* (*lève une
+`KeyError`*) and warnings that of *un avertissement* (*émet un
+`UserWarning`*).
 
 ---
 

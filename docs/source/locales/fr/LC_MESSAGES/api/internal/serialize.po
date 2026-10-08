@@ -375,7 +375,7 @@ msgstr ""
 "        pass\n"
 "    else:\n"
 "        return list(iterable)\n"
-"    # La méthode default de la classe de base lève TypeError\n"
+"    # La méthode default de la classe de base lève une TypeError\n"
 "    return super().default(o)"
 
 msgid "Return a JSON string representation of a Python data structure."
