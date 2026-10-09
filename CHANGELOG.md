@@ -36,7 +36,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   added to `docs/source/requirements.txt`; the extension
   pins the Mermaid version it loads in the browser (11.12.1). The EN/FR
   table of tree shapes becomes the translation glossary of `CONTRIBUTING.md`
-  and `CONTRIBUTING.fr.md`. Closes #146.
+  and `CONTRIBUTING.fr.md` ([DD-030](https://github.com/biface/ndt/issues/153)). Closes #146.
 
 ### Changed
 
@@ -48,6 +48,17 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   GIL and makes no thread-safety claim.
 - **Development baseline:** `.python-version` pins 3.11 (`uv python pin 3.11`);
   basedpyright checks against Python 3.11; black targets py311.
+- **Type checking on Python 3.11.** basedpyright in strict mode reports no
+  error with `pythonVersion` 3.11; the remaining warnings are in the
+  categories left for later (`reportAny`, `reportExplicitAny`,
+  `reportUnknown*`). Closes #76.
+- **Python 3.10 compatibility code removed.** `Callable`, `Generator`,
+  `Iterable`, `Iterator` and `Mapping` are imported from `collections.abc`,
+  in `tools.py` and `serialize.py`; `typing.Type` is replaced by `type`;
+  annotations whose target exists at import time are no longer quoted, and
+  the local imports of `Path` are removed. Every `# type: ignore` comment,
+  left over from mypy, is removed, and the issue templates no longer
+  mention mypy. Closes #102, #128.
 - **pytest configuration:** `DeprecationWarning` is raised as an error, so
   deprecated calls surface before a later Python version removes them.
 - **tox:** `py310` environment removed; `py315` and `py314t` added;
@@ -191,6 +202,19 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   `hatchling>=1.27`. The `Typing :: Typed` classifier and `keywords` are
   added, and `dependencies = []` states that the package has no runtime
   dependency. Part of #130.
+- **Documentation rewritten for 1.3.0.** The Guide follows one example, the
+  inventory of a house, in five parts: Getting Started, Exploring a Nested
+  Dictionary, Working with Paths, Serialisation and Extending the Package;
+  every example is a doctest. The Concepts pages open with "Nested
+  Dictionaries", then "The Forest of Keys". The API reference describes the
+  public interface: its pages name no private class, show public names in
+  signatures, and give NumPy-style docstrings whose examples run on their
+  own. The READMEs state Python 3.11+, no runtime dependency and `py.typed`,
+  and link Read the Docs `stable` and `latest` and the archive; the
+  Changelog axis links each version from 0.9.0 to its archived
+  documentation, and every DD identifier to its decision issue.
+  CONTRIBUTING, `release-drafter.yml` and the issue templates follow the
+  Python 3.11 baseline. Closes #134, #147, #148, #149, #150.
 - **Comparisons (breaking).** `==` is now strict, like `equal()`: same
   class, same `default_setup` and same content. A nested dictionary is no
   longer equal to a plain `dict` with the same content, in either order;
@@ -292,7 +316,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   although its docstring describes the number of keys at every level, which
   is the number of nodes of the forest of keys. It now counts every key:
   `{'a': {'b': {'c': 1}}, 'd': 2, 'e': {}}` gives 5 instead of 3. The result
-  changes for any dictionary with a nested level. Part of #144.
+  changes for any dictionary with a nested level ([DD-030](https://github.com/biface/ndt/issues/153)). Part of #144.
 - **`leaves()`** dropped the value of a key whose value is an empty nested
   dictionary, although such a key has no children and is a leaf, as the
   docstring states and as `paths()`, `unpacked_values()` and `height()`
@@ -310,7 +334,8 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   more than two top-level keys was never binary, even when no key had more
   than two children. The root is now skipped, as in `is_complete_tree()`,
   `is_perfect_tree()` and `is_full_tree()`, so the number of top-level keys
-  is free. Found while writing the Concepts page of #146.
+  is free. Found while writing the Concepts page of #146 ([DD-030](https://github.com/biface/ndt/issues/153)).
+  Closes #152.
 - **`pop()`** used `None` both as its default value and as the mark of a
   missing default. A missing flat key without a default returned `None`
   instead of raising, unlike `dict.pop()` and the docstring, and a missing
