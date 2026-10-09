@@ -1,49 +1,47 @@
+# =============================================================================
+# pyproject.toml — ndict-tools
+# Single configuration file for packaging, tool settings and tox
+# environments. Files kept outside on purpose:
+#   docs/source/requirements.txt   read by Read the Docs and by the GitHub
+#                                  Pages archive in each tag (DD-028)
+#   .tox-config/                   dependencies of each tox environment, by
+#                                  role (requirements/), and the scripts
+#                                  test.sh and coverage.sh with the files
+#                                  they read (versions.txt,
+#                                  coverage-version.txt). Tools used only by
+#                                  tox stay out of the project environment.
+#   .readthedocs.yaml, .codecov.yml, .python-version
+#                                  each read by its own tool only
+# =============================================================================
+
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [project]
 name = "ndict-tools"
-version = "1.2.0"
+version = "1.3.0"
 authors = [
     {name="biface"}
 ]
 description = "An implementation of nested dictionaries"
 readme = "README.md"
-requires-python = ">=3.10"
+license = "CECILL-C"
+license-files = ["LICENSE.md"]
+requires-python = ">=3.11"
+dependencies = []
+keywords = ["nested dictionary", "defaultdict", "hierarchical keys", "paths", "tree"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    "License :: CeCILL-C Free Software License Agreement (CECILL-C)",
+    "Programming Language :: Python :: 3.14",
     "Operating System :: OS Independent",
     "Topic :: Utilities",
-]
-
-[project.optional-dependencies]
-dev = [
-    "bandit",
-    "basedpyright",
-    "black",
-    "build",
-    "flake8",
-    "isort",
-    "pytest",
-    "pytest-cov",
-    "tox",
-    "tox-uv",
-    "twine",
-    "wheel",
-]
-docs = [
-    "sphinx==8.1.3",
-    "furo==2025.12.19",
-    "sphinx-multiversion-contrib==0.2.13",
-    "myst-parser==4.0.1",
+    "Typing :: Typed",
 ]
 
 [project.urls]
@@ -52,9 +50,13 @@ Documentation = "https://ndict-tools.readthedocs.io/en/latest/"
 Repository = "https://github.com/biface/ndt.git"
 Issues = "https://github.com/biface/ndt/issues"
 
+# -----------------------------------------------------------------------------
+# Tool settings
+# -----------------------------------------------------------------------------
+
 [tool.black]
 line-length = 88
-target-version = ["py310", "py311", "py312", "py313"]
+target-version = ["py311"]
 
 [tool.isort]
 profile = "black"
@@ -63,8 +65,226 @@ known_first_party = "ndict_tools"
 multi_line_output = 3
 include_trailing_comma = true
 
-[tool.flake8]
-max-line-length = 88
-ignore = ["E501"]
-extend-ignore = ["E203", "W503"]
-exclude = [".tox", ".git", "__pycache__", "build", "dist"]
+[tool.pytest.ini_options]
+# Deprecations become errors so that code deprecated in 3.11 surfaces before
+# it is removed in a later Python version.
+filterwarnings = ["error::DeprecationWarning"]
+
+[tool.basedpyright]
+include = ["src"]
+pythonVersion = "3.11"
+reportImportCycles = "warning"
+reportUnsafeMultipleInheritance = "warning"
+
+[tool.coverage.run]
+branch = true
+source = ["src/", "src/ndict_tools"]
+omit = ["*/.tox/*", "*/docs/*", "*/tests/*", "*/.venv/*"]
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "def __str__",
+    "if TYPE_CHECKING:",
+]
+
+[tool.coverage.html]
+directory = "coverage/coverage_html"
+title = "Code coverage Report"
+
+[tool.coverage.xml]
+output = "coverage/coverage.xml"
+
+# -----------------------------------------------------------------------------
+# tox
+#
+# Dependencies come from .tox-config/requirements/<role>.txt. Each tool's
+# commands are written once, in the environment of that tool; the aggregate
+# environments (check, ci-quality, pre-push) reference them. flake8 does not read pyproject.toml: its options are on its
+# command line. The CI calls ci-quality, py311 to py314 (py315 and py314t as
+# best effort) and coverage.
+# -----------------------------------------------------------------------------
+
+[tool.tox]
+requires = ["tox>=4.22", "tox-uv>=1.36"]
+env_list = [
+    "py311", "py312", "py313", "py314",
+    "basedpyright", "verifytypes", "typing",
+    "flake8", "black-check", "isort-check", "bandit",
+]
+
+# Test environments: pytest on the version named by the environment.
+[tool.tox.env_run_base]
+uv_seed = true
+set_env = { PYTHONPATH = "{tox_root}/src:{tox_root}/tests" }
+deps = ["-r {tox_root}/.tox-config/requirements/base.txt"]
+commands = [
+    ["pytest", "--import-mode=importlib", "--cov=ndict_tools", "--cov-report=term-missing"],
+]
+
+[tool.tox.env.py311]
+base_python = ["python3.11"]
+
+[tool.tox.env.py312]
+base_python = ["python3.12"]
+
+[tool.tox.env.py313]
+base_python = ["python3.13"]
+
+[tool.tox.env.py314]
+base_python = ["python3.14"]
+
+# Best effort: pre-release until 3.15.0 final
+[tool.tox.env.py315]
+base_python = ["python3.15"]
+
+# Best effort: free-threaded build (no GIL); no thread-safety claim
+[tool.tox.env.py314t]
+base_python = ["python3.14t"]
+
+# === Checks ==================================================================
+
+[tool.tox.env.basedpyright]
+description = "Type checking with basedpyright"
+deps = ["-r {tox_root}/.tox-config/requirements/type-check.txt"]
+allowlist_externals = ["bash"]
+commands = [
+    ["bash", "-c", "basedpyright src; code=$?; [ $code -le 1 ]"],
+    { replace = "ref", of = ["tool", "tox", "env", "typing", "commands"], extend = true },
+]
+
+[tool.tox.env.verifytypes]
+description = "Type completeness of the exported API (DD-027), on the installed package"
+deps = ["-r {tox_root}/.tox-config/requirements/type-check.txt"]
+allowlist_externals = ["bash"]
+# PYTHONPATH is unset so that basedpyright resolves the package installed from
+# the built distribution, not src/: a wheel without py.typed fails.
+commands = [
+    ["bash", "-c", "env -u PYTHONPATH basedpyright --verifytypes ndict_tools --ignoreexternal"],
+]
+
+[tool.tox.env.typing]
+description = "Static checks of inferred types (assert_type) in tests/typing"
+deps = ["-r {tox_root}/.tox-config/requirements/type-check.txt"]
+# No exit-code wrapper: an assert_type mismatch is an error and must fail.
+commands = [["basedpyright", "tests/typing"]]
+
+[tool.tox.env.flake8]
+description = "Lint the code with flake8"
+deps = ["-r {tox_root}/.tox-config/requirements/linter.txt"]
+commands = [
+    ["flake8", "--max-line-length=88", "--extend-ignore=E203,W503,E501",
+     "--exclude=.tox,.git,__pycache__,build,dist,.eggs,*.egg", "src", "tests"],
+]
+
+[tool.tox.env.black-check]
+description = "Check code formatting with black (no changes)"
+deps = ["-r {tox_root}/.tox-config/requirements/format.txt"]
+commands = [["black", "--check", "--diff", "src", "tests"]]
+
+[tool.tox.env.isort-check]
+description = "Check import sorting with isort (no changes)"
+deps = ["-r {tox_root}/.tox-config/requirements/format.txt"]
+commands = [["isort", "--check-only", "--diff", "src", "tests"]]
+
+[tool.tox.env.bandit]
+description = "Run security analysis with bandit"
+deps = ["-r {tox_root}/.tox-config/requirements/security.txt"]
+commands = [["bandit", "-r", "src"]]
+
+# === Auto-fix (local only) ===================================================
+
+[tool.tox.env.black]
+description = "Auto-format code with black"
+deps = ["-r {tox_root}/.tox-config/requirements/format.txt"]
+commands = [["black", "src", "tests"]]
+
+[tool.tox.env.isort]
+description = "Auto-sort imports with isort"
+deps = ["-r {tox_root}/.tox-config/requirements/format.txt"]
+commands = [["isort", "src", "tests"]]
+
+[tool.tox.env.format]
+description = "Auto-format code (black + isort)"
+deps = ["-r {tox_root}/.tox-config/requirements/format.txt"]
+commands = [
+    { replace = "ref", of = ["tool", "tox", "env", "black", "commands"], extend = true },
+    { replace = "ref", of = ["tool", "tox", "env", "isort", "commands"], extend = true },
+]
+
+# === Coverage (local through coverage.sh, and CI) ============================
+
+[tool.tox.env.coverage]
+description = "Produce python test coverage using pytest"
+base_python = ["python3.12"]
+deps = ["-r {tox_root}/.tox-config/requirements/base.txt"]
+commands = [
+    ["pytest", "--import-mode=importlib", "--cov=ndict_tools", "--cov-append",
+     "--cov-report=term-missing",
+     "--cov-report=xml:{tox_root}/coverage/coverage.xml",
+     "--cov-report=html:{tox_root}/coverage/coverage_html", "tests"],
+]
+
+# === Documentation ===========================================================
+
+[tool.tox.env.docs]
+description = "Build the documentation (English and French) and run its doctests"
+base_python = ["python3.11"]
+deps = ["-r {tox_root}/.tox-config/requirements/docs.txt"]
+commands = [
+    ["sphinx-build", "-q", "-W", "-b", "html", "docs/source", "docs/build/html"],
+    ["sphinx-build", "-q", "-W", "-b", "html", "-D", "language=fr", "docs/source", "docs/build/fr/html"],
+    ["sphinx-build", "-q", "-b", "doctest", "docs/source", "docs/build/doctest"],
+    ["sphinx-build", "-q", "-b", "doctest", "-D", "language=fr", "docs/source", "docs/build/fr/doctest"],
+]
+
+# === Aggregates ==============================================================
+
+[tool.tox.env.check]
+description = "Quick check (no formatting, only verify)"
+deps = ["-r {tox_root}/.tox-config/requirements/full.txt"]
+allowlist_externals = ["bash"]
+commands = [
+    { replace = "ref", of = ["tool", "tox", "env", "basedpyright", "commands"], extend = true },
+    { replace = "ref", of = ["tool", "tox", "env", "verifytypes", "commands"], extend = true },
+    { replace = "ref", of = ["tool", "tox", "env", "flake8", "commands"], extend = true },
+    ["black", "--check", "src", "tests"],
+    ["isort", "--check-only", "src", "tests"],
+]
+
+[tool.tox.env.ci-quality]
+description = "CI quality checks (no auto-fix, only verify)"
+deps = ["-r {tox_root}/.tox-config/requirements/full.txt"]
+allowlist_externals = ["bash"]
+commands = [
+    { replace = "ref", of = ["tool", "tox", "env", "basedpyright", "commands"], extend = true },
+    { replace = "ref", of = ["tool", "tox", "env", "verifytypes", "commands"], extend = true },
+    { replace = "ref", of = ["tool", "tox", "env", "flake8", "commands"], extend = true },
+    { replace = "ref", of = ["tool", "tox", "env", "black-check", "commands"], extend = true },
+    { replace = "ref", of = ["tool", "tox", "env", "isort-check", "commands"], extend = true },
+    { replace = "ref", of = ["tool", "tox", "env", "bandit", "commands"], extend = true },
+]
+
+[tool.tox.env.pre-push]
+description = "Complete local workflow before push (format + checks + tests)"
+deps = ["-r {tox_root}/.tox-config/requirements/full.txt"]
+allowlist_externals = ["bash"]
+pass_env = ["HOME", "USER"]
+commands = [
+    { replace = "ref", of = ["tool", "tox", "env", "format", "commands"], extend = true },
+    { replace = "ref", of = ["tool", "tox", "env", "basedpyright", "commands"], extend = true },
+    { replace = "ref", of = ["tool", "tox", "env", "verifytypes", "commands"], extend = true },
+    { replace = "ref", of = ["tool", "tox", "env", "flake8", "commands"], extend = true },
+    { replace = "ref", of = ["tool", "tox", "env", "bandit", "commands"], extend = true },
+    ["bash", "{tox_root}/.tox-config/scripts/test.sh"],
+    ["bash", "{tox_root}/.tox-config/scripts/coverage.sh"],
+]
+
+[tool.tox.env.local]
+description = "Alias for pre-push"
+deps = ["-r {tox_root}/.tox-config/requirements/full.txt"]
+allowlist_externals = ["bash"]
+pass_env = ["HOME", "USER"]
+commands = [{ replace = "ref", of = ["tool", "tox", "env", "pre-push", "commands"], extend = true }]

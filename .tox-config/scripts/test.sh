@@ -73,10 +73,10 @@ run_tests() {
     # Verification de l'existence du fichier
     if [[ ! -f "${VERSIONS_FILE}" ]]; then
         log_error "File not found: ${VERSIONS_FILE}"
-        log_info "Using default versions: py310, py311"
+        log_info "Using default versions: py311, py312"
         
         # Fallback sur versions par defaut
-        local default_versions=("py310" "py311")
+        local default_versions=("py311" "py312")
         for env in "${default_versions[@]}"; do
             log_section "Running tests with ${env}"
             if ! tox -e "${env}"; then
@@ -107,8 +107,8 @@ run_tests() {
     # Verification qu'au moins une version est definie
     if [[ ${#versions[@]} -eq 0 ]]; then
         log_warning "No test versions found in ${VERSIONS_FILE}"
-        log_info "Using default versions: py310, py311"
-        versions=("py310" "py311")
+        log_info "Using default versions: py311, py312"
+        versions=("py311" "py312")
     fi
     
     log_info "Test versions: ${versions[*]}"

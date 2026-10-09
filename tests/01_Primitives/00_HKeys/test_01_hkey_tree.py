@@ -124,7 +124,7 @@ class TestHKeyTree:
             ([frozenset({"cache", "redis"}), "config", "memory"], 2, 0),
         ],
     )
-    def test_get_children_by_path(self, key_tree, path, depth, max_depth):
+    def test_get_depth_by_path(self, key_tree, path, depth, max_depth):
         if path is not None:
             assert key_tree.find_by_path(path).get_depth() == depth
             assert key_tree.find_by_path(path).get_max_depth() == max_depth

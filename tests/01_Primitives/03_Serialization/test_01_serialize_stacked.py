@@ -11,8 +11,6 @@ Structure:
 """
 
 import pickle
-from copy import deepcopy
-from pathlib import Path
 
 import pytest
 

@@ -6,7 +6,8 @@ Covers:
 - Correct type propagation to nested dicts
 - _default_setup preservation through the classmethod
 - Already-instantiated _StackedDict values preserved as-is
-- StackedKeyError when default_setup is absent
+- Without default_setup: the class default, via _normalize_setup (#151);
+  StackedKeyError for the base class, which has no default
 - DeprecationWarning emitted by the free function
 - Round-trip: from_dict(to_dict()) produces a structurally equal dict
 """
@@ -118,12 +119,37 @@ class TestFromDictClassmethod:
     # -----------------------------------------------------------------------
 
     def test_missing_default_setup_raises(self, function_system_config):
-        """StackedKeyError raised when default_setup is absent."""
+        """The base class has no default configuration: StackedKeyError."""
         with pytest.raises(
             StackedKeyError,
-            match=re.escape("The key 'default_setup' must be present in class options"),
+            match=re.escape("Missing 'default_setup' argument"),
         ):
-            _StackedDict.from_dict(function_system_config, none_setup={})
+            _StackedDict.from_dict(function_system_config)
+
+    # -----------------------------------------------------------------------
+    # Without default_setup: the class default (_normalize_setup)
+    # -----------------------------------------------------------------------
+
+    @pytest.mark.parametrize(
+        "cls, expected_factory",
+        [
+            (NestedDictionary, NestedDictionary),
+            (StrictNestedDictionary, None),
+            (SmoothNestedDictionary, SmoothNestedDictionary),
+        ],
+    )
+    def test_without_default_setup_uses_class_default(
+        self, cls, expected_factory, function_system_config
+    ):
+        """from_dict resolves a missing default_setup like the constructor."""
+        result = cls.from_dict(function_system_config)
+        assert type(result) is cls
+        assert result.default_factory is expected_factory
+        assert result.default_setup == cls(function_system_config).default_setup
+        for value in result.values():
+            if isinstance(value, _StackedDict):
+                assert type(value) is cls
+                assert value.default_factory is expected_factory
 
     # -----------------------------------------------------------------------
     # Round-trip

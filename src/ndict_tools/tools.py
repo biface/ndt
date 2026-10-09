@@ -20,22 +20,23 @@ designed to:
 
 """
 
+import copy
 import json
 import warnings
 from collections import defaultdict, deque
-from pathlib import Path
-from textwrap import indent
-from typing import (
-    Any,
+from collections.abc import (
     Callable,
     Generator,
+    Hashable,
     Iterable,
     Iterator,
     Mapping,
-    Type,
-    TypeVar,
 )
+from pathlib import Path
+from textwrap import indent
+from typing import TYPE_CHECKING, Any, Self, TypeAlias, TypeVar, cast
 
+from ._compat import override
 from .exception import (
     StackedAttributeError,
     StackedIndexError,
@@ -44,9 +45,30 @@ from .exception import (
     StackedValueError,
 )
 
+if TYPE_CHECKING:
+    from _typeshed import SupportsKeysAndGetItem
+
 MAX_DEPTH = 100
 
 T = TypeVar("T", bound="_StackedDict")
+
+_SetupSource: TypeAlias = Mapping[str, Any] | Iterable[tuple[str, Any]]
+"Accepted by the default_setup setter: a mapping or (key, value) pairs."
+
+
+class _NoDefault:
+    """Type of the sentinel that marks a missing ``default`` argument."""
+
+    __slots__: tuple[()] = ()
+
+    @override
+    def __repr__(self) -> str:
+        return "<no default>"
+
+
+# Marks a missing ``default`` argument, so that ``None`` stays a valid default.
+# Its repr keeps the documented signature of ``pop()`` readable.
+_MISSING: Any = _NoDefault()
 
 
 def _reconstruct(
@@ -79,7 +101,7 @@ def _reconstruct(
 """Internal functions"""
 
 
-def compare_dict(d1, d2) -> bool:
+def compare_dict(d1: Any, d2: Any) -> bool:
     """
     Recursively compare two potentially nested structures for equality.
 
@@ -184,9 +206,15 @@ def unpack_items(
             yield (key,), value
 
 
-def from_dict(dictionary: dict[Any, Any], class_name: Type["T"], **class_options) -> T:
+def from_dict(
+    dictionary: dict[Any, Any], class_name: type[T], **class_options: Any
+) -> T:
     """
     Recursively convert a standard dictionary to a _StackedDict or subclass.
+
+    .. deprecated:: 1.1.0
+       Removed in 1.5.0. Use the class method instead:
+       ``NestedDictionary.from_dict(dictionary, default_setup={...})``.
 
     This function transforms a regular nested dictionary into a _StackedDict-based
     structure, preserving the hierarchical organization while adding the enhanced
@@ -197,12 +225,12 @@ def from_dict(dictionary: dict[Any, Any], class_name: Type["T"], **class_options
     ----------
     dictionary : dict
         The dictionary to transform (may be nested)
-    class_name : Type[T]
+    class_name : type[T]
         The _StackedDict class (or subclass) to instantiate.
         Must be a subclass of _StackedDict.
     **class_options : dict
-        Initialization options for the class instances.
-        Must contain 'default_setup' key with configuration dict.
+        Initialization options for the class instances. ``default_setup`` is
+        optional and resolved by ``class_name._normalize_setup``.
 
     Returns
     -------
@@ -213,16 +241,20 @@ def from_dict(dictionary: dict[Any, Any], class_name: Type["T"], **class_options
     Raises
     ------
     StackedKeyError
-        If 'default_setup' key is missing from class_options
+        If 'default_setup' is missing and class_name defines no default
+        configuration
     StackedTypeError
         If class_name is not a valid _StackedDict class or subclass
 
     Examples
     --------
+    >>> import warnings
     >>> setup = {'default_setup': {'indent': 2, 'default_factory': None}}
-    >>> sdict = from_dict({'a': {'b': 1}}, _StackedDict, **setup)
-    >>> type(sdict)
-    <class '_StackedDict'>
+    >>> with warnings.catch_warnings():
+    ...     warnings.simplefilter('ignore', DeprecationWarning)
+    ...     sdict = from_dict({'a': {'b': 1}}, _StackedDict, **setup)
+    >>> type(sdict).__name__
+    '_StackedDict'
     >>> sdict['a']['b']
     1
 
@@ -246,17 +278,12 @@ def from_dict(dictionary: dict[Any, Any], class_name: Type["T"], **class_options
         stacklevel=2,
     )
 
-    if "default_setup" in class_options:
-        if not isinstance(class_name, type) or not issubclass(class_name, _StackedDict):
-            raise StackedTypeError(
-                f"class_name must be a _StackedDict class, got {type(class_name)}"
-            )
-        dict_object: T = class_name(**class_options)
-    else:
-        raise StackedKeyError(
-            f"The key 'default_setup' must be present in class options : {class_options}",
-            key="default_setup",
+    if not isinstance(class_name, type) or not issubclass(class_name, _StackedDict):
+        raise StackedTypeError(
+            f"class_name must be a _StackedDict class, got {type(class_name)}"
         )
+    # The configuration is resolved by class_name._normalize_setup in __init__.
+    dict_object: T = class_name(**class_options)
 
     for key, value in dictionary.items():
         if isinstance(value, _StackedDict):
@@ -336,7 +363,7 @@ class _HKey:
         self.is_root: bool = is_root
 
     @classmethod
-    def build_forest(cls, stacked_dict: dict[Any, Any]) -> "_HKey":
+    def build_forest(cls, stacked_dict: dict[Any, Any]) -> Self:
         """
         Build a forest of _HKey trees from a nested dictionary.
 
@@ -350,8 +377,11 @@ class _HKey:
 
         Returns
         -------
-        _HKey
-            Root node (with is_root=True, key=None) containing the forest
+        Self
+            Root node (with is_root=True, key=None) containing the forest.
+            The root is an instance of the calling class; the nodes below it
+            are plain ``_HKey`` instances, because ``_build_from_dict`` and
+            ``add_child`` build ``_HKey`` explicitly.
 
         Examples
         --------
@@ -362,7 +392,7 @@ class _HKey:
         >>> forest.is_root
         True
         """
-        root: _HKey = cls(None, is_root=True)
+        root = cls(None, is_root=True)
         root._build_from_dict(stacked_dict)
         return root
 
@@ -472,7 +502,8 @@ class _HKey:
         Examples
         --------
         >>> node = _HKey('parent')
-        >>> node.add_child('child')
+        >>> node.add_child('child')  # Returns the new node
+        _HKey(key='child', children=0)
         >>> child = node.get_child('child')
         >>> child.key
         'child'
@@ -497,7 +528,9 @@ class _HKey:
         --------
         >>> node = _HKey('parent')
         >>> node.add_child('a')
+        _HKey(key='a', children=0)
         >>> node.add_child('b')
+        _HKey(key='b', children=0)
         >>> sorted(node.get_child_keys())
         ['a', 'b']
         """
@@ -588,10 +621,11 @@ class _HKey:
 
     def get_all_paths(self) -> list[list[Any]]:
         """
-        Get all paths from this node to all descendants.
+        Get the full paths of every node in the subtree rooted at this node.
 
-        Recursively collects paths to every node in the subtree,
-        including intermediate nodes and leaves.
+        Paths start at the root of the tree, in depth-first pre-order. On a
+        non-root node, the first path is the path of the node itself; on the
+        root, which has no key, only its descendants are listed.
 
         Returns
         -------
@@ -601,14 +635,15 @@ class _HKey:
         Examples
         --------
         >>> root = _HKey.build_forest({'a': {'b': 1, 'c': 2}})
-        >>> paths = root.get_all_paths()
-        >>> len(paths)
-        3
-        >>> sorted([tuple(p) for p in paths])
-        [('a',), ('a', 'b'), ('a', 'c')]
+        >>> root.get_all_paths()
+        [['a'], ['a', 'b'], ['a', 'c']]
+        >>> root.find_by_path(['a']).get_all_paths()
+        [['a'], ['a', 'b'], ['a', 'c']]
         """
         paths: list[list[Any]] = []
-        base_path: list[Any] = self.get_path() if not self.is_root else []
+        # Path of the parent: collect_paths appends the key of each node,
+        # this one included.
+        base_path: list[Any] = self.get_path()[:-1] if not self.is_root else []
 
         def collect_paths(node: _HKey, current_path: list[Any]) -> None:
             if not node.is_root:
@@ -645,12 +680,24 @@ class _HKey:
 
     def get_depth(self) -> int:
         """
-        Get the depth of this node (distance from root).
+        Get the depth of this node in the forest of keys.
+
+        A top-level key is the root of its tree and has depth 0; each level
+        below adds 1. The node returned by :meth:`build_forest`, which holds
+        no key, also returns 0.
 
         Returns
         -------
         int
-            Depth level (0 for direct children of root)
+            Number of edges between this node and the root of its tree
+
+        Examples
+        --------
+        >>> root = _HKey.build_forest({'a': {'b': {'c': 1}}})
+        >>> root.find_by_path(['a']).get_depth()
+        0
+        >>> root.find_by_path(['a', 'b', 'c']).get_depth()
+        2
         """
         depth: int = 0
         current: "_HKey | None" = self.parent
@@ -663,12 +710,27 @@ class _HKey:
 
     def get_max_depth(self) -> int:
         """
-        Get the maximum depth of the subtree rooted at this node.
+        Get the height of the subtree rooted at this node.
+
+        On a key node, this is the number of edges on the longest path from
+        the node down to a leaf: 0 for a leaf. On the node returned by
+        :meth:`build_forest`, which holds no key and sits above the top-level
+        keys, the extra edge makes the result the number of levels of the
+        forest, that is the greatest depth of a key plus 1 (0 for an empty
+        dictionary).
 
         Returns
         -------
         int
-            Maximum depth (0 for leaf nodes)
+            Height of the subtree, or number of levels on the forest root
+
+        Examples
+        --------
+        >>> root = _HKey.build_forest({'a': {'b': {'c': 1}}, 'd': 2})
+        >>> root.find_by_path(['a']).get_max_depth()
+        2
+        >>> root.get_max_depth()
+        3
         """
         if not self.children:
             return 0
@@ -1189,7 +1251,7 @@ class _HKey:
         >>> root = _HKey.build_forest({'a': {'b': {'c': 1}, 'x': {'b': {'z': 1}}}})
         >>> pruned = root.prune(lambda n: n.key == 'b' and n.get_depth() == 2)
         >>> pruned.get_all_paths()
-        [['a'], ['a', 'b'], ['a', 'x'], ['a', 'x', 'b']]
+        [['a'], ['a', 'x'], ['a', 'x', 'b']]
 
         >>> # Keep only leaf nodes
         >>> root = _HKey.build_forest({'a': {'b': 1, 'c': 2}})
@@ -1269,23 +1331,38 @@ class _HKey:
 
     def get_statistics(self) -> dict[str, Any]:
         """
-        Get comprehensive statistics about the tree.
+        Get statistics about the subtree rooted at this node.
 
         Returns
         -------
         dict[str, Any]
-            Dictionary containing various tree statistics
+            Dictionary with the following entries:
+
+            - ``total_nodes``: nodes of the subtree, this node included. On
+              the node returned by :meth:`build_forest`, the count includes
+              that node, which holds no key, so it is the number of keys
+              plus 1.
+            - ``leaf_count``: nodes without children.
+            - ``max_depth``: result of :meth:`get_max_depth`, so the number
+              of levels of the forest when called on the forest root.
+            - ``avg_branching_factor``: mean number of children of the nodes
+              that have children, rounded to 2 decimals.
+            - ``total_paths``: number of paths returned by
+              :meth:`get_all_paths`, one per key of the subtree.
+            - ``levels``: number of levels of keys in the subtree.
 
         Examples
         --------
         >>> root = _HKey.build_forest({'a': {'b': {'c': 1}}, 'd': 2})
         >>> stats = root.get_statistics()
         >>> stats['total_nodes']
-        4
+        5
         >>> stats['max_depth']
-        2
+        3
         >>> stats['leaf_count']
         2
+        >>> stats['levels']
+        3
         """
         all_nodes = list(self.dfs_preorder())
         leaves = list(self.iter_leaves())
@@ -1460,11 +1537,8 @@ class _HKey:
                 )
 
             # Verify parent's children contain this node
-            if node.parent and not node.is_root:
-                print("->")
-                print(node, ":", node.parent, ":", node.parent.children)
+            if node.parent is not None and not node.is_root:
                 if node not in node.parent.children:
-                    print("-->")
                     issues.append(f"Node {node.key} not in parent's children list")
 
         return len(issues) == 0, issues
@@ -1496,127 +1570,177 @@ class _HKey:
             for child in node.children:
                 if child.parent != node:
                     issues.append(
-                        f"Inconsistent parent: child {child.key} has parent {child.parent.key if child.parent else 'None'} but is child of {node.key}"
+                        f"Inconsistent parent: child {child.key} has parent {child.parent.key if child.parent is not None else 'None'} but is child of {node.key}"
                     )
 
         return issues
 
-    def is_complete_tree(self) -> bool:
+    @staticmethod
+    def _check_arity(n: int, minimum: int, method: str) -> None:
         """
-        Check if this is a complete tree.
+        Validate the arity argument of a tree predicate.
 
-        A complete tree is a tree where all levels are fully filled except
-        possibly the last level, which is filled from left to right.
+        Parameters
+        ----------
+        n : int
+            Requested arity.
+        minimum : int
+            Smallest meaningful arity for the predicate.
+        method : str
+            Name of the calling predicate, used in the error message.
+
+        Raises
+        ------
+        StackedValueError
+            If ``n`` is below ``minimum``.
+        """
+        if n < minimum:
+            raise StackedValueError(
+                f"{method}() requires an arity n >= {minimum}", value=n
+            )
+
+    def is_complete_tree(self, n: int = 2) -> bool:
+        """
+        Check if this is a complete n-ary tree (binary by default).
+
+        A complete tree has every level filled except possibly the last, whose
+        nodes are as far left as possible. In BFS order, once a node has fewer
+        than ``n`` children, no later node may have children. A node with more
+        than ``n`` children makes the tree not n-ary, hence not complete.
+
+        Nodes created with ``is_root=True`` are not checked: the root is the
+        virtual container whose children are the top-level keys, so the number
+        of top-level keys is free.
+
+        Parameters
+        ----------
+        n : int, optional
+            Arity of the tree, at least 2 (default: 2). Below 2 every tree would
+            be trivially complete.
 
         Returns
         -------
         bool
-            True if tree is complete
+            True if the tree is complete for arity ``n``.
+
+        Raises
+        ------
+        StackedValueError
+            If ``n`` is below 2.
 
         Examples
         --------
-        >>> # Complete tree: all levels filled
-        >>> root = _HKey('a')
-        >>> root.add_child('b')
-        >>> root.add_child('c')
-        >>> root.is_complete_tree()
-        True
-
-        >>> # Incomplete: last level not filled left-to-right
+        >>> # Complete: the last level is filled from the left
         >>> root = _HKey('a')
         >>> b = root.add_child('b')
         >>> c = root.add_child('c')
-        >>> c.add_child('d')  # Only right child has children
+        >>> d = b.add_child('d')
+        >>> root.is_complete_tree()
+        True
+
+        >>> # Not complete: 'b' has no children while 'c', to its right, has one
+        >>> root = _HKey('a')
+        >>> b = root.add_child('b')
+        >>> c = root.add_child('c')
+        >>> d = c.add_child('d')
         >>> root.is_complete_tree()
         False
 
         Notes
         -----
-        This uses BFS to check level-by-level filling.
+        Terminology follows English usage. French *arbre complet* corresponds to
+        English *perfect tree* (see ``is_perfect_tree``).
 
         See Also
         --------
-        is_perfect_tree : Check if perfectly balanced
-        is_balanced : Check if height-balanced
+        is_perfect_tree : Every level filled
+        is_full_tree : Every internal node has exactly n children
+        is_balanced : Height-balanced check
         """
-        if not self.has_children():
-            return True
+        self._check_arity(n, 2, "is_complete_tree")
 
         queue: deque[_HKey] = deque([self])
         found_incomplete = False
 
         while queue:
             node = queue.popleft()
-
-            for child in node.children:
-                if found_incomplete:
-                    # After finding a node that's not full, no nodes should have children
-                    if child.has_children():
-                        return False
-                queue.append(child)
-
-            # If this node doesn't have maximum children, mark as incomplete
-            if not node.is_root and len(node.children) < 2:
-                found_incomplete = True
+            if not node.is_root:
+                count = len(node.children)
+                if count > n:
+                    return False
+                if found_incomplete and count:
+                    # A node after the first incomplete one must be a leaf
+                    return False
+                if count < n:
+                    found_incomplete = True
+            queue.extend(node.children)
 
         return True
 
-    def is_perfect_tree(self) -> bool:
+    def is_perfect_tree(self, n: int = 2) -> bool:
         """
-        Check if this is a perfect tree (all leaves at same depth, all internal nodes have 2 children).
+        Check if this is a perfect n-ary tree (binary by default).
 
-        A perfect tree is both complete and full:
+        A perfect tree has every level filled: all leaves are at the same depth
+        and every internal node has exactly ``n`` children.
 
-        * All leaves are at the same depth
-        * All internal nodes have exactly 2 children
+        Nodes created with ``is_root=True`` are not checked for arity: the root
+        is the virtual container whose children are the top-level keys.
+
+        Parameters
+        ----------
+        n : int, optional
+            Arity of the tree, at least 2 (default: 2). Below 2 every chain
+            would be trivially perfect.
 
         Returns
         -------
         bool
-            True if tree is perfect
+            True if the tree is perfect for arity ``n``.
+
+        Raises
+        ------
+        StackedValueError
+            If ``n`` is below 2.
 
         Examples
         --------
-        >>> # Perfect tree with 2 children per node
         >>> root = _HKey('a')
         >>> b = root.add_child('b')
         >>> c = root.add_child('c')
-        >>> b.add_child('d')
-        >>> b.add_child('e')
-        >>> c.add_child('f')
-        >>> c.add_child('g')
+        >>> d = b.add_child('d')
+        >>> e = b.add_child('e')
+        >>> f = c.add_child('f')
+        >>> g = c.add_child('g')
         >>> root.is_perfect_tree()
         True
+        >>> root.is_perfect_tree(n=3)
+        False
 
         Notes
         -----
-        This assumes binary tree structure. For n-ary trees, this checks
-        if all internal nodes have the same number of children and all
-        leaves are at the same depth.
+        Terminology follows English usage: a perfect tree is what French calls
+        an *arbre complet*.
 
         See Also
         --------
-        is_complete_tree : Less strict completeness check
+        is_complete_tree : Last level may be partially filled
+        is_full_tree : Every internal node has exactly n children
         is_balanced : Height-balanced check
         """
+        self._check_arity(n, 2, "is_perfect_tree")
+
         leaves = list(self.iter_leaves())
-        if not leaves:
-            return True
+        if leaves:
+            first_leaf_depth = leaves[0].get_depth()
+            if not all(leaf.get_depth() == first_leaf_depth for leaf in leaves):
+                return False
 
-        # All leaves should be at the same depth
-        first_leaf_depth = leaves[0].get_depth()
-        if not all(leaf.get_depth() == first_leaf_depth for leaf in leaves):
-            return False
-
-        # All internal nodes should have the same number of children
-        internal_nodes = [
-            n for n in self.dfs_preorder() if n.has_children() and not n.is_root
-        ]
-        if not internal_nodes:
-            return True
-
-        first_children_count = len(internal_nodes[0].children)
-        return all(len(n.children) == first_children_count for n in internal_nodes)
+        return all(
+            len(node.children) == n
+            for node in self.dfs_preorder()
+            if node.has_children() and not node.is_root
+        )
 
     def is_balanced(self, threshold: int = 1) -> bool:
         """
@@ -1645,7 +1769,9 @@ class _HKey:
         >>> root = _HKey('a')
         >>> b = root.add_child('b')
         >>> b.add_child('c').add_child('d').add_child('e')
+        _HKey(key='e', children=0)
         >>> root.add_child('f')
+        _HKey(key='f', children=0)
         >>> root.is_balanced(threshold=1)
         False
 
@@ -1696,6 +1822,7 @@ class _HKey:
         >>> b = root.add_child('b')
         >>> c = root.add_child('c')
         >>> b.add_child('d').add_child('e')  # Deep subtree
+        _HKey(key='e', children=0)
         >>> root.get_balance_factor()
         2
 
@@ -1721,8 +1848,9 @@ class _HKey:
         Examples
         --------
         >>> root = _HKey.build_forest({'a': {'b': 1, 'c': 2}})
+        >>> # One node with two children, two nodes without children
         >>> root.count_nodes_by_degree()
-        {2: 1, 0: 2}  # One node with 2 children, two nodes with 0 children
+        {2: 1, 0: 2}
 
         Notes
         -----
@@ -1745,75 +1873,88 @@ class _HKey:
         """
         Check if this is a binary tree (all nodes have at most 2 children).
 
-        Returns
-        -------
-        bool
-            True if all nodes have 0, 1, or 2 children
-
-        Examples
-        --------
-        >>> root = _HKey('a')
-        >>> root.add_child('b')
-        >>> root.add_child('c')
-        >>> root.is_binary_tree()
-        True
-
-        >>> root.add_child('d')  # Now has 3 children
-        >>> root.is_binary_tree()
-        False
-        """
-        for node in self.dfs_preorder():
-            if len(node.children) > 2:
-                return False
-        return True
-
-    def is_full_tree(self, n: int | None = None) -> bool:
-        """
-        Check if this is a full tree (all nodes have 0 or n children).
-
-        A full tree (also called proper or plane tree) has all internal nodes
-        with the same number of children.
-
-        Parameters
-        ----------
-        n : Optional[int], optional
-            Expected number of children for internal nodes. If None, uses the
-            number from the first internal node found.
+        Nodes created with ``is_root=True`` are not checked: the root is the
+        virtual container whose children are the top-level keys, so the number
+        of top-level keys is free.
 
         Returns
         -------
         bool
-            True if tree is full
+            True if every node other than the root has 0, 1, or 2 children
 
         Examples
         --------
-        >>> # Full binary tree (0 or 2 children)
         >>> root = _HKey('a')
         >>> b = root.add_child('b')
         >>> c = root.add_child('c')
-        >>> b.add_child('d')
-        >>> b.add_child('e')
-        >>> root.is_full_tree(n=2)
+        >>> root.is_binary_tree()
         True
+
+        >>> d = root.add_child('d')  # Now has 3 children
+        >>> root.is_binary_tree()
+        False
+
+        >>> # Three top-level keys, each with at most 2 children
+        >>> forest = _HKey.build_forest({'a': {'b': 1, 'c': 2}, 'd': 3, 'e': 4})
+        >>> forest.is_binary_tree()
+        True
+        """
+        for node in self.dfs_preorder():
+            if not node.is_root and len(node.children) > 2:
+                return False
+        return True
+
+    def is_full_tree(self, n: int = 2) -> bool:
+        """
+        Check if this is a full n-ary tree (binary by default).
+
+        A full tree (also called proper tree) has every internal node with
+        exactly ``n`` children; leaves may be at different depths. With
+        ``n=1`` the question is whether the tree is a chain.
+
+        Nodes created with ``is_root=True`` are not checked: the root is the
+        virtual container whose children are the top-level keys.
+
+        Parameters
+        ----------
+        n : int, optional
+            Expected number of children of every internal node, at least 1
+            (default: 2).
+
+        Returns
+        -------
+        bool
+            True if every internal node has exactly ``n`` children.
+
+        Raises
+        ------
+        StackedValueError
+            If ``n`` is below 1.
+
+        Examples
+        --------
+        >>> root = _HKey('a')
+        >>> b = root.add_child('b')
+        >>> c = root.add_child('c')
+        >>> d = b.add_child('d')
+        >>> e = b.add_child('e')
+        >>> root.is_full_tree()
+        True
+        >>> root.is_full_tree(n=3)
+        False
 
         See Also
         --------
         is_binary_tree : Check if binary
         is_perfect_tree : Check if perfect
         """
-        internal_nodes = [
-            node
+        self._check_arity(n, 1, "is_full_tree")
+
+        return all(
+            len(node.children) == n
             for node in self.dfs_preorder()
             if node.has_children() and not node.is_root
-        ]
-
-        if not internal_nodes:
-            return True
-
-        if n is None:
-            n = len(internal_nodes[0].children)
-
-        return all(len(node.children) == n for node in internal_nodes)
+        )
 
     def __len__(self) -> int:
         """Return the number of direct children."""
@@ -1834,6 +1975,7 @@ class _HKey:
         """Iterate over children."""
         return iter(self.children)
 
+    @override
     def __repr__(self) -> str:
         if self.is_root:
             return f"_HKey(ROOT, children={len(self.children)})"
@@ -1852,7 +1994,8 @@ class _StackedDict(defaultdict[Any, Any]):
     Key features:
 
     * **Hierarchical keys**: Use lists as keys to access nested values: ``d[['a', 'b', 'c']]``
-    * **Automatic nesting**: Missing intermediate levels are created automatically
+    * **Automatic nesting**: Writing through a path creates the missing
+      intermediate levels
     * **Path views**: Access all paths via ``paths()`` and ``compact_paths()``
     * **Tree traversal**: DFS and BFS algorithms for navigation
     * **Deep operations**: Specialized copy, equality, and conversion methods
@@ -1866,42 +2009,67 @@ class _StackedDict(defaultdict[Any, Any]):
 
     Parameters
     ----------
-    *args : iterable, optional
-        Dictionaries or iterables to initialize from
-    **kwargs : dict, optional
-        Either initialization data OR configuration via 'default_setup'
+    *args : Mapping or iterable of (key, value) pairs
+        Dictionaries, ``_StackedDict`` instances, or iterables of
+        (key, value) pairs. They are processed in order; later values
+        override earlier ones.
+    default_setup : Mapping[str, Any]
+        Configuration with at least 'indent' and 'default_factory' keys.
+        Keyword-only and required: ``_StackedDict`` has no default
+        configuration. The mapping is copied, never modified; subclasses
+        complete it through ``_normalize_setup``.
+    **kwargs : Any
+        Direct key-value pairs, added after ``args``.
+
+    Raises
+    ------
+    StackedKeyError
+        If ``default_setup`` is missing, or if 'indent' or 'default_factory'
+        is missing from it
+    StackedAttributeError
+        If ``default_setup`` contains keys that aren't valid attributes
 
     Attributes
     ----------
     indent : int
-        Indentation level for string representation (default: 2)
+        Indentation step of the string representation, set by
+        ``default_setup``
     default_factory : callable or None
-        Factory function for missing keys (inherited from defaultdict)
+        Factory called for a missing key (inherited from ``defaultdict``).
+        With None, reading a missing key raises ``KeyError``.
     _default_setup : set
-        Internal storage for configuration as set of (key, value) tuples
+        Internal storage for configuration as set of (key, value) tuples;
+        read it through the ``default_setup`` property
 
     Examples
     --------
     >>> setup = {'indent': 2, 'default_factory': None}
     >>> sd = _StackedDict(default_setup=setup)
-    >>> sd['a']['b']['c'] = 1  # Automatic nesting
-    >>> sd[['a', 'b', 'c']]
+    >>> sd[['a', 'b', 'c']] = 1  # The path creates 'a' and 'b'
+    >>> sd['a']['b']['c']
     1
-    >>> # Initialize with data
+    >>> # Initialize with data: nested dicts become _StackedDict
     >>> sd = _StackedDict({'a': {'b': 1}}, default_setup=setup)
+    >>> type(sd['a']).__name__
+    '_StackedDict'
     >>> list(sd.paths())
     [['a'], ['a', 'b']]
-    >>> # Hierarchical key access
-    >>> sd[['a', 'b']] = 2
-    >>> sd['a']['b']
-    2
+    >>> # Copy another _StackedDict
+    >>> sd2 = _StackedDict(sd, default_setup=setup)
+    >>> sd2 == sd, sd2['a'] is sd['a']
+    (True, False)
+    >>> # The configuration is required
+    >>> _StackedDict({'a': 1})
+    Traceback (most recent call last):
+        ...
+    ndict_tools.exception.StackedKeyError: "Missing 'default_setup' argument...
 
     Notes
     -----
-    The class maintains two key invariants:
-
-    1. All nested dictionaries are _StackedDict instances (or subclass)
-    2. All instances share the same default_setup configuration
+    - Every argument is copied: an instance of the same class is
+      deep-copied, any other mapping or iterable is converted level by level
+    - The levels built by the constructor receive the configuration of the
+      instance
 
     See Also
     --------
@@ -1910,93 +2078,25 @@ class _StackedDict(defaultdict[Any, Any]):
     _HKey : Internal tree structure for path operations
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+        self,
+        *args: Mapping[Any, Any] | Iterable[tuple[Any, Any]],
+        default_setup: Mapping[str, Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
         """
-        Initialize a new _StackedDict with configuration and optional data.
-
-        The constructor requires configuration via the 'default_setup' parameter,
-        which must contain at least 'indent' and 'default_factory' keys. Additional
-        initialization data can be provided through args or kwargs.
-
-        Parameters
-        ----------
-        *args : iterable
-            Dictionaries, _StackedDict instances, or iterables of (key, value) pairs
-        **kwargs : dict
-            Either:
-            - 'default_setup': dict with 'indent' and 'default_factory' keys
-            - Direct key-value pairs to initialize (requires default_setup in kwargs)
-
-        Raises
-        ------
-        StackedKeyError
-            If 'indent' or 'default_factory' is missing from configuration
-        StackedAttributeError
-            If default_setup contains keys that aren't valid attributes
-
-        Examples
-        --------
-        >>> setup = {'indent': 2, 'default_factory': None}
-        >>> sd = _StackedDict(default_setup=setup)
-        >>> # Initialize with data
-        >>> sd = _StackedDict({'a': 1}, default_setup=setup)
-        >>> # Copy another _StackedDict
-        >>> sd2 = _StackedDict(sd, default_setup=setup)
-
-        Notes
-        -----
-        - Args are processed sequentially, later values override earlier ones
-        - _StackedDict args are deep-copied
-        - Regular dicts are converted to _StackedDict recursively
-        - All configuration is propagated to nested instances
+        Initialize the dictionary; the parameters are described on the class.
         """
-
-        # ind: int = 0
-        # default = None
-        setup = set()
 
         # Initialize instance attributes
 
         self.indent: int = 0
         "indent is used to print the dictionary with json indentation"
         self._default_setup: set[tuple[str, Any]] = set()
-        "default_setup is ued to disseminate default parameters to stacked objects"
-
-        # Manage init parameters
-        settings = kwargs.pop("default_setup", None)
-
-        if settings is None:
-            raise StackedKeyError(
-                "Missing 'default_setup' argument. Pass default_setup={'indent': <int>, 'default_factory': <class|None>}.",
-                key="default_setup",
-            )
-
-        if "indent" not in settings:
-            raise StackedKeyError(
-                "Missing 'indent' argument in default settings", key="indent"
-            )
-        if "default_factory" not in settings:
-            raise StackedKeyError(
-                "Missing 'default_factory' argument in default settings",
-                key="default_factory",
-            )
-
-        for key, value in settings.items():
-            setup.add((key, value))
-
-        # Initializing instance
+        "default_setup is used to disseminate default parameters to stacked objects"
 
         super().__init__()
-        self._default_setup = setup
-        for key, value in self._default_setup:
-            if hasattr(self, key):
-                self.__setattr__(key, value)
-            else:
-                # You cannot initialize undefined attributes
-                raise StackedAttributeError(
-                    f"The key {key} is not an attribute of the {self.__class__} class.",
-                    attribute=key,
-                )
+        self._apply_setup(type(self)._normalize_setup(default_setup))
 
         # Update dictionary
 
@@ -2027,12 +2127,12 @@ class _StackedDict(defaultdict[Any, Any]):
     # ========================================================================
 
     @classmethod
-    def from_dict(cls, dictionary: dict[Any, Any], **class_options) -> "_StackedDict":
+    def from_dict(cls, dictionary: dict[Any, Any], **class_options: Any) -> Self:
         """
-        Recursively convert a standard dictionary to a ``_StackedDict`` or subclass.
+        Recursively convert a standard dictionary to a nested dictionary of this class.
 
-        Alternative constructor that transforms a regular nested dictionary into a
-        ``_StackedDict``-based structure. The target class is ``cls`` itself,
+        Alternative constructor that transforms a regular nested dictionary into
+        an instance of the class it is called on. The target class is ``cls`` itself,
         eliminating the need to pass the class explicitly and preventing errors
         in recursive calls.
 
@@ -2041,30 +2141,38 @@ class _StackedDict(defaultdict[Any, Any]):
         dictionary : dict
             The dictionary to transform (may be nested).
         **class_options : dict
-            Initialization options. Must contain ``default_setup`` key.
+            Initialization options, passed to ``cls`` at every level.
+            ``default_setup`` is optional: as for the constructor, the
+            configuration is resolved by ``cls._normalize_setup``, which
+            supplies the default of the class when none is given.
 
         Returns
         -------
-        _StackedDict
-            New instance of ``cls`` containing the dictionary structure.
+        Self
+            New instance of the calling class containing the dictionary
+            structure.
 
         Raises
         ------
         StackedKeyError
-            If ``default_setup`` is missing from ``class_options``.
+            If ``default_setup`` is missing and ``cls`` defines no default
+            configuration.
 
         Examples
         --------
-        >>> nd = NestedDictionary.from_dict(
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary.from_dict({'a': {'b': 1}})
+        >>> nd['a']['b']
+        1
+        >>> strict = NestedDictionary.from_dict(
         ...     {'a': {'b': 1}},
         ...     default_setup={'indent': 0, 'default_factory': None}
         ... )
-        >>> nd['a']['b']
-        1
 
         Notes
         -----
-        - Already-instantiated ``_StackedDict`` values are preserved as-is.
+        - Values that are already nested dictionaries of the family are
+          preserved as-is.
         - Regular ``dict`` values are recursively converted using ``cls``.
         - Non-dict values are assigned directly.
 
@@ -2072,11 +2180,7 @@ class _StackedDict(defaultdict[Any, Any]):
         --------
         to_dict : Inverse operation.
         """
-        if "default_setup" not in class_options:
-            raise StackedKeyError(
-                f"The key 'default_setup' must be present in class options : {class_options}",
-                key="default_setup",
-            )
+        # The configuration is resolved by cls._normalize_setup in __init__.
         dict_object = cls(**class_options)
         for key, value in dictionary.items():
             if isinstance(value, _StackedDict):
@@ -2091,6 +2195,7 @@ class _StackedDict(defaultdict[Any, Any]):
     # PICKLE SUPPORT
     # ========================================================================
 
+    @override
     def __reduce__(self) -> tuple[Any, ...]:
         """
         Support pickle serialization.
@@ -2116,13 +2221,13 @@ class _StackedDict(defaultdict[Any, Any]):
     # SERIALIZATION METHODS (JSON + PICKLE)
     # ========================================================================
 
-    def to_json(self, path: "str | Path", indent: int | None = None) -> None:
+    def to_json(self, path: str | Path, indent: int | None = None) -> None:
         """
         Serialize this dictionary to a JSON file.
 
-        Non-string keys are encoded as type-tagged strings of the form
-        ``__type__:value`` (e.g., integer key ``42`` → ``"__int__:42"``,
-        tuple key ``(1, 2)`` → ``"__tuple__:(1, 2)"``). Round-trips are
+        Non-string keys are written in square brackets (e.g., integer key
+        ``42`` → ``"[42]"``, tuple key ``(1, 2)`` → ``"[(1, 2)]"``); a string
+        key that starts with ``[`` is escaped with a backslash. Round-trips are
         lossless for supported types: ``str``, ``int``, ``float``, ``bool``,
         flat ``tuple``, flat ``frozenset``. File I/O is delegated to ``json.dump``.
 
@@ -2135,15 +2240,21 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
+        >>> from ndict_tools import NestedDictionary
+        >>> import tempfile
+        >>> from pathlib import Path
+        >>> tmp = tempfile.TemporaryDirectory()
+        >>> path = Path(tmp.name) / 'nd.json'
         >>> nd = NestedDictionary({'a': {'b': 1}})
-        >>> nd.to_json('/tmp/nd.json')
+        >>> nd.to_json(path)
+        >>> path.read_text(encoding='utf-8')
+        '{"a": {"b": 1}}'
+        >>> tmp.cleanup()
 
         See Also
         --------
         from_json : Reconstruct from a JSON file.
         """
-        from pathlib import Path
-
         from .serialize import NestedDictionaryEncoder
 
         _indent = indent if indent is not None else self.indent
@@ -2151,50 +2262,69 @@ class _StackedDict(defaultdict[Any, Any]):
             json.dump(self, f, cls=NestedDictionaryEncoder, indent=_indent or None)
 
     @classmethod
-    def from_json(cls, path: "str | Path", **class_options) -> "_StackedDict":
+    def from_json(cls, path: str | Path, **class_options: Any) -> Self:
         """
-        Reconstruct a ``_StackedDict`` (or subclass) from a JSON file.
+        Reconstruct a nested dictionary of this class from a JSON file.
 
-        Non-string keys stored as ``__type__:value`` tagged strings are
-        decoded back to their original Python types. Round-trips are lossless
-        for supported types: ``str``, ``int``, ``float``, ``bool``, flat
-        ``tuple``, flat ``frozenset``.
+        Keys written in square brackets by ``to_json`` are decoded back to
+        their original Python types; escaped string keys lose their escape.
+        Round-trips are lossless for supported types: ``str``, ``int``,
+        ``float``, ``bool``, flat ``tuple``, flat ``frozenset``.
 
         Parameters
         ----------
         path : str or Path
             Path to the JSON file.
         **class_options : dict
-            Passed to ``cls.from_dict``; must include ``default_setup``.
+            Passed to ``cls.from_dict``. The JSON file carries no
+            configuration: ``default_setup`` gives it, and when it is absent
+            ``cls._normalize_setup`` supplies the default of the class.
 
         Returns
         -------
-        _StackedDict
-            Reconstructed instance of ``cls``.
+        Self
+            Reconstructed instance of the calling class.
+
+        Raises
+        ------
+        StackedTypeError
+            If the root of the JSON document is not an object (for example a
+            list or a scalar), so no instance of the calling class is built.
 
         Examples
         --------
-        >>> nd = NestedDictionary.from_json(
-        ...     '/tmp/nd.json',
+        >>> from ndict_tools import NestedDictionary
+        >>> import tempfile
+        >>> from pathlib import Path
+        >>> tmp = tempfile.TemporaryDirectory()
+        >>> path = Path(tmp.name) / 'nd.json'
+        >>> NestedDictionary({'a': {'b': 1}}).to_json(path)
+        >>> nd = NestedDictionary.from_json(path)
+        >>> nd.to_dict()
+        {'a': {'b': 1}}
+        >>> strict = NestedDictionary.from_json(
+        ...     path,
         ...     default_setup={'indent': 0, 'default_factory': None}
         ... )
+        >>> strict.default_factory is None
+        True
+        >>> tmp.cleanup()
 
         See Also
         --------
         to_json : Serialize to a JSON file.
         """
-        from pathlib import Path
-
         from .serialize import _make_decoder_hook
 
         with open(Path(path), "r", encoding="utf-8") as f:
-            return json.load(
+            loaded: object = json.load(
                 f, object_pairs_hook=_make_decoder_hook(cls, class_options)
             )
+        return cls._check_loaded(loaded, path)
 
     def to_pickle(
         self,
-        path: "str | Path",
+        path: str | Path,
         protocol: int | None = None,
     ) -> None:
         """
@@ -2225,12 +2355,12 @@ class _StackedDict(defaultdict[Any, Any]):
     @classmethod
     def from_pickle(
         cls,
-        path: "str | Path",
+        path: str | Path,
         verify: bool = True,
-        **class_options,
-    ) -> "_StackedDict":
+        **class_options: Any,
+    ) -> Self:
         """
-        Reconstruct a ``_StackedDict`` (or subclass) from a pickle file.
+        Reconstruct a nested dictionary of this class from a pickle file.
 
         Parameters
         ----------
@@ -2244,13 +2374,18 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Returns
         -------
-        _StackedDict
-            Reconstructed instance.
+        Self
+            Reconstructed instance. The pickled object keeps its own class,
+            which is the calling class or one of its subclasses.
 
         Raises
         ------
         StackedValueError
             If ``verify=True`` and the digest mismatches or sidecar is absent.
+        StackedTypeError
+            If the pickled object is not an instance of the calling class, for
+            example a ``NestedDictionary`` file loaded with
+            ``StrictNestedDictionary.from_pickle``.
 
         Warns
         -----
@@ -2263,7 +2398,141 @@ class _StackedDict(defaultdict[Any, Any]):
         """
         from .serialize import _pickle_load
 
-        return _pickle_load(path, verify=verify)
+        return cls._check_loaded(_pickle_load(path, verify=verify), path)
+
+    @classmethod
+    def _check_loaded(cls, loaded: object, path: str | Path) -> Self:
+        """
+        Check that a deserialized object is an instance of the calling class.
+
+        Shared by :meth:`from_json` and :meth:`from_pickle`, whose loaders
+        return ``Any``. Instances of a subclass of ``cls`` are accepted.
+
+        Parameters
+        ----------
+        loaded : object
+            Object returned by the loader.
+        path : str or Path
+            Source file, used in the error message.
+
+        Returns
+        -------
+        Self
+            ``loaded``, unchanged.
+
+        Raises
+        ------
+        StackedTypeError
+            If ``loaded`` is not an instance of ``cls``.
+        """
+        if not isinstance(loaded, cls):
+            raise StackedTypeError(
+                f"'{path}' does not contain an instance of {cls.__name__}",
+                expected_type=cls,
+                actual_type=type(loaded),
+            )
+        return loaded
+
+    # ========================================================================
+    # CONFIGURATION (default_setup)
+    # ========================================================================
+
+    @classmethod
+    def _normalize_setup(
+        cls, setup: Mapping[str, Any] | Iterable[tuple[str, Any]] | None
+    ) -> dict[str, Any]:
+        """
+        Build the configuration an instance of ``cls`` will use.
+
+        Returns a new dict and never modifies ``setup``. The base class only
+        checks that the required keys are present. Subclasses override this
+        hook to supply defaults or to force the values that define them (for
+        instance the ``default_factory`` of a strict or smooth variant), then
+        delegate to ``super()``.
+
+        Parameters
+        ----------
+        setup : Mapping[str, Any] or iterable of (str, Any) pairs, or None
+            Requested configuration.
+
+        Returns
+        -------
+        dict[str, Any]
+            Configuration to apply.
+
+        Raises
+        ------
+        StackedKeyError
+            If ``setup`` is None, or if 'indent' or 'default_factory' is missing.
+        """
+        if setup is None:
+            raise StackedKeyError(
+                "Missing 'default_setup' argument. Pass default_setup={'indent': <int>, 'default_factory': <class|None>}.",
+                key="default_setup",
+            )
+        normalized = dict(setup)
+        if "indent" not in normalized:
+            raise StackedKeyError(
+                "Missing 'indent' argument in default settings", key="indent"
+            )
+        if "default_factory" not in normalized:
+            raise StackedKeyError(
+                "Missing 'default_factory' argument in default settings",
+                key="default_factory",
+            )
+        return normalized
+
+    def _apply_setup(self, setup: Mapping[str, Any]) -> None:
+        """
+        Apply a normalized configuration to this instance only.
+
+        Every key is checked before any attribute is changed, so an invalid
+        configuration leaves the instance untouched.
+
+        Parameters
+        ----------
+        setup : Mapping[str, Any]
+            Configuration returned by ``_normalize_setup``.
+
+        Raises
+        ------
+        StackedAttributeError
+            If a key is not an attribute of the instance.
+        """
+        for key in setup:
+            if not hasattr(self, key):
+                # You cannot initialize undefined attributes
+                raise StackedAttributeError(
+                    f"The key {key} is not an attribute of the {self.__class__} class.",
+                    attribute=key,
+                )
+        for key, value in setup.items():
+            setattr(self, key, value)
+        self._default_setup = set(setup.items())
+
+    def _propagate_setup(self, setup: Mapping[str, Any], visited: set[int]) -> None:
+        """
+        Apply a configuration to this instance and to every nested level.
+
+        Each level normalizes the configuration through its own class, so a
+        nested strict or smooth dictionary keeps its ``default_factory``.
+        Levels already visited are skipped, which handles shared
+        sub-structures and self-references.
+
+        Parameters
+        ----------
+        setup : Mapping[str, Any]
+            Configuration to propagate.
+        visited : set[int]
+            ``id()`` of the instances already configured.
+        """
+        if id(self) in visited:
+            return
+        visited.add(id(self))
+        self._apply_setup(type(self)._normalize_setup(setup))
+        for value in self.values():
+            if isinstance(value, _StackedDict):
+                value._propagate_setup(setup, visited)
 
     @property
     def default_setup(self) -> list[tuple[str, Any]]:
@@ -2280,9 +2549,10 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict(default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.default_setup
-        [('indent', 2), ('default_factory', None)]
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary()
+        >>> nd.default_setup
+        [('indent', 0), ('default_factory', <class 'ndict_tools.core.NestedDictionary'>)]
 
         See Also
         --------
@@ -2302,31 +2572,44 @@ class _StackedDict(defaultdict[Any, Any]):
         ordered.extend(remaining)
         return ordered
 
+    # Asymmetric on purpose: the setter accepts any source of configuration,
+    # the getter returns the normalized, ordered form (#106).
     @default_setup.setter
-    def default_setup(self, value) -> None:
+    def default_setup(
+        self, value: _SetupSource  # pyright: ignore[reportPropertyTypeMismatch]
+    ) -> None:
         """
-        Update configuration from dict, list, or set of tuples.
+        Replace the configuration and propagate it to every nested level.
+
+        The new configuration is validated and normalized as in ``__init__``,
+        then applied to this instance and to all its nested levels, which keeps the invariant that all levels share the same
+        configuration. Each level normalizes it through its own class.
 
         Parameters
         ----------
-        value : dict, list of tuple, or set of tuple
-            New configuration to apply
+        value : Mapping[str, Any] or iterable of (str, Any) pairs
+            New configuration to apply. It is not modified.
+
+        Raises
+        ------
+        StackedKeyError
+            If 'indent' or 'default_factory' is missing.
+        StackedAttributeError
+            If a key is not an attribute of the instance.
 
         Examples
         --------
-        >>> sd = _StackedDict(default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.default_setup = {'indent': 4, 'default_factory': int}
-        >>> sd.indent
-        4
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}})
+        >>> nd.default_setup = {'indent': 4, 'default_factory': NestedDictionary}
+        >>> nd.indent, nd['a'].indent
+        (4, 4)
         """
-        if isinstance(value, dict):
-            items = value.items()
-        else:
-            items = value
-        self._default_setup = set(items)
+        self._propagate_setup(type(self)._normalize_setup(value), set())
 
-    def __str__(self, padding=0) -> str:
-        """ "
+    @override
+    def __str__(self, padding: int = 0) -> str:
+        """
         Convert to JSON-like formatted string representation.
 
         Creates a human-readable string with proper indentation showing
@@ -2344,11 +2627,15 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> print(sd)
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary(
+        ...     {'a': {'b': 1}},
+        ...     default_setup={'indent': 2, 'default_factory': NestedDictionary},
+        ... )
+        >>> print(nd)
         {
           a : {
-            b : 1,
+              b : 1,
           },
         }
 
@@ -2356,7 +2643,7 @@ class _StackedDict(defaultdict[Any, Any]):
         -----
         - Uses recursive formatting for nested dictionaries
         - Trailing commas are included for consistency
-        - Empty dictionaries shown as {}
+        - An empty dictionary is shown as ``{`` and ``}`` on two lines
         """
 
         d_str = "{\n"
@@ -2375,9 +2662,10 @@ class _StackedDict(defaultdict[Any, Any]):
 
         return d_str
 
-    def __copy__(self) -> "_StackedDict":
+    @override
+    def __copy__(self) -> Self:
         """
-        Create a shallow copy of the _StackedDict.
+        Create a shallow copy of the nested dictionary.
 
         Creates a new _StackedDict with the same keys and values, but values
         are not recursively copied. Nested _StackedDict instances are referenced,
@@ -2385,16 +2673,17 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Returns
         -------
-        _StackedDict
-            Shallow copy with same configuration
+        Self
+            Shallow copy of the same class, with the same configuration
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd2 = sd.__copy__()
-        >>> sd2 is sd
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}})
+        >>> nd2 = nd.__copy__()
+        >>> nd2 is nd
         False
-        >>> sd2['a'] is sd['a']  # Nested dicts are referenced
+        >>> nd2['a'] is nd['a']  # Nested dicts are referenced
         True
 
         See Also
@@ -2408,32 +2697,45 @@ class _StackedDict(defaultdict[Any, Any]):
             new[key] = value
         return new
 
-    def __deepcopy__(self) -> "_StackedDict":
+    def __deepcopy__(self, memo: dict[int, object] | None = None) -> Self:
         """
-        Create a deep copy of the _StackedDict.
+        Create a deep copy of the nested dictionary.
 
-        Creates a completely independent copy where all nested structures
-        are recursively duplicated. Changes to the copy will not affect
-        the original.
+        Implements the ``copy.deepcopy`` protocol. Every key and value is
+        copied recursively, including mutable leaf values such as lists, so
+        changes to the copy never affect the original.
+
+        Parameters
+        ----------
+        memo : dict[int, object] or None, optional
+            Mapping from ``id()`` of already copied objects to their copies,
+            maintained by the ``copy`` module. Pass it through unchanged when
+            calling this method from another ``__deepcopy__``. ``None`` starts
+            a new copy operation.
 
         Returns
         -------
-        _StackedDict
-            Complete independent copy
+        Self
+            Independent copy of the same class, with the same configuration
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd2 = sd.__deepcopy__()
-        >>> sd2['a']['b'] = 2
-        >>> sd['a']['b']
-        1
+        >>> from ndict_tools import NestedDictionary
+        >>> import copy
+        >>> nd = NestedDictionary({'a': {'b': [1]}})
+        >>> nd2 = copy.deepcopy(nd)
+        >>> nd2['a']['b'].append(2)
+        >>> nd['a']['b']
+        [1]
 
         Notes
         -----
-        - Uses to_dict() → from_dict() pipeline for copying
-        - Preserves class type (works with subclasses)
-        - All configuration is transferred to the copy
+        - The new instance is registered in ``memo`` before its content is
+          copied. An object reachable through several paths is therefore
+          copied once and stays shared in the copy, and a dictionary that
+          contains itself does not cause infinite recursion.
+        - The class and ``default_setup`` of the original are preserved, so
+          subclasses and the three public variants copy to their own type.
 
         See Also
         --------
@@ -2441,11 +2743,16 @@ class _StackedDict(defaultdict[Any, Any]):
         deepcopy : Public method wrapper
         """
 
-        return self.__class__.from_dict(
-            self.to_dict(), default_setup=dict(self.default_setup)
-        )
+        if memo is None:
+            memo = {}
+        new = self.__class__(default_setup=dict(self.default_setup))
+        memo[id(self)] = new
+        for key, value in self.items():
+            new[copy.deepcopy(key, memo)] = copy.deepcopy(value, memo)
+        return new
 
-    def __setitem__(self, key, value) -> None:
+    @override
+    def __setitem__(self, key: Any, value: Any) -> None:
         """
         set item with support for hierarchical keys.
 
@@ -2467,14 +2774,18 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict(default_setup={'indent': 2, 'default_factory': None})
-        >>> sd['a'] = 1  # Flat key
-        >>> sd[['b', 'c', 'd']] = 2  # Hierarchical key
-        >>> sd['b']['c']['d']
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary()
+        >>> nd['a'] = 1  # Flat key
+        >>> nd[['b', 'c', 'd']] = 2  # Hierarchical key
+        >>> nd['b']['c']['d']
         2
 
         >>> # Nested lists not allowed
-        >>> sd[['a', ['b']]] = 1  # Raises StackedTypeError
+        >>> nd[['a', ['b']]] = 1
+        Traceback (most recent call last):
+            ...
+        ndict_tools.exception.StackedTypeError: Nested lists are not allowed as keys in NestedDictionary. (expected: str, got: list) (at path: a)
 
         Notes
         -----
@@ -2493,7 +2804,7 @@ class _StackedDict(defaultdict[Any, Any]):
             for sub_key in key:
                 if isinstance(sub_key, list):
                     raise StackedTypeError(
-                        "Nested lists are not allowed as keys in _StackedDict.",
+                        f"Nested lists are not allowed as keys in {type(self).__name__}.",
                         expected_type=str,
                         actual_type=list,
                         path=key[: key.index(sub_key)],
@@ -2514,7 +2825,8 @@ class _StackedDict(defaultdict[Any, Any]):
             # Flat keys are handled as usual
             super().__setitem__(key, value)
 
-    def __getitem__(self, key):
+    @override
+    def __getitem__(self, key: Any) -> Any:
         """
         Get item with support for hierarchical keys.
 
@@ -2541,10 +2853,11 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd['a']
-        <_StackedDict: {'b': 1}>
-        >>> sd[['a', 'b']]
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}})
+        >>> nd['a'].to_dict()
+        {'b': 1}
+        >>> nd[['a', 'b']]
         1
 
         Notes
@@ -2563,7 +2876,7 @@ class _StackedDict(defaultdict[Any, Any]):
             for sub_key in key:
                 if isinstance(sub_key, list):
                     raise StackedTypeError(
-                        "Nested lists are not allowed as keys in _StackedDict.",
+                        f"Nested lists are not allowed as keys in {type(self).__name__}.",
                         expected_type=str,
                         actual_type=list,
                         path=key[: key.index(sub_key)],
@@ -2580,7 +2893,8 @@ class _StackedDict(defaultdict[Any, Any]):
         # else:
         return super().__getitem__(key)
 
-    def __delitem__(self, key):
+    @override
+    def __delitem__(self, key: Any) -> None:
         """
         Delete item with support for hierarchical keys and cleanup.
 
@@ -2595,9 +2909,10 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': {'c': 1}}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> del sd[['a', 'b', 'c']]
-        >>> 'b' in sd['a']  # Empty 'b' was removed
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': {'c': 1}}})
+        >>> del nd[['a', 'b', 'c']]
+        >>> 'a' in nd  # 'b', then 'a', were emptied and removed
         False
 
         Notes
@@ -2630,55 +2945,47 @@ class _StackedDict(defaultdict[Any, Any]):
         else:  # Autres types traités comme des clés simples
             super().__delitem__(key)
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object) -> bool:
         """
-        Override __eq__ to compare two dictionaries, this function an isomorphism to dictionaries set
+        Check strict equality, like :meth:`equal`.
 
-        Two structures are isomorphic if they represent the same nested
-        dictionary structure, regardless of whether they're _StackedDict,
-        plain dict, or any other dict-like type.
+        ``a == b`` is ``a.equal(b)``: same class, same ``default_setup`` and
+        same content. A plain ``dict`` is never equal to a nested dictionary,
+        even with the same content; use :meth:`similar` to compare content.
 
         Parameters
         ----------
-        other : dict or _StackedDict
-            Dictionary to compare with
+        other : object
+            Object to compare with
 
         Returns
         -------
         bool
-            True if structure-preserving mapping exists
+            True if ``other`` is equal to this dictionary
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> regular_dict = {'a': {'b': 1}}
-        >>> sd == regular_dict
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}})
+        >>> nd == NestedDictionary({'a': {'b': 1}})
         True
-        >>> sd == {'a': {'b': 1}}
-        True
-        >>> sd == {'a': {'b': 2}}
+        >>> nd == {'a': {'b': 1}}
         False
-
-        Notes
-        -----
-        Checks if sd[k1]...[kn] == other[k1]...[kn] for all paths.
-        This is the most permissive comparison method.
+        >>> nd.similar({'a': {'b': 1}})
+        True
 
         See Also
         --------
         equal : Strict equality
-        similar : Compare _StackedDict instances
-        isomorph : Compare as plain dicts
+        isomorph : Same content, any class of the family
+        similar : Same content only
         """
 
-        if not isinstance(other, (dict, _StackedDict)):
-            return False
-        elif isinstance(other, _StackedDict):
-            return compare_dict(self.to_dict(), other.to_dict())
-        else:
-            return compare_dict(self.to_dict(), dict(other))
+        return self.equal(other)
 
-    def __ne__(self, other):
+    @override
+    def __ne__(self, other: object) -> bool:
         """
         Check inequality (negation of __eq__).
 
@@ -2694,18 +3001,20 @@ class _StackedDict(defaultdict[Any, Any]):
 
         return not self.__eq__(other)
 
-    def equal(self, other):
+    def equal(self, other: object) -> bool:
         """
         Check equality: same class, configuration, and content.
 
-        Two _StackedDict instances are equal if they have:
+        Two nested dictionaries are equal if they have:
         1. Identical class type (exact match, not subclasses)
         2. Identical default_setup configuration
         3. Identical dictionary structure and values
 
+        This is the strictest comparison, and the one used by ``==``.
+
         Parameters
         ----------
-        other : Any
+        other : object
             Object to compare with
 
         Returns
@@ -2715,116 +3024,121 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> setup = {'indent': 2, 'default_factory': None}
-        >>> sd1 = _StackedDict({'a': 1}, default_setup=setup)
-        >>> sd2 = _StackedDict({'a': 1}, default_setup=setup)
-        >>> sd1 == sd2
+        >>> from ndict_tools import NestedDictionary
+        >>> nd1 = NestedDictionary({'a': 1})
+        >>> nd2 = NestedDictionary({'a': 1})
+        >>> nd1.equal(nd2)
         True
 
         >>> # Different setup
-        >>> sd3 = _StackedDict({'a': 1}, default_setup={'indent': 4, 'default_factory': None})
-        >>> sd1 == sd3
+        >>> nd3 = NestedDictionary(
+        ...     {'a': 1},
+        ...     default_setup={'indent': 4, 'default_factory': NestedDictionary},
+        ... )
+        >>> nd1.equal(nd3)
         False
 
         See Also
         --------
-        __eq__ : dictionaries equalities
+        __eq__ : Same as equal
         __ne__ : Inequality check
-        similar : Compare content only (ignore class/setup)
-        isomorph : Compare as plain dicts
+        isomorph : Same content, any class of the family
+        similar : Same content only
         """
 
-        if not isinstance(other, type(self)):
+        if not isinstance(other, _StackedDict) or type(other) is not type(self):
             return False
         if self._default_setup != other._default_setup:
             return False
         return compare_dict(self.to_dict(), other.to_dict())
 
-    def similar(self, other):
+    def isomorph(self, other: object) -> bool:
         """
-        Check if two structures share the same content (ignoring setup).
+        Check if two nested dictionaries are isomorphic.
 
-        Two structures are similar if they:
-        1. Are both _StackedDict instances (any subclass)
+        Two structures are isomorphic if they:
+        1. Are both nested dictionaries (any class of the family)
         2. Have identical dictionary content (keys and values)
 
-        Configuration differences are ignored.
+        They describe the same nested structure, up to the choice of class:
+        a NestedDictionary and a StrictNestedDictionary with the same content
+        differ only in what reading a missing key does. Configuration
+        differences are ignored. A plain dict is never isomorphic.
 
         Parameters
         ----------
-        other : Any
+        other : object
             Object to compare with
 
         Returns
         -------
         bool
-            True if both are _StackedDict with same content
+            True if both are nested dictionaries with the same content
 
         Examples
         --------
-        >>> setup1 = {'indent': 2, 'default_factory': None}
-        >>> setup2 = {'indent': 4, 'default_factory': _StackedDict}
-        >>> sd1 = _StackedDict({'a': 1}, default_setup=setup1)
-        >>> sd2 = _StackedDict({'a': 1}, default_setup=setup2)
-        >>> sd1 == sd2
+        >>> from ndict_tools import NestedDictionary
+        >>> from ndict_tools import StrictNestedDictionary
+        >>> nd1 = NestedDictionary({'a': 1})
+        >>> nd2 = StrictNestedDictionary({'a': 1})
+        >>> nd1.equal(nd2)
         False
-        >>> sd1.similar(sd2)
+        >>> nd1.isomorph(nd2)
         True
+        >>> nd1.isomorph({'a': 1})
+        False
 
         See Also
         --------
-        __eq__ : dictionaries equalities
-        __ne__ : Inequality check
-        equal : Strict equality (includes setup)
-        isomorph : Compare as plain dicts
+        equal : Strict equality (includes class and setup)
+        similar : Same content only, plain dicts accepted
         """
+
         if not isinstance(other, _StackedDict):
             return False
 
         return compare_dict(self.to_dict(), other.to_dict())
 
-    def isomorph(self, other):
+    def similar(self, other: object) -> bool:
         """
-        Check if structures are isomorphic (same keys/values, any dict type).
+        Check if two structures have the same content, whatever holds it.
 
-        Two structures are isomorphic if they represent the same nested
-        dictionary structure, regardless of whether they're _StackedDict,
-        plain dict, or any other dict-like type.
+        Two structures are similar if they represent the same nested
+        dictionary content, regardless of whether they are nested
+        dictionaries of the family or plain dicts. Class and configuration are ignored.
 
         Parameters
         ----------
-        other : dict or _StackedDict
+        other : object
             Dictionary to compare with
 
         Returns
         -------
         bool
-            True if structure-preserving mapping exists
+            True if ``other`` is a dict with the same content
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> regular_dict = {'a': {'b': 1}}
-        >>> sd.isomorph(regular_dict)
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}})
+        >>> nd.similar({'a': {'b': 1}})
         True
-
-        >>> sd.isomorph({'a': {'b': 2}})
+        >>> nd.similar({'a': {'b': 2}})
         False
 
         Notes
         -----
-        Checks if sd[k1]...[kn] == other[k1]...[kn] for all paths.
-        This is the most permissive comparison method.
+        Checks if self[k1]...[kn] == other[k1]...[kn] for all paths.
+        This is the most permissive comparison method:
+        ``equal`` implies ``isomorph``, which implies ``similar``.
 
         See Also
         --------
-        __eq__ : dictionaries equalities
-        __ne__ : Inequality check
         equal : Strict equality
-        similar : Compare _StackedDict instances
+        isomorph : Same content, any class of the family
         """
 
-        if not isinstance(other, (dict, _StackedDict)):
+        if not isinstance(other, dict):
             return False
         elif isinstance(other, _StackedDict):
             return compare_dict(self.to_dict(), other.to_dict())
@@ -2845,14 +3159,15 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}, 'c': 2}, default_setup={'indent': 2, 'default_factory': None})
-        >>> list(sd.unpacked_items())
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}, 'c': 2})
+        >>> list(nd.unpacked_items())
         [(('a', 'b'), 1), (('c',), 2)]
 
         >>> # Empty dict as value
-        >>> sd = _StackedDict({'a': {}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> list(sd.unpacked_items())
-        [(('a',), {})]
+        >>> nd = NestedDictionary({'a': {}})
+        >>> [(path, type(value).__name__) for path, value in nd.unpacked_items()]
+        [(('a',), 'NestedDictionary')]
 
         Notes
         -----
@@ -2884,18 +3199,19 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> list(sd.unpacked_keys())
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}})
+        >>> list(nd.unpacked_keys())
         [('a', 'b')]
 
-        >>> sd = _StackedDict({'a': {'b': 1, 'c': 2}, 'd': 3}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sorted(sd.unpacked_keys())
+        >>> nd = NestedDictionary({'a': {'b': 1, 'c': 2}, 'd': 3})
+        >>> sorted(nd.unpacked_keys())
         [('a', 'b'), ('a', 'c'), ('d',)]
 
         See Also
         --------
         unpacked_items : Get (path, value) pairs
-        paths : Get paths as _Paths view object
+        paths : Get the paths as a view object
         """
 
         for key, value in unpack_items(self):
@@ -2915,14 +3231,15 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}, 'c': 2}, default_setup={'indent': 2, 'default_factory': None})
-        >>> list(sd.unpacked_values())
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}, 'c': 2})
+        >>> list(nd.unpacked_values())
         [1, 2]
 
         >>> # Empty dict is a value
-        >>> sd = _StackedDict({'a': {}, 'b': 1}, default_setup={'indent': 2, 'default_factory': None})
-        >>> list(sd.unpacked_values())
-        [{}, 1]
+        >>> nd = NestedDictionary({'a': {}, 'b': 1})
+        >>> [type(value).__name__ for value in nd.unpacked_values()]
+        ['NestedDictionary', 'int']
 
         See Also
         --------
@@ -2936,8 +3253,8 @@ class _StackedDict(defaultdict[Any, Any]):
         """
         Convert to a standard nested dictionary.
 
-        Recursively converts the _StackedDict and all nested _StackedDict
-        instances to regular Python dictionaries, removing all special
+        Recursively converts the nested dictionary and all its nested levels
+        to regular Python dictionaries, removing all special
         functionality but preserving the structure.
 
         Returns
@@ -2947,8 +3264,9 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> regular = sd.to_dict()
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}})
+        >>> regular = nd.to_dict()
         >>> type(regular)
         <class 'dict'>
         >>> regular
@@ -2956,14 +3274,14 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Notes
         -----
-        - All _StackedDict instances are converted recursively
+        - All nested levels are converted recursively
         - Other value types are preserved as-is
         - Inverse operation of from_dict()
 
         See Also
         --------
-        from_dict : Convert dict to _StackedDict
-        __deepcopy__ : Create _StackedDict copy
+        from_dict : Convert a dict to a nested dictionary
+        deepcopy : Create a deep copy
         """
 
         unpacked_dict = {}
@@ -2974,20 +3292,22 @@ class _StackedDict(defaultdict[Any, Any]):
                 unpacked_dict[key] = self[key]
         return unpacked_dict
 
-    def copy(self) -> "_StackedDict":
+    @override
+    def copy(self) -> Self:
         """
-        Create a shallow copy of the _StackedDict.
+        Create a shallow copy of the nested dictionary.
 
         Returns
         -------
-        _StackedDict
-            Shallow copy with same configuration
+        Self
+            Shallow copy of the same class, with the same configuration
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd2 = sd.copy()
-        >>> sd2['a'] is sd['a']
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}})
+        >>> nd2 = nd.copy()
+        >>> nd2['a'] is nd['a']
         True
 
         See Also
@@ -2998,24 +3318,26 @@ class _StackedDict(defaultdict[Any, Any]):
 
         return self.__copy__()
 
-    def deepcopy(self) -> "_StackedDict":
+    def deepcopy(self) -> Self:
         """
-        Create a deep copy of the _StackedDict.
+        Create a deep copy of the nested dictionary.
 
         Creates a completely independent copy where all nested structures
-        are recursively duplicated.
+        and mutable leaf values are recursively duplicated. Equivalent to
+        ``copy.deepcopy(self)``.
 
         Returns
         -------
-        _StackedDict
-            Complete independent copy
+        Self
+            Complete independent copy of the same class
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd2 = sd.deepcopy()
-        >>> sd2['a']['b'] = 999
-        >>> sd['a']['b']
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}})
+        >>> nd2 = nd.deepcopy()
+        >>> nd2['a']['b'] = 999
+        >>> nd['a']['b']
         1
 
         See Also
@@ -3024,15 +3346,17 @@ class _StackedDict(defaultdict[Any, Any]):
         copy : Shallow copy alternative
         """
 
-        return self.__deepcopy__()
+        return copy.deepcopy(self)
 
-    def pop(self, key: Any | list[Any], default=None) -> Any:
+    @override
+    def pop(self, key: Any | list[Any], default: Any = _MISSING) -> Any:
         """
         Remove and return value at key or hierarchical path.
 
         Removes the specified key (flat or hierarchical) and returns its value.
         Automatically cleans up empty parent dictionaries after removal.
-        If the key doesn't exist, returns the default value or raises an error.
+        If the key doesn't exist, returns the default value, ``None`` included,
+        or raises an error when no default is given, as ``dict.pop`` does.
 
         Parameters
         ----------
@@ -3053,21 +3377,24 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}, 'c': 2}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.pop('c')
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}, 'c': 2})
+        >>> nd.pop('c')
         2
-        >>> 'c' in sd
+        >>> 'c' in nd
         False
 
         >>> # Hierarchical key
-        >>> sd.pop(['a', 'b'])
+        >>> nd.pop(['a', 'b'])
         1
-        >>> 'a' in sd  # Empty 'a' was removed
+        >>> 'a' in nd  # Empty 'a' was removed
         False
 
         >>> # With default
-        >>> sd.pop('nonexistent', 'default_value')
+        >>> nd.pop('nonexistent', 'default_value')
         'default_value'
+        >>> nd.pop('nonexistent', None) is None  # None is a valid default
+        True
 
         See Also
         --------
@@ -3081,7 +3408,7 @@ class _StackedDict(defaultdict[Any, Any]):
             parents = []  # Track parent dictionaries for cleanup
             for sub_key in key[:-1]:  # Traverse up to the last key
                 if sub_key not in current:
-                    if default is not None:
+                    if default is not _MISSING:
                         return default
                     raise StackedKeyError(
                         f"Key path {key} does not exist.", key=key, path=key[:-1]
@@ -3098,16 +3425,21 @@ class _StackedDict(defaultdict[Any, Any]):
                         parent.pop(sub_key)
                 return value
             else:
-                if default is not None:
+                if default is not _MISSING:
                     return default
                 raise StackedKeyError(
                     f"Key path {key} does not exist.", key=key[-1], path=key[:-1]
                 )
         else:
             # Handle flat keys
-            return super().pop(key, default)
+            if key in self:
+                return super().pop(key)
+            if default is not _MISSING:
+                return default
+            raise StackedKeyError(f"Key {key!r} does not exist.", key=key)
 
-    def popitem(self):
+    @override
+    def popitem(self) -> tuple[list[Any], Any]:
         """
         Remove and return the last item as (path, value) pair.
 
@@ -3127,21 +3459,30 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1, 'c': 2}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> path, value = sd.popitem()
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1, 'c': 2}})
+        >>> path, value = nd.popitem()
         >>> path
         ['a', 'c']
         >>> value
         2
 
+        >>> nd.popitem()
+        (['a', 'b'], 1)
+        >>> nd.to_dict()  # The emptied parent 'a' stays
+        {'a': {}}
+
         >>> # Empty dictionary
-        >>> sd = _StackedDict(default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.popitem()  # Raises StackedIndexError
+        >>> NestedDictionary().popitem()
+        Traceback (most recent call last):
+            ...
+        ndict_tools.exception.StackedIndexError: popitem(): NestedDictionary is empty
 
         Notes
         -----
         - Follows DFS to find the last (rightmost, deepest) item
-        - Cleans up empty parent dictionaries automatically
+        - Removes one key at a time: a parent emptied by the removal stays in
+          place, unlike ``del`` and ``pop()``
         - Path is returned as a list of keys
 
         See Also
@@ -3151,11 +3492,12 @@ class _StackedDict(defaultdict[Any, Any]):
         """
 
         if not self:  # Handle empty dictionary
-            raise StackedIndexError("popitem(): _StackedDict is empty")
+            raise StackedIndexError(f"popitem(): {type(self).__name__} is empty")
 
         # Initialize a stack to traverse the dictionary
         path: list[Any] = []
-        stack = [(self, [])]  # Each entry is (current_dict, current_path)
+        # Each entry is (current_dict, current_path)
+        stack: list[tuple[Any, list[Any]]] = [(self, [])]
 
         while stack:
             current, path = stack.pop()  # Get the current dictionary and path
@@ -3178,57 +3520,65 @@ class _StackedDict(defaultdict[Any, Any]):
 
         return path, value
 
-    def update(  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+    @override
+    def update(
         self,
-        __m: Mapping[Any, Any] | Iterable[tuple[Any, Any]] | None = None,
-        **kwargs,
+        m: "SupportsKeysAndGetItem[Any, Any] | Iterable[tuple[Any, Any]] | None" = None,
+        /,
+        **kwargs: Any,
     ) -> None:
         """
-        Update _StackedDict with key/value pairs from mapping, iterable, or kwargs.
+        Update the nested dictionary with key/value pairs from mapping, iterable, or kwargs.
 
         Merges the provided mapping, iterable of key-value pairs, or keyword
-        arguments into this _StackedDict, converting regular dicts to _StackedDict
-        instances recursively while preserving existing _StackedDict values.
+        arguments into this nested dictionary, converting regular dicts to
+        nested levels recursively while preserving the nested dictionaries
+        already given. Those keep their identity and receive this instance's
+        configuration through the ``default_setup`` setter.
 
         Parameters
         ----------
-        __m : Mapping[Any, Any] or Iterable[tuple[Any, Any]], optional
-            Either a mapping (dict, _StackedDict) or an iterable of (key, value)
-            tuples to merge. If None, only kwargs are used.
+        m : SupportsKeysAndGetItem or Iterable[tuple[Any, Any]], optional
+            Positional-only. A mapping (dict, nested dictionary), any object with
+            ``keys()`` and ``__getitem__``, or an iterable of (key, value)
+            tuples to merge, as accepted by ``dict.update``. If None, only
+            kwargs are used.
         **kwargs : Any
             Additional key/value pairs to merge
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': 1}, default_setup={'indent': 2, 'default_factory': None})
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': 1})
 
         >>> # From dict
-        >>> sd.update({'b': 2, 'c': {'d': 3}})
-        >>> sd['c']['d']
+        >>> nd.update({'b': 2, 'c': {'d': 3}})
+        >>> nd['c']['d']
         3
 
         >>> # From iterable
-        >>> sd.update([('e', 4), ('f', {'g': 5})])
-        >>> sd['f']['g']
+        >>> nd.update([('e', 4), ('f', {'g': 5})])
+        >>> nd['f']['g']
         5
 
         >>> # Using kwargs
-        >>> sd.update(h=6, i={'j': 7})
-        >>> sd['i']['j']
+        >>> nd.update(h=6, i={'j': 7})
+        >>> nd['i']['j']
         7
 
         >>> # Combined
-        >>> sd.update({'k': 8}, l=9)
-        >>> sd['k'], sd['l']
+        >>> nd.update({'k': 8}, l=9)
+        >>> nd['k'], nd['l']
         (8, 9)
 
         Notes
         -----
-        - Accepts mappings (dict, _StackedDict, etc.)
+        - Accepts mappings (dict, nested dictionary, etc.) and any object with
+          ``keys()`` and ``__getitem__``
         - Accepts iterables of (key, value) tuples
         - Accepts keyword arguments
-        - Regular dicts are converted to _StackedDict recursively
-        - _StackedDict values are accepted directly with synchronized config
+        - Regular dicts are converted to nested levels recursively
+        - Nested dictionaries are accepted directly with synchronized config
         - Configuration is synchronized across all nested instances
         - Later values override earlier ones for duplicate keys
 
@@ -3236,27 +3586,26 @@ class _StackedDict(defaultdict[Any, Any]):
         --------
         __init__ : Initialization with data
         __setitem__ : set individual items
-        from_dict : Convert dict to _StackedDict
+        from_dict : Convert a dict to a nested dictionary
         """
 
         # Handle mapping or iterable argument
-        if __m is not None:
+        if m is not None:
             # Convert to dict if it's an iterable of tuples
-            if not isinstance(__m, Mapping):
+            if not isinstance(m, Mapping):
                 try:
-                    __m = dict(__m)
+                    m = dict(m)
                 except (TypeError, ValueError) as e:
                     raise StackedTypeError(
-                        f"update() argument must be a mapping or iterable of pairs, got {type(__m).__name__}",
+                        f"update() argument must be a mapping or iterable of pairs, got {type(m).__name__}",
                         expected_type=Mapping,
-                        actual_type=type(__m),
+                        actual_type=type(m),
                     ) from e
 
             # Process the mapping
-            for key, value in __m.items():
+            for key, value in m.items():
                 if isinstance(value, _StackedDict):
-                    value.indent = self.indent
-                    value.default_factory = self.default_factory
+                    value.default_setup = self.default_setup
                     self[key] = value
                 elif isinstance(value, dict):
                     nested_dict = self.__class__.from_dict(
@@ -3270,8 +3619,7 @@ class _StackedDict(defaultdict[Any, Any]):
 
         for key, value in kwargs.items():
             if isinstance(value, _StackedDict):
-                value.indent = self.indent
-                value.default_factory = self.default_factory
+                value.default_setup = self.default_setup
                 self[key] = value
             elif isinstance(value, dict):
                 nested_dict = self.__class__.from_dict(
@@ -3306,14 +3654,18 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.is_key('b')
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}})
+        >>> nd.is_key('b')
         True
-        >>> sd.is_key('c')
+        >>> nd.is_key('c')
         False
 
         >>> # Lists not allowed
-        >>> sd.is_key(['a', 'b'])  # Raises StackedKeyError
+        >>> nd.is_key(['a', 'b'])
+        Traceback (most recent call last):
+            ...
+        ndict_tools.exception.StackedKeyError: "This function manages only atomic keys...
 
         Notes
         -----
@@ -3353,17 +3705,18 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}, 'c': {'b': 2}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.occurrences('b')
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}, 'c': {'b': 2}})
+        >>> nd.occurrences('b')
         2
-        >>> sd.occurrences('a')
+        >>> nd.occurrences('a')
         1
-        >>> sd.occurrences('z')
+        >>> nd.occurrences('z')
         0
 
         >>> # Key appearing multiple times in same path
-        >>> sd = _StackedDict({'a': {'a': 1}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.occurrences('a')
+        >>> nd = NestedDictionary({'a': {'a': 1}})
+        >>> nd.occurrences('a')
         2
 
         See Also
@@ -3380,7 +3733,7 @@ class _StackedDict(defaultdict[Any, Any]):
                         __occurrences += 1
         return __occurrences
 
-    def key_list(self, key: Any) -> list[list[Any]]:
+    def key_list(self, key: Any) -> list[tuple[Any, ...]]:
         """
         Get all hierarchical paths containing a specific key.
 
@@ -3394,7 +3747,7 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Returns
         -------
-        list :
+        list[tuple[Any, ...]]
             list of paths (as tuples) containing the key
 
         Raises
@@ -3404,14 +3757,18 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}, 'c': {'b': 2}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.key_list('b')
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}, 'c': {'b': 2}})
+        >>> nd.key_list('b')
         [('a', 'b'), ('c', 'b')]
 
-        >>> sd.key_list('a')
+        >>> nd.key_list('a')
         [('a', 'b')]
 
-        >>> sd.key_list('nonexistent')  # Raises StackedKeyError
+        >>> nd.key_list('nonexistent')
+        Traceback (most recent call last):
+            ...
+        ndict_tools.exception.StackedKeyError: 'Cannot find the key: nonexistent...
 
         See Also
         --------
@@ -3420,7 +3777,7 @@ class _StackedDict(defaultdict[Any, Any]):
         occurrences : Count occurrences
         """
 
-        __key_list = []
+        __key_list: list[tuple[Any, ...]] = []
 
         if self.is_key(key):
             for keys in self.unpacked_keys():
@@ -3457,14 +3814,18 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}, 'c': {'b': 2}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.items_list('b')
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}, 'c': {'b': 2}})
+        >>> nd.items_list('b')
         [1, 2]
 
-        >>> sd.items_list('a')
+        >>> nd.items_list('a')
         [1]
 
-        >>> sd.items_list('nonexistent')  # Raises StackedKeyError
+        >>> nd.items_list('nonexistent')
+        Traceback (most recent call last):
+            ...
+        ndict_tools.exception.StackedKeyError: 'Cannot find the key: nonexistent...
 
         Notes
         -----
@@ -3506,8 +3867,9 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}, 'c': 2}, default_setup={'indent': 2, 'default_factory': None})
-        >>> paths = sd.paths()
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}, 'c': 2})
+        >>> paths = nd.paths()
         >>> len(paths)
         3
         >>> ['a', 'b'] in paths
@@ -3519,7 +3881,8 @@ class _StackedDict(defaultdict[Any, Any]):
         -----
         - Paths are generated lazily during iteration
         - Internal _HKey tree is built on first access
-        - View updates automatically if dictionary changes
+        - The view reads the dictionary on first access and keeps that
+          state; call paths() again after a change
         - More efficient than unpacked_keys() for large structures
 
         See Also
@@ -3546,8 +3909,9 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1, 'c': 2}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> c_paths = sd.compact_paths()
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1, 'c': 2}})
+        >>> c_paths = nd.compact_paths()
         >>> c_paths.structure
         [['a', 'b', 'c']]
 
@@ -3557,7 +3921,8 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Notes
         -----
-        - Provides bijective mapping between expanded and compact forms
+        - The structure built from a dictionary is the canonical compact form
+          of its paths; expanding it gives those paths back
         - Useful for path coverage analysis
         - More compact representation for deeply nested structures
 
@@ -3569,7 +3934,9 @@ class _StackedDict(defaultdict[Any, Any]):
 
         return _CPaths(self)
 
-    def dfs(self, node=None, path=None) -> Generator[tuple[list[Any], Any], None, None]:
+    def dfs(
+        self, node: Mapping[Any, Any] | None = None, path: list[Any] | None = None
+    ) -> Generator[tuple[list[Any], Any], None, None]:
         """
         Depth-First Search traversal of the nested dictionary.
 
@@ -3591,12 +3958,15 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}, 'c': 2}, default_setup={'indent': 2, 'default_factory': None})
-        >>> for path, value in sd.dfs():
-        ...     print(f'{path} -> {value}')
-        ['a'] -> <_StackedDict>
-        ['a', 'b'] -> 1
-        ['c'] -> 2
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}, 'c': 2})
+        >>> for path, value in nd.dfs():
+        ...     if isinstance(value, NestedDictionary):
+        ...         value = value.to_dict()
+        ...     print(path, value)
+        ['a'] {'b': 1}
+        ['a', 'b'] 1
+        ['c'] 2
 
         Notes
         -----
@@ -3626,43 +3996,40 @@ class _StackedDict(defaultdict[Any, Any]):
 
     def bfs(self) -> Generator[tuple[tuple[Any, ...], Any], None, None]:
         """
-        Breadth-First Search traversal of the nested dictionary.
+        Breadth-first traversal of the terminal values.
 
-        Iteratively traverses the dictionary level by level, visiting all
-        nodes at depth N before moving to depth N+1. Uses a queue (deque)
-        for efficient FIFO operations.
+        Walks the dictionary level by level with a queue, and yields the
+        keys whose value is not a nested dictionary, with their path: all
+        those of depth N before those of depth N+1. Keys whose value is a
+        nested dictionary are traversed but not yielded, so an empty nested
+        dictionary yields nothing.
 
         Yields
         ------
         tuple
-            (path_tuple, value) for each node in BFS order
+            (path_tuple, value) for each terminal value, in breadth-first
+            order
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': {'c': 1}}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> for path, value in sd.bfs():
-        ...     print(f'{path} -> {value}')
-        ('a',) -> <_StackedDict>
-        ('a', 'b') -> <_StackedDict>
-        ('a', 'b', 'c') -> 1
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': {'c': 1}}})
+        >>> list(nd.bfs())
+        [(('a', 'b', 'c'), 1)]
 
-        >>> # Only leaf values
-        >>> sd = _StackedDict({'a': {'b': 1, 'c': 2}, 'd': 3}, default_setup={'indent': 2, 'default_factory': None})
-        >>> leaves = [(p, v) for p, v in sd.bfs() if not isinstance(v, _StackedDict)]
-        >>> leaves
-        [(('a', 'b'), 1), ('a', 'c'), 2), (('d',), 3)]
+        >>> nd = NestedDictionary({'a': {'b': 1, 'c': 2}, 'd': 3})
+        >>> list(nd.bfs())
+        [(('d',), 3), (('a', 'b'), 1), (('a', 'c'), 2)]
 
         Notes
         -----
-        - Visits all nodes at same depth before going deeper
+        - Yields terminal values only, unlike :meth:`dfs`, which also yields
+          the keys whose value is a nested dictionary
         - Returns paths as immutable tuples
-        - Includes all nodes (intermediate and terminal)
-        - More memory efficient than collecting all paths first
 
         See Also
         --------
         dfs : Depth-first traversal
-        _HKey.bfs : Tree-based BFS traversal
         """
 
         queue: deque[tuple[tuple[Any, ...], _StackedDict]] = deque(
@@ -3683,28 +4050,30 @@ class _StackedDict(defaultdict[Any, Any]):
 
     def height(self) -> int:
         """
-        Compute the height (maximum depth) of the nested structure.
+        Compute the number of levels of the nested structure.
 
-        The height is defined as the length of the longest path from root
-        to any leaf node. An empty dictionary has height 0.
+        This is the number of keys on the longest path. Top-level keys have
+        depth 0, so the result is the greatest depth of a key plus 1. An
+        empty dictionary has height 0.
 
         Returns
         -------
         int
-            Maximum path length in the dictionary
+            Number of keys on the longest path
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': 1}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.height()
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': 1})
+        >>> nd.height()
         1
 
-        >>> sd = _StackedDict({'a': {'b': {'c': 1}}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.height()
+        >>> nd = NestedDictionary({'a': {'b': {'c': 1}}})
+        >>> nd.height()
         3
 
-        >>> sd = _StackedDict(default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.height()
+        >>> nd = NestedDictionary()
+        >>> nd.height()
         0
 
         Notes
@@ -3715,7 +4084,7 @@ class _StackedDict(defaultdict[Any, Any]):
 
         See Also
         --------
-        size : Count total number of keys
+        size : Count every key
         leaves : Get all leaf values
         """
 
@@ -3735,13 +4104,19 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.size()
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}})
+        >>> nd.size()
         2
 
-        >>> sd = _StackedDict({'a': {'b': 1, 'c': 2}, 'd': 3}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.size()
+        >>> nd = NestedDictionary({'a': {'b': 1, 'c': 2}, 'd': 3})
+        >>> nd.size()
         4
+
+        >>> # A key whose value is an empty dictionary counts
+        >>> nd = NestedDictionary({'a': {}})
+        >>> nd.size()
+        1
 
         Notes
         -----
@@ -3751,18 +4126,18 @@ class _StackedDict(defaultdict[Any, Any]):
 
         See Also
         --------
-        height : Get maximum depth
+        height : Get the number of levels
         __len__ : Get top-level key count
         """
 
-        return sum(1 for _ in self.unpacked_items())
+        return sum(1 for _ in self.dfs())
 
     def leaves(self) -> list[Any]:
         """
-        Extract all leaf (terminal) values from the nested structure.
+        Extract the values of all leaf keys from the nested structure.
 
-        Returns a list of all values that are not themselves nested
-        dictionaries, i.e., all terminal nodes in the tree structure.
+        A leaf is a key without children: its value is either not a nested
+        dictionary, or an empty one. Returns the values of these keys.
 
         Returns
         -------
@@ -3771,24 +4146,25 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': 1}, 'c': 2}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.leaves()
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}, 'c': 2})
+        >>> nd.leaves()
         [1, 2]
 
-        >>> sd = _StackedDict({'a': {'b': {'c': 1}}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.leaves()
+        >>> nd = NestedDictionary({'a': {'b': {'c': 1}}})
+        >>> nd.leaves()
         [1]
 
         >>> # Empty dict as leaf value
-        >>> sd = _StackedDict({'a': {}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.leaves()
-        [{}]
+        >>> nd = NestedDictionary({'a': {}})
+        >>> [type(value).__name__ for value in nd.leaves()]
+        ['NestedDictionary']
 
         Notes
         -----
         - Returns values in DFS order
         - Empty dictionaries are considered leaf values
-        - Plain dicts (not _StackedDict) are also leaves
+        - Plain dicts (not nested dictionaries of the family) are also leaves
 
         See Also
         --------
@@ -3796,7 +4172,11 @@ class _StackedDict(defaultdict[Any, Any]):
         dfs : Traversal including intermediate nodes
         """
 
-        return [value for _, value in self.dfs() if not isinstance(value, _StackedDict)]
+        return [
+            value
+            for _, value in self.dfs()
+            if not isinstance(value, _StackedDict) or not value
+        ]
 
     def is_balanced(self) -> bool:
         """
@@ -3813,14 +4193,15 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
+        >>> from ndict_tools import NestedDictionary
         >>> # Balanced
-        >>> sd = _StackedDict({'a': {'b': 1}, 'c': {'d': 2}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.is_balanced()
+        >>> nd = NestedDictionary({'a': {'b': 1}, 'c': {'d': 2}})
+        >>> nd.is_balanced()
         True
 
         >>> # Unbalanced
-        >>> sd = _StackedDict({'a': {'b': {'c': 1}}, 'd': 2}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.is_balanced()
+        >>> nd = NestedDictionary({'a': {'b': {'c': 1}}, 'd': 2})
+        >>> nd.is_balanced()
         False
 
         Notes
@@ -3833,13 +4214,12 @@ class _StackedDict(defaultdict[Any, Any]):
         See Also
         --------
         height : Get maximum depth
-        _HKey.is_balanced : Tree-based balance check
         """
 
-        def check_balance(node):
+        def check_balance(node: Any) -> tuple[int, bool]:
             if not isinstance(node, _StackedDict) or not node:
                 return 0, True  # Height, is_balanced
-            heights = []
+            heights: list[int] = []
             for key in node:
                 height, balanced = check_balance(node[key])
                 if not balanced:
@@ -3852,7 +4232,7 @@ class _StackedDict(defaultdict[Any, Any]):
         _, balanced = check_balance(self)
         return balanced
 
-    def ancestors(self, value):
+    def ancestors(self, value: Any) -> list[Any]:
         """
         Find the hierarchical path (ancestors) leading to a specific value.
 
@@ -3877,15 +4257,19 @@ class _StackedDict(defaultdict[Any, Any]):
 
         Examples
         --------
-        >>> sd = _StackedDict({'a': {'b': {'c': 1}}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.ancestors(1)
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': {'c': 1}}})
+        >>> nd.ancestors(1)
         ['a', 'b']
 
-        >>> sd = _StackedDict({'a': {'b': 1}, 'c': {'d': 2}}, default_setup={'indent': 2, 'default_factory': None})
-        >>> sd.ancestors(2)
+        >>> nd = NestedDictionary({'a': {'b': 1}, 'c': {'d': 2}})
+        >>> nd.ancestors(2)
         ['c']
 
-        >>> sd.ancestors(999)  # Raises StackedValueError
+        >>> nd.ancestors(999)
+        Traceback (most recent call last):
+            ...
+        ndict_tools.exception.StackedValueError: Value 999 not found in the dictionary...
 
         Notes
         -----
@@ -3940,8 +4324,9 @@ class _Paths:
 
     Examples
     --------
-    >>> data = _StackedDict({'a': {'b': 1}, 'c': 2})
-    >>> paths = _Paths(data)
+    >>> from ndict_tools import NestedDictionary
+    >>> nd = NestedDictionary({'a': {'b': 1}, 'c': 2})
+    >>> paths = nd.paths()
     >>> list(paths)
     [['a'], ['a', 'b'], ['c']]
     >>> ['a', 'b'] in paths
@@ -3993,7 +4378,8 @@ class _Paths:
 
         Examples
         --------
-        >>> paths = _Paths(_StackedDict({'a': {'b': 1}}))
+        >>> from ndict_tools import NestedDictionary
+        >>> paths = NestedDictionary({'a': {'b': 1}}).paths()
         >>> for path in paths:
         ...     print(path)
         ['a']
@@ -4013,7 +4399,8 @@ class _Paths:
 
         Examples
         --------
-        >>> paths = _Paths(_StackedDict({'a': {'b': 1}, 'c': 2}))
+        >>> from ndict_tools import NestedDictionary
+        >>> paths = NestedDictionary({'a': {'b': 1}, 'c': 2}).paths()
         >>> len(paths)
         3
         """
@@ -4039,7 +4426,8 @@ class _Paths:
 
         Examples
         --------
-        >>> paths = _Paths(_StackedDict({'a': {'b': 1}}))
+        >>> from ndict_tools import NestedDictionary
+        >>> paths = NestedDictionary({'a': {'b': 1}}).paths()
         >>> ['a', 'b'] in paths
         True
         >>> ['a', 'c'] in paths
@@ -4048,14 +4436,15 @@ class _Paths:
         hkey = self._ensure_hkey()
         return hkey.find_by_path(path) is not None
 
+    @override
     def __eq__(self, other: Any) -> bool:
         """
-        Compare two DictPaths for set-wise equality (order-independent).
+        Compare two path views for set-wise equality (order-independent).
 
         Parameters
         ----------
         other : Any
-            Another DictPaths or iterable of paths
+            Another path view, or an iterable of paths
 
         Returns
         -------
@@ -4064,8 +4453,9 @@ class _Paths:
 
         Examples
         --------
-        >>> paths1 = _Paths(_StackedDict({'a': 1}))
-        >>> paths2 = _Paths(_StackedDict({'a': 1}))
+        >>> from ndict_tools import NestedDictionary
+        >>> paths1 = NestedDictionary({'a': 1}).paths()
+        >>> paths2 = NestedDictionary({'a': 1}).paths()
         >>> paths1 == paths2
         True
         """
@@ -4077,14 +4467,15 @@ class _Paths:
         except TypeError:
             return NotImplemented
 
+    @override
     def __ne__(self, other: Any) -> bool:
         """
-        Check inequality between DictPaths objects.
+        Check inequality between path views.
 
         Parameters
         ----------
         other : Any
-            Another DictPaths or iterable
+            Another path view, or an iterable of paths
 
         Returns
         -------
@@ -4096,6 +4487,7 @@ class _Paths:
             return NotImplemented
         return not result
 
+    @override
     def __repr__(self) -> str:
         """
         Return string representation.
@@ -4123,7 +4515,8 @@ class _Paths:
 
         Examples
         --------
-        >>> paths = _Paths(_StackedDict({'a': {'b': 1, 'c': 2}}))
+        >>> from ndict_tools import NestedDictionary
+        >>> paths = NestedDictionary({'a': {'b': 1, 'c': 2}}).paths()
         >>> paths.get_children(['a'])
         ['b', 'c']
         >>> paths.get_children(['a', 'b'])
@@ -4155,7 +4548,8 @@ class _Paths:
 
         Examples
         --------
-        >>> paths = _Paths(_StackedDict({'a': {'b': 1}}))
+        >>> from ndict_tools import NestedDictionary
+        >>> paths = NestedDictionary({'a': {'b': 1}}).paths()
         >>> paths.has_children(['a'])
         True
         >>> paths.has_children(['a', 'b'])
@@ -4183,7 +4577,8 @@ class _Paths:
 
         Examples
         --------
-        >>> paths = _Paths(_StackedDict({'a': {'b': {'c': 1}, 'd': 2}}))
+        >>> from ndict_tools import NestedDictionary
+        >>> paths = NestedDictionary({'a': {'b': {'c': 1}, 'd': 2}}).paths()
         >>> paths.get_subtree_paths(['a'])
         [['a'], ['a', 'b'], ['a', 'b', 'c'], ['a', 'd']]
 
@@ -4196,12 +4591,7 @@ class _Paths:
         if node is None:
             return []
 
-        subtree_paths = node.get_all_paths()
-        if not node.is_root:
-            base_path = node.get_path()
-            return [base_path] + subtree_paths if subtree_paths else [base_path]
-
-        return subtree_paths
+        return node.get_all_paths()
 
     def filter_paths(self, predicate: Callable[[list[Any]], bool]) -> list[list[Any]]:
         """
@@ -4219,7 +4609,8 @@ class _Paths:
 
         Examples
         --------
-        >>> paths = _Paths(_StackedDict({'a': {'b': 1}, 'c': 2}))
+        >>> from ndict_tools import NestedDictionary
+        >>> paths = NestedDictionary({'a': {'b': 1}, 'c': 2}).paths()
         >>> # Get paths longer than 1
         >>> paths.filter_paths(lambda p: len(p) > 1)
         [['a', 'b']]
@@ -4233,16 +4624,20 @@ class _Paths:
 
     def get_depth(self) -> int:
         """
-        Get the maximum depth of paths.
+        Get the number of levels of the paths.
+
+        This is the number of keys on the longest path, that is the greatest
+        depth of a key plus 1, since top-level keys have depth 0.
 
         Returns
         -------
         int
-            Maximum path length
+            Number of keys on the longest path
 
         Examples
         --------
-        >>> paths = _Paths(_StackedDict({'a': {'b': {'c': 1}}}))
+        >>> from ndict_tools import NestedDictionary
+        >>> paths = NestedDictionary({'a': {'b': {'c': 1}}}).paths()
         >>> paths.get_depth()
         3
         """
@@ -4260,7 +4655,8 @@ class _Paths:
 
         Examples
         --------
-        >>> paths = _Paths(_StackedDict({'a': {'b': 1}, 'c': 2}))
+        >>> from ndict_tools import NestedDictionary
+        >>> paths = NestedDictionary({'a': {'b': 1}, 'c': 2}).paths()
         >>> paths.get_leaf_paths()
         [['a', 'b'], ['c']]
         """
@@ -4279,6 +4675,10 @@ class _Paths:
         return _CPaths(self._stacked_dict)
 
 
+_StructureSource: TypeAlias = _StackedDict | _HKey | list[Any] | dict[str, Any]
+"Accepted by the _CPaths.structure setter: a nested mapping, a key tree or a compact structure."
+
+
 class _CPaths(_Paths):
     """
     A lazy view providing compact representation of hierarchical paths.
@@ -4288,9 +4688,17 @@ class _CPaths(_Paths):
     - Leaf nodes: just the key
     - Internal nodes: [key, child1, child2, ...]
 
-    The compact structure uses a bijective mapping:
-    - Paths → Compact structure (factorization)
+    Inside a node list, every element after the first is a child of the
+    first: ``['b', 'c', 'd']`` is ``b`` with two children, while
+    ``['b', ['c', 'd']]`` is the chain ``b``, ``c``, ``d``.
+
+    Paths and compact structure are converted both ways:
+    - Paths → Compact structure (factorization), which gives the canonical form
     - Compact structure → Paths (expansion)
+
+    Each set of paths has exactly one canonical form. Other structures are
+    accepted and can expand to the same paths, such as ``['a']`` for the leaf
+    ``'a'``.
 
     .. warning::
        This is a private class (underscore prefix) and should not be instantiated
@@ -4308,10 +4716,11 @@ class _CPaths(_Paths):
 
     Examples
     --------
-    >>> data = _StackedDict({'a': 1, 'b': {'c': 2, 'd': 3}})
-    >>> c_paths = _CPaths(data)
+    >>> from ndict_tools import NestedDictionary
+    >>> nd = NestedDictionary({'a': 1, 'b': {'c': 2, 'd': 3}})
+    >>> c_paths = nd.compact_paths()
     >>> c_paths.structure
-    [['a'], ['b', 'c', 'd']]
+    ['a', ['b', 'c', 'd']]
     >>> list(c_paths)  # Inherited from _Paths
     [['a'], ['b'], ['b', 'c'], ['b', 'd']]
 
@@ -4361,6 +4770,10 @@ class _CPaths(_Paths):
         ------
         ValueError
             If structure format is invalid
+        StackedTypeError
+            If a key (a leaf, or the first element of a node list) is not
+            hashable, so that it could not be a key of a nested dictionary.
+            The error carries the path of the parent node.
 
         Notes
         -----
@@ -4375,20 +4788,40 @@ class _CPaths(_Paths):
                 f"Structure must be a list, got {type(structure).__name__}"
             )
 
-        def validate_node(node, depth=0):
+        def check_key(key: object, path: list[object]) -> None:
+            # hash() rather than isinstance(key, Hashable): a tuple holding
+            # a list is a Hashable instance but cannot be hashed.
+            try:
+                _ = hash(key)
+            except TypeError:
+                raise StackedTypeError(
+                    f"Structure key {key!r} is not hashable and cannot be a "
+                    + "key of a nested dictionary",
+                    expected_type=Hashable,
+                    actual_type=type(key),
+                    path=path,
+                ) from None
+
+        def validate_node(
+            node: object, depth: int = 0, path: list[object] | None = None
+        ) -> None:
             if depth > MAX_DEPTH:  # Prevent infinite recursion
                 raise ValueError(
                     f"Structure too deeply nested (max depth: {MAX_DEPTH})"
                 )
+            parent_path: list[object] = path if path is not None else []
 
             if isinstance(node, list):
-                if len(node) == 0:
+                items = cast(list[object], node)
+                if len(items) == 0:
                     raise ValueError("Empty list not allowed in structure")
                 # First element is the key, rest are children
-                # Recursively validate children
-                for child in node[1:]:
-                    validate_node(child, depth + 1)
-            # Leaf nodes can be any value (will be used as keys)
+                check_key(items[0], parent_path)
+                for child in items[1:]:
+                    validate_node(child, depth + 1, parent_path + [items[0]])
+            else:
+                # A leaf is a key with no children
+                check_key(node, parent_path)
 
         for branch in structure:
             validate_node(branch)
@@ -4405,28 +4838,33 @@ class _CPaths(_Paths):
 
         Examples
         --------
-        >>> c_paths = _CPaths(_StackedDict({'a': {'b': 1, 'c': 2}}))
+        >>> from ndict_tools import NestedDictionary
+        >>> c_paths = NestedDictionary({'a': {'b': 1, 'c': 2}}).compact_paths()
         >>> c_paths.structure
         [['a', 'b', 'c']]
         """
         return self._ensure_structure()
 
+    # Asymmetric on purpose: the setter accepts a nested mapping, a key tree or
+    # a compact structure; the getter always returns the compact structure (#106).
     @structure.setter
     def structure(
-        self, value: _StackedDict | _HKey | list[Any] | dict[str, Any]
+        self, value: _StructureSource  # pyright: ignore[reportPropertyTypeMismatch]
     ) -> None:
         """
         set or build the compact structure representation.
 
         Accepts the following input types:
-        - _StackedDict (or dict): the source nested mapping to analyze
-        - _HKey: an already-built hierarchical key tree
+
+        - a nested dictionary or a plain dict: the source nested mapping to
+          analyze
         - list[Any]: a compact structure as nested lists
 
         Parameters
         ----------
-        value : Union[_StackedDict, _HKey, list[Any]]
-            Input used to define the structure.
+        value : nested dictionary, dict or list[Any]
+            Input used to define the structure. A plain dict is analyzed as a
+            nested dictionary that creates no level on read.
 
         Raises
         ------
@@ -4437,28 +4875,27 @@ class _CPaths(_Paths):
 
         Examples
         --------
-        >>> c_paths = _CPaths(_StackedDict())
+        >>> from ndict_tools import NestedDictionary
+        >>> c_paths = NestedDictionary().compact_paths()
         >>> # From compact structure (manual)
         >>> c_paths.structure = [['a'], ['d']]
         >>> c_paths.expand()
         [['a'], ['d']]
 
-        >>> # From a stacked dict
-        >>> c_paths.structure = _StackedDict({'a': {'b': 1}, 'd': 2})
+        >>> # From a nested dictionary
+        >>> c_paths.structure = NestedDictionary({'a': {'b': 1}, 'd': 2})
         >>> c_paths.expand()
         [['a'], ['a', 'b'], ['d']]
-
-        >>> # From an _HKey
-        >>> hk = _HKey.build_forest({'x': {'y': {'z': 1}}})
-        >>> c_paths.structure = hk
-        >>> c_paths.expand()
-        [['x'], ['x', 'y'], ['x', 'y', 'z']]
         """
         # Case 1: _StackedDict or dict
         if isinstance(value, _StackedDict) or isinstance(value, dict):
             # Normalize to _StackedDict
             self._stacked_dict = (
-                value if isinstance(value, _StackedDict) else _StackedDict(value)
+                value
+                if isinstance(value, _StackedDict)
+                else _StackedDict(
+                    value, default_setup={"indent": 0, "default_factory": None}
+                )
             )
             # Invalidate and rebuild from stacked dict
             self._hkey = None
@@ -4482,7 +4919,7 @@ class _CPaths(_Paths):
             return
 
         raise TypeError(
-            f"Unsupported type for structure: {type(value).__name__}. Expected _StackedDict, _HKey or list."
+            f"Unsupported type for structure: {type(value).__name__}. Expected a nested dictionary, a dict or a list."
         )
 
     def _build_compact_structure(self) -> list[Any]:
@@ -4504,7 +4941,7 @@ class _CPaths(_Paths):
         of all keys. This is the core factorization algorithm.
         """
 
-        def compact_node(node) -> Any:
+        def compact_node(node: _HKey) -> Any:
             """
             Recursively compact a node from _hkey tree.
 
@@ -4541,8 +4978,10 @@ class _CPaths(_Paths):
         """
         Expand compact structure back to full paths.
 
-        This is the inverse operation of compactification, establishing
-        the bijection between compact and expanded representations.
+        This is the inverse operation of compactification. Several
+        structures can expand to the same paths; the structure built from a
+        dictionary is the canonical one, and each set of paths has exactly
+        one canonical structure.
 
         Parameters
         ----------
@@ -4556,12 +4995,17 @@ class _CPaths(_Paths):
 
         Examples
         --------
-        >>> structure = [['a'], ['b', 'c', 'd']]
-        >>> _CPaths.expand_structure(structure)
+        >>> from ndict_tools import CompactPathsView
+        >>> structure = ['a', ['b', 'c', 'd']]
+        >>> CompactPathsView.expand_structure(structure)
         [['a'], ['b'], ['b', 'c'], ['b', 'd']]
 
+        >>> # Inside a node list, a nested list is a chain, not siblings
+        >>> CompactPathsView.expand_structure([['b', ['c', 'd']]])
+        [['b'], ['b', 'c'], ['b', 'c', 'd']]
+
         >>> structure = [['x', ['y', 'z1', 'z2'], 'a']]
-        >>> _CPaths.expand_structure(structure)
+        >>> CompactPathsView.expand_structure(structure)
         [['x'], ['x', 'y'], ['x', 'y', 'z1'], ['x', 'y', 'z2'], ['x', 'a']]
         """
         all_paths = []
@@ -4611,7 +5055,8 @@ class _CPaths(_Paths):
 
         Examples
         --------
-        >>> c_paths = _CPaths(_StackedDict({'a': {'b': 1}}))
+        >>> from ndict_tools import NestedDictionary
+        >>> c_paths = NestedDictionary({'a': {'b': 1}}).compact_paths()
         >>> c_paths.expand()
         [['a'], ['a', 'b']]
 
@@ -4622,6 +5067,7 @@ class _CPaths(_Paths):
         """
         return self.expand_structure(self.structure)
 
+    @override
     def __repr__(self) -> str:
         """
         Return technical representation with compact structure.
@@ -4633,28 +5079,35 @@ class _CPaths(_Paths):
 
         Examples
         --------
-        >>> c_paths = _CPaths(_StackedDict({'a': 1}))
+        >>> from ndict_tools import NestedDictionary
+        >>> c_paths = NestedDictionary({'a': 1}).compact_paths()
         >>> repr(c_paths)
-        "_CPaths([['a']])"
+        "CompactPathsView(['a'])"
         """
         return f"{self.__class__.__name__}({self.structure})"
 
+    @override
     def __str__(self) -> str:
         """
         Return readable string representation.
 
+        The prefix is the name of the actual class, so a public subclass such
+        as ``CompactPathsView`` does not show the private ``_CPaths`` name.
+
         Returns
         -------
         str
-            Human-readable description
+            Class name, number of paths and compact structure
 
         Examples
         --------
-        >>> c_paths = _CPaths(_StackedDict({'a': {'b': 1}, 'c': 2}))
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}, 'c': 2})
+        >>> c_paths = nd.compact_paths()
         >>> str(c_paths)
-        "_CPaths(3 paths): [['a', 'b'], ['c']]"
+        "CompactPathsView(3 paths): [['a', 'b'], 'c']"
         """
-        return f"_CPaths({len(self)} paths): {self.structure}"
+        return f"{self.__class__.__name__}({len(self)} paths): {self.structure}"
 
     # ========================================================================
     # COVERAGE ANALYSIS METHODS
@@ -4686,90 +5139,101 @@ class _CPaths(_Paths):
         only_in_2 = set2 - set1
         return set1, set2, intersection, only_in_1, only_in_2
 
-    def is_covering(self, stacked_dict) -> bool:
+    def is_covering(self, stacked_dict: "_StackedDict") -> bool:
         """
-        Check if this _CPaths covers all paths in the given _StackedDict.
+        Check if this view describes exactly the paths of a nested dictionary.
 
-        A _CPaths is "covering" if its expanded paths exactly match all paths
-        in the target _StackedDict.
+        With S the set of paths expanded from this structure and T the set of
+        paths of ``stacked_dict``, the result is ``S == T``. It is stricter
+        than full coverage: ``coverage()`` returns ``1.0`` as soon as T is
+        included in S, while ``is_covering()`` also requires S to hold no
+        other path.
 
         Parameters
         ----------
-        stacked_dict : _StackedDict
-            The _StackedDict to compare against
+        stacked_dict : NestedDictionary
+            The nested dictionary to compare against (any class of the family)
 
         Returns
         -------
         bool
-            True if all paths in stacked_dict are present in this _CPaths
+            True if both sets of paths are equal
 
         Examples
         --------
-        >>> sdict = _StackedDict({'a': {'b': 1}, 'c': 2})
-        >>> c_paths = _CPaths(sdict)
-        >>> c_paths.is_covering(sdict)
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}, 'c': 2})
+        >>> c_paths = nd.compact_paths()
+        >>> c_paths.is_covering(nd)
         True
 
         >>> # Partial coverage
         >>> c_paths.structure = [['a']]  # Only covers 'a', not 'a.b' or 'c'
-        >>> c_paths.is_covering(sdict)
+        >>> c_paths.is_covering(nd)
         False
+
+        >>> # Every path of nd plus an extra one: full coverage, not equal
+        >>> c_paths.structure = [['a', 'b'], 'c', 'e']
+        >>> c_paths.coverage(nd), c_paths.is_covering(nd)
+        (1.0, False)
 
         Notes
         -----
-        For a _CPaths created directly from a _StackedDict:
-        _CPaths(sdict).is_covering(sdict) will ALWAYS return True
-        because the compact structure is built from all paths in sdict.
+        For a view created from the nested dictionary it is compared with:
+        ``nd.compact_paths().is_covering(nd)`` always returns True
+        because the compact structure is built from all paths in nd.
         """
         target_paths = list(_Paths(stacked_dict))
         expanded_paths = self.expand()
         set1, set2, _, _, _ = self._compare_path_sets(expanded_paths, target_paths)
         return set1 == set2
 
-    def coverage(self, stacked_dict) -> float:
+    def coverage(self, stacked_dict: "_StackedDict") -> float:
         """
-        Calculate the coverage percentage of this _CPaths over a _StackedDict.
+        Calculate the share of the paths of a nested dictionary found in this view.
 
-        Coverage is defined as the ratio of paths in this _CPaths that exist
-        in the target _StackedDict, divided by the total number of paths in
-        the _StackedDict.
+        With S the set of paths expanded from this structure and T the set of
+        paths of ``stacked_dict``, coverage is ``len(S & T) / len(T)``. Paths
+        of S that are not in T do not change it, so the value stays between
+        0.0 and 1.0. When T is empty, the result is 1.0 if S is empty too and
+        0.0 otherwise.
 
         Parameters
         ----------
-        stacked_dict : _StackedDict
-            The _StackedDict to compare against
+        stacked_dict : NestedDictionary
+            The nested dictionary to compare against (any class of the family)
 
         Returns
         -------
         float
-            Coverage percentage between 0.0 and 1.0 (or > 1.0 if _CPaths
-            contains paths not in stacked_dict)
+            Coverage between 0.0 and 1.0
 
         Examples
         --------
-        >>> sdict = _StackedDict({'a': {'b': 1, 'c': 2}, 'd': 3})
-        >>> c_paths = _CPaths(sdict)
-        >>> c_paths.coverage(sdict)
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1, 'c': 2}, 'd': 3})
+        >>> c_paths = nd.compact_paths()
+        >>> c_paths.coverage(nd)
         1.0
 
         >>> # Partial coverage: only 'a' and 'a.b' out of 4 paths
         >>> c_paths.structure = [['a', 'b']]
-        >>> c_paths.coverage(sdict)
+        >>> c_paths.coverage(nd)
         0.5
 
-        >>> # Over-coverage: includes paths not in sdict
+        >>> # Extra paths do not raise the value above 1.0
         >>> c_paths.structure = [['a', 'b', 'c'], ['d'], ['e']]
-        >>> c_paths.coverage(sdict)
-        1.25
+        >>> c_paths.coverage(nd)
+        1.0
 
         Notes
         -----
-        For a _CPaths created directly from a _StackedDict:
-        _CPaths(sdict).coverage(sdict) will ALWAYS return 1.0
-        because all paths from sdict are included.
+        For a view created from the nested dictionary it is compared with:
+        ``nd.compact_paths().coverage(nd)`` always returns 1.0
+        because all paths from nd are included.
 
-        The coverage can be > 1.0 if the _CPaths contains more paths than
-        the _StackedDict (e.g., manually set structure).
+        Use ``missing_paths()`` to list the extra paths and ``is_covering()``
+        to check that the two sets are equal.
         """
         target_paths = list(_Paths(stacked_dict))
         expanded_paths = self.expand()
@@ -4783,45 +5247,46 @@ class _CPaths(_Paths):
 
         return len(intersection) / len(set2)
 
-    def missing_paths(self, stacked_dict) -> list[list[Any]]:
+    def missing_paths(self, stacked_dict: "_StackedDict") -> list[list[Any]]:
         """
-        Get paths from this _CPaths that are NOT in the _StackedDict.
+        Get paths from this view that are NOT in the nested dictionary.
 
-        Returns the list of paths that exist in this _CPaths's expanded form
-        but do not exist in the target _StackedDict. Useful for identifying
+        Returns the list of paths that exist in this view's expanded form
+        but do not exist in the target nested dictionary. Useful for identifying
         extra or invalid paths.
 
         Parameters
         ----------
-        stacked_dict : _StackedDict
-            The _StackedDict to compare against
+        stacked_dict : NestedDictionary
+            The nested dictionary to compare against (any class of the family)
 
         Returns
         -------
         list[list[Any]]
-            list of paths in _CPaths but not in stacked_dict
+            list of paths in this view but not in stacked_dict
 
         Examples
         --------
-        >>> sdict = _StackedDict({'a': {'b': 1}})
-        >>> c_paths = _CPaths(sdict)
-        >>> c_paths.missing_paths(sdict)
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1}})
+        >>> c_paths = nd.compact_paths()
+        >>> c_paths.missing_paths(nd)
         []
 
         >>> # Add extra paths
         >>> c_paths.structure = [['a', 'b', 'c'], ['d']]
-        >>> c_paths.missing_paths(sdict)
+        >>> c_paths.missing_paths(nd)
         [['a', 'c'], ['d']]
 
         Notes
         -----
-        For a _CPaths created directly from a _StackedDict:
-        _CPaths(sdict).missing_paths(sdict) will ALWAYS return []
-        because all paths are derived from sdict.
+        For a view created from the nested dictionary it is compared with:
+        ``nd.compact_paths().missing_paths(nd)`` always returns []
+        because all paths are derived from nd.
 
         See Also
         --------
-        uncovered_paths : Get paths in _StackedDict not covered by _CPaths
+        uncovered_paths : Get paths in the nested dictionary not covered by this view
         """
         target_paths = list(_Paths(stacked_dict))
         expanded_paths = self.expand()
@@ -4833,45 +5298,46 @@ class _CPaths(_Paths):
         extra_set = set(only_in_1)
         return [list(p) for p in expanded_paths if tuple(p) in extra_set]
 
-    def uncovered_paths(self, stacked_dict) -> list[list[Any]]:
+    def uncovered_paths(self, stacked_dict: "_StackedDict") -> list[list[Any]]:
         """
-        Get paths from _StackedDict that are NOT covered by this _CPaths.
+        Get paths from the nested dictionary that are NOT covered by this view.
 
-        Returns the list of paths that exist in the target _StackedDict but
-        are not present in this _CPaths's expanded form. Useful for identifying
+        Returns the list of paths that exist in the target nested dictionary but
+        are not present in this view's expanded form. Useful for identifying
         gaps in coverage.
 
         Parameters
         ----------
-        stacked_dict : _StackedDict
-            The _StackedDict to compare against
+        stacked_dict : NestedDictionary
+            The nested dictionary to compare against (any class of the family)
 
         Returns
         -------
         list[list[Any]]
-            list of paths in stacked_dict but not in _CPaths
+            list of paths in stacked_dict but not in this view
 
         Examples
         --------
-        >>> sdict = _StackedDict({'a': {'b': 1, 'c': 2}, 'd': 3})
-        >>> c_paths = _CPaths(sdict)
-        >>> c_paths.uncovered_paths(sdict)
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1, 'c': 2}, 'd': 3})
+        >>> c_paths = nd.compact_paths()
+        >>> c_paths.uncovered_paths(nd)
         []
 
         >>> # Partial structure
         >>> c_paths.structure = [['a', 'b']]
-        >>> c_paths.uncovered_paths(sdict)
+        >>> c_paths.uncovered_paths(nd)
         [['a', 'c'], ['d']]
 
         Notes
         -----
-        For a _CPaths created directly from a _StackedDict:
-        _CPaths(sdict).uncovered_paths(sdict) will ALWAYS return []
-        because all paths from sdict are included.
+        For a view created from the nested dictionary it is compared with:
+        ``nd.compact_paths().uncovered_paths(nd)`` always returns []
+        because all paths from nd are included.
 
         See Also
         --------
-        missing_paths : Get paths in _CPaths not in _StackedDict
+        missing_paths : Get paths in this view not in the nested dictionary
         coverage : Get coverage ratio
         """
         target_paths = list(_Paths(stacked_dict))

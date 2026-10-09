@@ -1,0 +1,127 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2024-2026, biface
+# This file is distributed under the same license as the Nested Dictionary
+# Tools package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Nested Dictionary Tools 1.3.0b1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-07 10:11+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+msgid "Changelog"
+msgstr "Historique des versions"
+
+msgid "Version history"
+msgstr "Historique des versions"
+
+msgid ""
+"Each published version keeps its own documentation on the `GitHub Pages "
+"archive <https://biface.github.io/ndt/>`_, under ``/vX.Y.Z/``; from "
+"1.3.0, the French translation is under ``/fr/vX.Y.Z/``. Read the Docs "
+"serves `stable <https://ndict-tools.readthedocs.io/en/stable/>`_ (the "
+"last published version) and `latest <https://ndict-"
+"tools.readthedocs.io/en/latest/>`_ (the development version). Earlier 0.x"
+" versions are not documented; the documentation of 0.9.0 is kept until "
+"October 2027."
+msgstr ""
+"Chaque version publiée conserve sa propre documentation dans l’`GitHub "
+"Pages archive <https://biface.github.io/ndt/>`_, sous ``/vX.Y.Z/`` ; à "
+"partir de la 1.3.0, la traduction française se trouve sous "
+"``/fr/vX.Y.Z/``. Read the Docs sert `stable <https://ndict-"
+"tools.readthedocs.io/en/stable/>`_ (la dernière version publiée) et "
+"`latest <https://ndict-tools.readthedocs.io/en/latest/>`_ (la version de "
+"développement). Les versions 0.x antérieures ne sont pas documentées ; la"
+" documentation de la 0.9.0 est conservée jusqu’en octobre 2027."
+
+msgid "Version"
+msgstr "Version"
+
+msgid "Date"
+msgstr "Date"
+
+msgid "Summary"
+msgstr "Résumé"
+
+msgid "`1.3.0 <https://biface.github.io/ndt/v1.3.0/>`__"
+msgstr "`1.3.0 <https://biface.github.io/ndt/v1.3.0/>`__"
+
+msgid "2026-10-09"
+msgstr "2026-10-09"
+
+msgid ""
+"Python 3.11 minimum, typed package (``py.typed``), strict ``==`` "
+"(breaking), Guide and Concepts rewritten, French translation, per-version"
+" documentation archive."
+msgstr ""
+"Python 3.11 minimum, paquet typé (``py.typed``), ``==`` strict (rupture "
+"de compatibilité), Guide et Concepts réécrits, traduction française, "
+"archive de la documentation par version."
+
+msgid "`1.2.0 <https://biface.github.io/ndt/v1.2.0/>`__"
+msgstr "`1.2.0 <https://biface.github.io/ndt/v1.2.0/>`__"
+
+msgid "2026-05-06"
+msgstr "2026-05-06"
+
+msgid "Cleanup, documentation overhaul, removal of ``DictPaths``."
+msgstr "Nettoyage, refonte de la documentation, suppression de ``DictPaths``."
+
+msgid "`1.1.0 <https://biface.github.io/ndt/v1.1.0/>`__"
+msgstr "`1.1.0 <https://biface.github.io/ndt/v1.1.0/>`__"
+
+msgid "2026-04-05"
+msgstr "2026-04-05"
+
+msgid ""
+"Serialisation (JSON + pickle), ``from_dict`` classmethod, Python 3.13 "
+"support, Python 3.9 dropped."
+msgstr ""
+"Sérialisation (JSON + pickle), méthode de classe ``from_dict``, prise en "
+"charge de Python 3.13, abandon de Python 3.9."
+
+msgid "`1.0.0 <https://biface.github.io/ndt/v1.0.0/>`__"
+msgstr "`1.0.0 <https://biface.github.io/ndt/v1.0.0/>`__"
+
+msgid "2026-01-31"
+msgstr "2026-01-31"
+
+msgid "First stable release. Public API, exception hierarchy, PyPI publication."
+msgstr ""
+"Première version stable. API publique, hiérarchie d’exceptions, "
+"publication sur PyPI."
+
+msgid "`0.9.0 <https://biface.github.io/ndt/v0.9.0/>`__"
+msgstr "`0.9.0 <https://biface.github.io/ndt/v0.9.0/>`__"
+
+msgid "2025-11-04"
+msgstr "2025-11-04"
+
+msgid ""
+"``default_setup`` generalised, Python versions earlier than 3.9 dropped. "
+"Gathers the earlier 0.x work. Documentation kept until October 2027."
+msgstr ""
+"``default_setup`` généralisé, abandon des versions de Python antérieures "
+"à 3.9. Rassemble le travail des versions 0.x précédentes. Documentation "
+"conservée jusqu’en octobre 2027."
+
+msgid "Full history"
+msgstr "Historique complet"
+
+msgid "The complete change log is maintained in :doc:`history`."
+msgstr "Le journal complet des modifications est tenu dans :doc:`history`."
+
+msgid "Active deprecations are listed in :doc:`deprecations`."
+msgstr "Les dépréciations en cours sont énumérées dans :doc:`deprecations`."
+

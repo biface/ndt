@@ -1,8 +1,10 @@
-# Documentation build dependencies
-# Sphinx is pinned to 8.1.3 — the last version compatible with Python 3.10.
-# Upgrade to 8.2.x in v1.3.0 (Python 3.11 baseline).
-# Evaluate Sphinx 9.x in v1.4.0 (Python 3.12 baseline).
-sphinx==8.1.3
+# Documentation build dependencies (Python 3.11 baseline).
+# Exact versions: each published tag is rebuilt from its own copy of this file
+# by the GitHub Pages archive workflow (DD-028), so a tag's build must not
+# depend on later releases. tox -e docs reads it through
+# .tox-config/requirements/docs.txt.
+sphinx==9.0.4
 furo==2025.12.19
-sphinx-multiversion-contrib==0.2.13
-myst-parser==4.0.1
+myst-parser==5.1.0
+sphinxcontrib-mermaid==2.1.1
+sphinx-intl==2.4.0

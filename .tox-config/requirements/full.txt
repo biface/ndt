@@ -7,3 +7,4 @@ pytest
 pytest-cov
 tox
 tox-uv
+typing_extensions

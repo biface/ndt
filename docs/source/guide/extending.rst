@@ -1,210 +1,214 @@
-Part 4 — Extending the Package
-================================
+Part 5 — Extending the Package
+==============================
 
-This part is aimed at developers who want to subclass, modify, or
-contribute to **ndict-tools**. It explains the internal architecture and
-the contracts that hold the package together.
+This part is for developers who write their own class on top of
+**ndict-tools**. It explains what to subclass, how a subclass sets its
+configuration, and what it inherits without writing anything.
 
-.. note::
+.. testsetup:: extending
 
-   All private classes described here are documented in the
-   :doc:`/api/internal/tools` and :doc:`/api/internal/serialize` reference
-   pages. Their interfaces are subject to change between releases.
+   import os
+   import tempfile
+
+   _previous_dir = os.getcwd()
+   os.chdir(tempfile.mkdtemp())
+
+.. testcleanup:: extending
+
+   os.chdir(_previous_dir)
 
 
-The private/public split
--------------------------
+Public and private classes
+--------------------------
 
-The package is organised in three layers, each with a clearly defined
-responsibility:
+The package has a private engine and a public interface:
 
 .. code-block:: text
 
    ndict_tools/
-   ├── tools.py      ← private engine  (_StackedDict, _HKey, _Paths, _CPaths)
-   ├── core.py       ← public wrappers (NestedDictionary, PathsView, …)
-   ├── serialize.py  ← private I/O     (_encode_key, NestedDictionaryEncoder, …)
-   ├── exception.py  ← exception hierarchy
-   └── __init__.py   ← re-exports from core.py only
+   ├── tools.py      ← private engine   (_StackedDict, _HKey, _Paths, _CPaths)
+   ├── core.py       ← public classes   (NestedDictionary, PathsView, …)
+   ├── serialize.py  ← private helpers  (JSON key encoding, pickle checks)
+   ├── exception.py  ← exceptions
+   └── __init__.py   ← exports the public classes and the exceptions
 
-The rule is simple: **nothing from** ``tools.py`` **or** ``serialize.py``
-**is exported from** ``__init__.py``. Users import exclusively from the
-top-level package. Internal classes are underscored and considered
-implementation details.
-
-When you extend the package, subclass the public classes in ``core.py``,
-not the private classes in ``tools.py`` directly. The public classes are
-the stable surface.
+``__init__.py`` exports the classes of ``core.py`` and the exceptions, and
+nothing from ``tools.py`` or ``serialize.py``. Subclass the public classes,
+usually :class:`~ndict_tools.NestedDictionary`, never the private ones: the
+private classes can change between releases. Their reference is in
+:doc:`/api/internal/tools` and :doc:`/api/internal/serialize`.
 
 
-The ``default_setup`` contract
---------------------------------
+The configuration of a subclass
+-------------------------------
 
-Every ``_StackedDict`` instance carries a ``default_setup`` dictionary
-that bundles its configuration:
+The configuration of a nested dictionary, its ``default_setup``, is what
+every level of the dictionary shares: ``indent`` and ``default_factory``
+for the public classes. A subclass extends the package by adding its own
+setting to it, which then follows the dictionary everywhere the
+configuration goes.
 
-.. code-block:: python
+Every way of building an instance resolves the configuration through one
+class method, ``_normalize_setup``: the constructor, the ``default_setup``
+setter, :meth:`~ndict_tools.NestedDictionary.from_dict` and
+:meth:`~ndict_tools.NestedDictionary.from_json`. It receives the
+``default_setup`` given by the caller, or ``None``, and returns the
+configuration to apply as a new :class:`dict`, without changing the one it
+received. :class:`~ndict_tools.NestedDictionary` supplies its default
+there; :class:`~ndict_tools.StrictNestedDictionary` and
+:class:`~ndict_tools.SmoothNestedDictionary` force their
+``default_factory`` there.
 
-   default_setup = {
-       "indent": 2,              # spaces used when printing
-       "default_factory": NestedDictionary,  # class for missing keys
-   }
+Here is an ``Inventory`` of a house whose configuration also holds the unit
+in which powers are given:
 
-This contract must be respected by any method that creates a new instance
-— constructors, ``from_dict``, ``from_json``, ``from_pickle``, and any
-custom factory you write. The ``default_setup`` must round-trip cleanly
-through serialisation so that the reconstructed object behaves identically
-to the original.
+.. doctest:: extending
 
-When writing a custom subclass, forward ``default_setup`` explicitly:
+   >>> from ndict_tools import NestedDictionary
+   >>> class Inventory(NestedDictionary):
+   ...     """A nested dictionary describing the equipment of a house."""
+   ...
+   ...     def __init__(self, *args, **kwargs):
+   ...         self.unit: str = "W"
+   ...         super().__init__(*args, **kwargs)
+   ...
+   ...     @classmethod
+   ...     def _normalize_setup(cls, setup):
+   ...         normalized = dict(setup) if setup else {"indent": 2, "default_factory": cls}
+   ...         normalized.setdefault("unit", "W")
+   ...         return super()._normalize_setup(normalized)
+   ...
+   ...     def total_power(self):
+   ...         total = sum(value for path, value in self.unpacked_items() if path[-1] == "power")
+   ...         return f"{total} {self.unit}"
 
-.. code-block:: python
+The two methods have separate jobs:
 
-   from ndict_tools import NestedDictionary
+- ``__init__`` declares ``unit`` as an attribute of the instance, before
+  calling the parent constructor, as :class:`~ndict_tools.NestedDictionary`
+  does for ``indent``. The parent constructor then applies the
+  configuration, and it only accepts keys that are attributes of the
+  instance: without this declaration, ``unit`` would raise
+  :class:`~ndict_tools.StackedAttributeError`.
+- ``_normalize_setup`` gives the default configuration, completes a
+  configuration that has no ``unit``, and hands the result to the parent
+  class, which checks that ``indent`` and ``default_factory`` are present.
 
-   class TaggedDictionary(NestedDictionary):
-       """A NestedDictionary that carries an optional tag."""
+Four rules follow.
 
-       def __init__(self, *args, tag: str = "", **kwargs):
-           super().__init__(*args, **kwargs)
-           self.tag = tag
+**1. A new setting is an instance attribute and a configuration key.**
+The constructor sets it on every level, like ``indent``. A house measured
+in kilowatts:
 
-       @classmethod
-       def from_dict(cls, dictionary, *, default_setup, tag="", **kwargs):
-           instance = super().from_dict(
-               dictionary, default_setup=default_setup, **kwargs
-           )
-           instance.tag = tag
-           return instance
+.. doctest:: extending
+
+   >>> house = Inventory(
+   ...     {
+   ...         "kitchen": {"lights": "ceiling", "heating": {"type": "radiator", "power": 1.5}},
+   ...         "bedroom": {"heating": {"type": "radiator", "power": 1.0}},
+   ...     },
+   ...     default_setup={"indent": 2, "default_factory": Inventory, "unit": "kW"},
+   ... )
+   >>> house.unit, house["kitchen"].unit, house[["kitchen", "heating"]].unit
+   ('kW', 'kW', 'kW')
+   >>> house.total_power()
+   '2.5 kW'
+   >>> house["bedroom"].total_power()
+   '1.0 kW'
+
+Assigning ``default_setup`` later changes the setting at every level, as
+Part 1 shows for ``indent``.
+
+**2. Define the default, or always pass it.** Without ``default_setup``,
+an ``Inventory`` gets the configuration of ``_normalize_setup``, in watts:
+
+.. doctest:: extending
+
+   >>> Inventory({"office": {"heating": {"power": 500}}}).total_power()
+   '500 W'
+
+A subclass that does not override ``_normalize_setup`` inherits the
+default of its parent, which has no ``unit``.
+
+**3. Use the subclass as its own** ``default_factory``. The nested
+dictionaries given to the constructor or to ``from_dict`` are converted
+with the class that builds them. Keys created by reading a missing key,
+however, come from ``default_factory``. The default above uses ``cls``, so
+both kinds of levels are ``Inventory`` objects, and so are those of a
+subclass of ``Inventory``:
+
+.. doctest:: extending
+
+   >>> home = Inventory({"kitchen": {"lights": "ceiling"}})
+   >>> type(home["kitchen"]).__name__
+   'Inventory'
+   >>> type(home["attic"]).__name__
+   'Inventory'
+
+Without this, the two kinds of levels differ. A bare subclass keeps the
+``default_factory`` of :class:`~ndict_tools.NestedDictionary`:
+
+.. doctest:: extending
+
+   >>> class BareInventory(NestedDictionary):
+   ...     pass
+   >>> bare = BareInventory({"kitchen": {"lights": "ceiling"}})
+   >>> type(bare["kitchen"]).__name__
+   'BareInventory'
+   >>> type(bare["attic"]).__name__
+   'NestedDictionary'
+
+:class:`~ndict_tools.SmoothNestedDictionary` follows the same rule: its
+``_normalize_setup`` sets ``default_factory`` to itself.
+
+**4. The other constructors need no override.**
+:meth:`~ndict_tools.NestedDictionary.from_dict`,
+:meth:`~ndict_tools.NestedDictionary.copy` and
+:meth:`~ndict_tools.NestedDictionary.deepcopy` build through the class of
+the instance and keep its configuration, ``unit`` included:
+
+.. doctest:: extending
+
+   >>> kilowatts = {"indent": 2, "default_factory": Inventory, "unit": "kW"}
+   >>> Inventory.from_dict({"garage": {"charger": {"power": 7.4}}}, default_setup=kilowatts).total_power()
+   '7.4 kW'
+   >>> copied = house.deepcopy()
+   >>> type(copied).__name__, copied.unit, copied == house
+   ('Inventory', 'kW', True)
+
+:meth:`~ndict_tools.NestedDictionary.from_pickle` returns the object with
+the configuration it had when written. Pickle stores the class by its name,
+so a subclass that is pickled must be defined at the top level of an
+importable module. A JSON file holds the content only (see
+:doc:`serialization`): :meth:`~ndict_tools.NestedDictionary.from_json`
+returns an ``Inventory`` with the default configuration, in watts, unless
+``default_setup`` is given.
+
+.. doctest:: extending
+
+   >>> house.to_json("house.json")
+   >>> Inventory.from_json("house.json").unit
+   'W'
+   >>> Inventory.from_json("house.json", default_setup=kilowatts).total_power()
+   '2.5 kW'
+
+Since ``unit`` is part of the configuration, it also counts in comparisons
+(see :doc:`exploring`): the same content with another unit is isomorphic,
+not equal.
+
+.. doctest:: extending
+
+   >>> watts = {"indent": 2, "default_factory": Inventory, "unit": "W"}
+   >>> in_watts = Inventory(house.to_dict(), default_setup=watts)
+   >>> in_watts == house, in_watts.isomorph(house)
+   (False, True)
 
 
-The ``from_dict`` recursion pattern
---------------------------------------
+Where the model is described
+----------------------------
 
-:meth:`~ndict_tools.NestedDictionary.from_dict` converts a plain
-:class:`dict` recursively. The recursion is driven by ``default_factory``
-inside ``default_setup``: whenever a value is itself a :class:`dict`, the
-method calls ``default_factory.from_dict(value, ...)`` to convert it to
-the same class.
-
-This means the ``default_factory`` must itself implement ``from_dict``.
-All three public classes satisfy this contract. If you write a custom
-subclass and use it as ``default_factory``, ensure it does too.
-
-.. code-block:: python
-
-   from ndict_tools import NestedDictionary
-
-   plain = {"a": {"b": {"c": 1}}}
-
-   # default_factory=NestedDictionary — all levels become NestedDictionary
-   nd = NestedDictionary.from_dict(
-       plain,
-       default_setup={"indent": 0, "default_factory": NestedDictionary},
-   )
-   type(nd["a"])        # <class 'NestedDictionary'>
-   type(nd["a"]["b"])   # <class 'NestedDictionary'>
-
-
-The ``_HKey`` tree model
---------------------------
-
-Internally, all paths are stored in a tree of :class:`~ndict_tools.tools._HKey`
-nodes. Each node is an immutable named tuple that holds:
-
-- its **key** (the single dictionary key this node represents),
-- its **children** (a tuple of ``_HKey`` nodes, one per child key),
-- a **leaf flag** (``True`` when this node has no children).
-
-.. code-block:: text
-
-   nd = {"a": {"b": 1, "c": 2}, "d": 3}
-
-   _HKey tree:
-   root
-   ├── _HKey(key='a', leaf=False)
-   │   ├── _HKey(key='b', leaf=True)
-   │   └── _HKey(key='c', leaf=True)
-   └── _HKey(key='d', leaf=True)
-
-The tree is built once by :class:`~ndict_tools.tools._Paths` on first
-access and reused for all subsequent operations (membership, children
-lookup, subtree traversal, filtering). It is never mutated — a new tree
-is built whenever the underlying dictionary changes.
-
-``_HKey`` uses ``__slots__`` and is hashable. It is never exposed in the
-public API.
-
-
-Writing a custom path filter
------------------------------
-
-The simplest extension point is :meth:`~ndict_tools.PathsView.filter_paths`.
-It takes any callable that accepts a path (a :class:`list` of keys) and
-returns a :class:`bool`:
-
-.. code-block:: python
-
-   from ndict_tools import NestedDictionary
-
-   nd = NestedDictionary({
-       "prod":    {"db": {"host": "h1", "port": 5432}, "cache": {"ttl": 60}},
-       "staging": {"db": {"host": "h2", "port": 5433}},
-   })
-
-   pv = nd.paths()
-
-   # All leaf paths under 'prod'
-   prod_leaves = pv.filter_paths(
-       lambda p: p[0] == "prod" and not pv.has_children(p)
-   )
-   # [['prod', 'db', 'host'], ['prod', 'db', 'port'], ['prod', 'cache', 'ttl']]
-
-   # All paths that contain the key 'port'
-   port_paths = pv.filter_paths(lambda p: "port" in p)
-   # [['prod', 'db', 'port'], ['staging', 'db', 'port']]
-
-For more structured filtering, subclass :class:`~ndict_tools.tools._Paths`
-and override ``filter_paths`` — then expose the subclass via a new method
-on your custom dictionary class.
-
-
-Writing a custom subclass
---------------------------
-
-Here is a minimal but complete example: a ``FrozenNestedDictionary`` that
-raises on any write attempt after construction:
-
-.. code-block:: python
-
-   from ndict_tools import NestedDictionary
-   from ndict_tools.exception import StackedKeyError
-
-   class FrozenNestedDictionary(NestedDictionary):
-       """A NestedDictionary that cannot be modified after construction."""
-
-       _frozen = False
-
-       def __init__(self, *args, **kwargs):
-           super().__init__(*args, **kwargs)
-           self._frozen = True
-
-       def __setitem__(self, key, value):
-           if self._frozen:
-               raise StackedKeyError(
-                   "FrozenNestedDictionary is read-only.",
-                   key=key,
-               )
-           super().__setitem__(key, value)
-
-       def __delitem__(self, key):
-           if self._frozen:
-               raise StackedKeyError(
-                   "FrozenNestedDictionary is read-only.",
-                   key=key,
-               )
-           super().__delitem__(key)
-
-   nd = FrozenNestedDictionary({"a": 1})
-   nd["a"]          # 1
-   nd["b"] = 2      # raises StackedKeyError
+The guide only covers the public interface. How the keys of a nested
+dictionary form a forest, what its paths and compact paths are, and how
+coverage is computed are explained in the :doc:`/concepts/index` section.
+The private classes that implement them are documented in the API
+reference.

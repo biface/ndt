@@ -20,12 +20,11 @@ Obtaining a paths view
 Call :meth:`~ndict_tools.NestedDictionary.paths` on any
 :class:`~ndict_tools.NestedDictionary`:
 
-.. code-block:: python
+.. doctest::
 
-    from ndict_tools import NestedDictionary
-
-    nd = NestedDictionary({"a": {"b": 1, "c": 2}, "d": 3})
-    paths = nd.paths()
+    >>> from ndict_tools import NestedDictionary
+    >>> nd = NestedDictionary({"a": {"b": 1, "c": 2}, "d": 3})
+    >>> paths = nd.paths()
 
 
 The view is *lazy*: no paths are materialised in memory until you actually
@@ -36,15 +35,14 @@ and reused for all subsequent operations.
 Iterating over paths
 ---------------------
 
-.. code-block:: python
+.. doctest::
 
-    for path in paths:
-        print(path)
-
-    # ['a']
-    # ['a', 'b']
-    # ['a', 'c']
-    # ['d']
+    >>> for path in paths:
+    ...     print(path)
+    ['a']
+    ['a', 'b']
+    ['a', 'c']
+    ['d']
 
 Paths are yielded in depth-first, pre-order — each node before its children.
 
@@ -52,9 +50,10 @@ Paths are yielded in depth-first, pre-order — each node before its children.
 Counting paths
 --------------
 
-.. code-block:: python
+.. doctest::
 
-    len(paths)   # 4
+    >>> len(paths)
+    4
 
 
 Membership testing
@@ -63,11 +62,14 @@ Membership testing
 Membership testing uses the internal tree structure and does not iterate all
 paths:
 
-.. code-block:: python
+.. doctest::
 
-    ['a', 'b'] in paths    # True
-    ['a', 'z'] in paths    # False
-    ['d'] in paths         # True
+    >>> ['a', 'b'] in paths
+    True
+    >>> ['a', 'z'] in paths
+    False
+    >>> ['d'] in paths
+    True
 
 
 Navigating the tree
@@ -76,24 +78,27 @@ Navigating the tree
 A :class:`~ndict_tools.PathsView` understands the parent–child relationships
 between paths:
 
-.. code-block:: python
+.. doctest::
 
-    # Direct children of a path
-    paths.get_children(['a'])       # ['b', 'c']
-    paths.get_children(['a', 'b'])  # []  — leaf node
-
-    # Check whether a path has children
-    paths.has_children(['a'])       # True
-    paths.has_children(['d'])       # False
-
-    # All paths rooted at a given prefix
-    paths.get_subtree_paths(['a'])  # [['a'], ['a', 'b'], ['a', 'c']]
-
-    # Leaf paths only (no children)
-    paths.get_leaf_paths()          # [['a', 'b'], ['a', 'c'], ['d']]
-
-    # Maximum depth across all paths
-    paths.get_depth()               # 2
+    >>> # Direct children of a path
+    >>> paths.get_children(['a'])
+    ['b', 'c']
+    >>> paths.get_children(['a', 'b'])  # leaf node
+    []
+    >>> # Check whether a path has children
+    >>> paths.has_children(['a'])
+    True
+    >>> paths.has_children(['d'])
+    False
+    >>> # All paths rooted at a given prefix
+    >>> paths.get_subtree_paths(['a'])
+    [['a'], ['a', 'b'], ['a', 'c']]
+    >>> # Leaf paths only (no children)
+    >>> paths.get_leaf_paths()
+    [['a', 'b'], ['a', 'c'], ['d']]
+    >>> # Number of levels: keys on the longest path
+    >>> paths.get_depth()
+    2
 
 
 Filtering paths
@@ -101,15 +106,14 @@ Filtering paths
 
 Pass a predicate to keep only the paths that match a condition:
 
-.. code-block:: python
+.. doctest::
 
-    # Paths deeper than one level
-    paths.filter_paths(lambda p: len(p) > 1)
-    # [['a', 'b'], ['a', 'c']]
-
-    # Paths that contain the key 'b'
-    paths.filter_paths(lambda p: 'b' in p)
-    # [['a', 'b']]
+    >>> # Paths deeper than one level
+    >>> paths.filter_paths(lambda p: len(p) > 1)
+    [['a', 'b'], ['a', 'c']]
+    >>> # Paths that contain the key 'b'
+    >>> paths.filter_paths(lambda p: 'b' in p)
+    [['a', 'b']]
 
 
 Converting to compact form
@@ -118,10 +122,11 @@ Converting to compact form
 A :class:`~ndict_tools.PathsView` can be converted to a
 :class:`~ndict_tools.CompactPathsView` in one step:
 
-.. code-block:: python
+.. doctest::
 
-    compact = paths.to_compact()
-    compact.structure   # [['a', 'b', 'c'], ['d']]
+    >>> compact = paths.to_compact()
+    >>> compact.structure
+    [['a', 'b', 'c'], 'd']
 
 See :doc:`compact_paths` for the full picture.
 
@@ -132,7 +137,8 @@ Equality
 Two :class:`~ndict_tools.PathsView` objects are equal when they contain the
 same set of paths, regardless of order:
 
-.. code-block:: python
+.. doctest::
 
-    nd2 = NestedDictionary({"d": 3, "a": {"c": 2, "b": 1}})
-    nd.paths() == nd2.paths()   # True
+    >>> nd2 = NestedDictionary({"d": 3, "a": {"c": 2, "b": 1}})
+    >>> nd.paths() == nd2.paths()
+    True

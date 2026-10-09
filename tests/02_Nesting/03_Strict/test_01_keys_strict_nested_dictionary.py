@@ -110,9 +110,9 @@ class TestKeysStrictNestedDictionary:
         for key in keys:
             d = d[key]
         assert isinstance(d, StrictNestedDictionary)
-        assert d.default_factory == None
+        assert d.default_factory is None
         with pytest.raises(error, match=re.escape(error_msg)):
-            test = d[false_end_key]
+            d[false_end_key]
 
     @pytest.mark.parametrize(
         "false_keys_type, error, error_msg",
@@ -121,7 +121,7 @@ class TestKeysStrictNestedDictionary:
             (
                 [1, [1, 2]],
                 StackedTypeError,
-                "Nested lists are not allowed as keys in _StackedDict. (expected: str, got: list)",
+                "Nested lists are not allowed as keys in StrictNestedDictionary. (expected: str, got: list)",
             ),
         ],
     )

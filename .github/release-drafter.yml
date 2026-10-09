@@ -97,7 +97,7 @@ template: |
   | Tests | `bash .tox-config/scripts/test.sh` | <!-- ✅ / ❌ --> |
   | Static analysis | `basedpyright src/` | <!-- ✅ / ❌ --> |
   | Coverage | `pytest --cov` ≥ 80 % | <!-- ✅ / ❌ --> |
-  | Formatting | `black --check --target-version py310 src/` | <!-- ✅ / ❌ --> |
+  | Formatting | `black --check src/` | <!-- ✅ / ❌ --> |
   | SemVer | No breaking change in patch/minor | <!-- ✅ / ❌ --> |
 
   **Full Changelog**: $PREVIOUS_TAG...v$RESOLVED_VERSION
@@ -107,7 +107,7 @@ autolabeler:
     files:
       - ".github/**"
       - ".codecov.yml"
-      - "tox.ini"
+      - ".tox-config/**"
       - "pyproject.toml"
 
   - label: "type: test"

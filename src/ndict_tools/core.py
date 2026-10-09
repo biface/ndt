@@ -3,6 +3,10 @@ This module provides tools and class for creating nested dictionaries, since sta
 dictionaries.
 """
 
+from collections.abc import Iterable, Mapping
+from typing import Any
+
+from ._compat import override
 from .tools import _CPaths, _Paths, _StackedDict
 
 """Classes section"""
@@ -17,42 +21,55 @@ class NestedDictionary(_StackedDict):
 
     Parameters
     ----------
-    *args : Iterable
-        The first one of the list must be a dictionary to instantiate an object
-    **kwargs : dict
-        Enrichments settings:
-
-        - indent : int, optional
-            Indentation of the printable nested dictionary (used by json.dumps() function)
-        - strict : bool, optional (default=False)
-            Strict mode define default answer to unknown key
-        - default_setup : dict, optional
-            Custom setup for default behavior
+    *args : Mapping or iterable of (key, value) pairs
+        Initial data. Nested plain dictionaries are converted recursively.
+    default_setup : Mapping[str, Any], optional
+        Configuration (keyword-only) with 'indent' and 'default_factory'
+        keys. When omitted or empty, ``{'indent': 0, 'default_factory':
+        NestedDictionary}`` is used. To get strict behaviour, use
+        ``StrictNestedDictionary`` or pass ``'default_factory': None``.
+    **kwargs : Any
+        Initial data given as keyword arguments. They are data, not settings:
+        ``NestedDictionary(indent=2)`` creates a key ``'indent'``.
 
     Examples
     --------
-    >>> NestedDictionary({'first': 1,'second': {'1': "2:1", '2': "2:2", '3': "3:2"}, 'third': 3, 'fourth': 4})
+    >>> from ndict_tools import NestedDictionary
+    >>> # From a dictionary
+    >>> nd1 = NestedDictionary({'first': 1, 'second': {'1': "2:1", '2': "2:2"}, 'third': 3})
+    >>> nd1['second']['2']
+    '2:2'
 
-    >>> NestedDictionary(zip(['first','second', 'third', 'fourth'],
-    ...                  [1, {'1': "2:1", '2': "2:2", '3': "3:2"}, 3, 4]))
+    >>> # From an iterable of (key, value) pairs
+    >>> nd2 = NestedDictionary(zip(['first', 'second', 'third'],
+    ...                            [1, {'1': "2:1", '2': "2:2"}, 3]))
+    >>> nd3 = NestedDictionary([('first', 1), ('second', {'1': "2:1", '2': "2:2"}),
+    ...                         ('third', 3)])
+    >>> nd1 == nd2 == nd3
+    True
 
-    >>> NestedDictionary([('first', 1), ('second', {'1': "2:1", '2': "2:2", '3': "3:2"}),
-    ...                   ('third', 3), ('fourth', 4)])
+    >>> # Nested plain dictionaries become NestedDictionary levels
+    >>> type(nd1['second']).__name__
+    'NestedDictionary'
     """
 
-    def __init__(self, *args, **kwargs):
+    @classmethod
+    @override
+    def _normalize_setup(
+        cls, setup: Mapping[str, Any] | Iterable[tuple[str, Any]] | None
+    ) -> dict[str, Any]:
+        """
+        Supply the default configuration when none is given.
 
-        default_setup = kwargs.pop("default_setup", None)
+        A missing or empty ``setup`` becomes
+        ``{'indent': 0, 'default_factory': NestedDictionary}``. Any other
+        configuration is passed on unchanged for validation.
+        """
+        if not setup:
+            setup = {"indent": 0, "default_factory": NestedDictionary}
+        return super()._normalize_setup(setup)
 
-        if not default_setup:
-            default_setup = {"indent": 0, "default_factory": NestedDictionary}
-
-        super().__init__(
-            *args,
-            **kwargs,
-            default_setup=default_setup,
-        )
-
+    @override
     def paths(self) -> "PathsView":
         """
         Get a view of all hierarchical paths in this dictionary.
@@ -68,6 +85,7 @@ class NestedDictionary(_StackedDict):
 
         Examples
         --------
+        >>> from ndict_tools import NestedDictionary
         >>> nd = NestedDictionary({'a': {'b': 1, 'c': 2}, 'd': 3})
         >>> paths = nd.paths()
         >>> list(paths)
@@ -92,6 +110,7 @@ class NestedDictionary(_StackedDict):
         """
         return PathsView(self)
 
+    @override
     def compact_paths(self) -> "CompactPathsView":
         """
         Get a compact representation of all paths in this dictionary.
@@ -106,10 +125,11 @@ class NestedDictionary(_StackedDict):
 
         Examples
         --------
+        >>> from ndict_tools import NestedDictionary
         >>> nd = NestedDictionary({'a': {'b': 1, 'c': 2}, 'd': 3})
         >>> cpaths = nd.compact_paths()
         >>> cpaths.structure
-        [['a', 'b', 'c'], ['d']]
+        [['a', 'b', 'c'], 'd']
 
         >>> # Expand to full paths
         >>> cpaths.expand()
@@ -135,10 +155,13 @@ class StrictNestedDictionary(NestedDictionary):
 
     Parameters
     ----------
-    *args : Iterable
-        Positional arguments passed to NestedDictionary
-    **kwargs : dict
-        Keyword arguments passed to NestedDictionary
+    *args : Mapping or iterable of (key, value) pairs
+        Initial data, as for ``NestedDictionary``
+    default_setup : Mapping[str, Any], optional
+        Configuration (keyword-only). Its ``default_factory`` is overridden;
+        ``indent`` defaults to 0. The mapping is not modified.
+    **kwargs : Any
+        Initial data given as keyword arguments
 
     Notes
     -----
@@ -146,16 +169,20 @@ class StrictNestedDictionary(NestedDictionary):
     automatic creation of nested dictionaries for unknown keys.
     """
 
-    def __init__(self, *args, **kwargs):
+    @classmethod
+    @override
+    def _normalize_setup(
+        cls, setup: Mapping[str, Any] | Iterable[tuple[str, Any]] | None
+    ) -> dict[str, Any]:
+        """
+        Force ``default_factory`` to None; ``indent`` defaults to 0.
 
-        setup = kwargs.pop("default_setup", None)
-        if setup:
-            setup["indent"] = setup.pop("indent", 0)
-            setup["default_factory"] = None
-        else:
-            setup = {"indent": 0, "default_factory": None}
-
-        super().__init__(*args, **kwargs, default_setup=setup)
+        Works on a copy: the caller's configuration is never modified.
+        """
+        normalized = dict(setup) if setup else {}
+        normalized.setdefault("indent", 0)
+        normalized["default_factory"] = None
+        return super()._normalize_setup(normalized)
 
 
 class SmoothNestedDictionary(NestedDictionary):
@@ -167,10 +194,13 @@ class SmoothNestedDictionary(NestedDictionary):
 
     Parameters
     ----------
-    *args : Iterable
-        Positional arguments passed to NestedDictionary
-    **kwargs : dict
-        Keyword arguments passed to NestedDictionary
+    *args : Mapping or iterable of (key, value) pairs
+        Initial data, as for ``NestedDictionary``
+    default_setup : Mapping[str, Any], optional
+        Configuration (keyword-only). Its ``default_factory`` is overridden;
+        ``indent`` defaults to 0. The mapping is not modified.
+    **kwargs : Any
+        Initial data given as keyword arguments
 
     Notes
     -----
@@ -178,17 +208,20 @@ class SmoothNestedDictionary(NestedDictionary):
     automatically creating nested dictionaries for unknown keys.
     """
 
-    def __init__(self, *args, **kwargs):
+    @classmethod
+    @override
+    def _normalize_setup(
+        cls, setup: Mapping[str, Any] | Iterable[tuple[str, Any]] | None
+    ) -> dict[str, Any]:
+        """
+        Force ``default_factory`` to SmoothNestedDictionary; ``indent`` defaults to 0.
 
-        setup = kwargs.pop("default_setup", None)
-        if setup:
-            setup["indent"] = setup.pop("indent", 0)
-            setup["default_factory"] = SmoothNestedDictionary
-
-        else:
-            setup = {"indent": 0, "default_factory": SmoothNestedDictionary}
-
-        super().__init__(*args, **kwargs, default_setup=setup)
+        Works on a copy: the caller's configuration is never modified.
+        """
+        normalized = dict(setup) if setup else {}
+        normalized.setdefault("indent", 0)
+        normalized["default_factory"] = SmoothNestedDictionary
+        return super()._normalize_setup(normalized)
 
 
 class PathsView(_Paths):
@@ -199,17 +232,18 @@ class PathsView(_Paths):
     hierarchical paths in nested dictionaries. Provides lazy iteration over all
     paths without storing them in memory.
 
-    This is the public API for working with paths. It inherits all functionality
-    from the internal ``_Paths`` class and ensures that conversions return public
-    class instances.
+    This is the public API for working with paths: its conversions return
+    public class instances.
 
     Parameters
     ----------
-    stacked_dict : NestedDictionary or _StackedDict
-        The nested dictionary to create a view for
+    stacked_dict : NestedDictionary
+        The nested dictionary to create a view for (any class of the
+        NestedDictionary family)
 
     Examples
     --------
+    >>> from ndict_tools import NestedDictionary
     >>> nd = NestedDictionary({'a': {'b': 1, 'c': 2}, 'd': 3})
     >>> paths = nd.paths()
     >>> type(paths).__name__
@@ -250,6 +284,7 @@ class PathsView(_Paths):
     NestedDictionary : Nested dictionary with path operations
     """
 
+    @override
     def to_compact(self) -> "CompactPathsView":
         """
         Convert this PathsView to a CompactPathsView.
@@ -261,10 +296,12 @@ class PathsView(_Paths):
 
         Examples
         --------
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1, 'c': 2}, 'd': 3})
         >>> paths = nd.paths()
         >>> compact = paths.to_compact()
         >>> compact.structure
-        [['a', 'b', 'c'], ['d']]
+        [['a', 'b', 'c'], 'd']
         """
         return CompactPathsView(self._stacked_dict)
 
@@ -283,21 +320,18 @@ class CompactPathsView(_CPaths):
     - Leaf nodes are represented by their key alone
     - Internal nodes are represented as [key, child1, child2, ...]
 
-    This class provides a bijective mapping between compact and expanded forms,
-    allowing efficient conversion in both directions.
+    A structure built from a dictionary is the canonical form of its paths, and
+    conversion works in both directions.
 
     Parameters
     ----------
-    stacked_dict : NestedDictionary or _StackedDict
-        The nested dictionary to create a compact view for
-
-    Attributes
-    ----------
-    structure : List[Any]
-        The compact representation as nested lists (lazy-built, read/write)
+    stacked_dict : NestedDictionary
+        The nested dictionary to create a compact view for (any class of the
+        NestedDictionary family)
 
     Examples
     --------
+    >>> from ndict_tools import NestedDictionary, PathsView
     >>> nd = NestedDictionary({'a': {'b': 1, 'c': 2}, 'd': 3})
     >>> cpaths = nd.compact_paths()
     >>> type(cpaths).__name__
@@ -305,13 +339,13 @@ class CompactPathsView(_CPaths):
 
     >>> # Get compact structure
     >>> cpaths.structure
-    [['a', 'b', 'c'], ['d']]
+    [['a', 'b', 'c'], 'd']
 
     >>> # Expand to full paths
     >>> cpaths.expand()
     [['a'], ['a', 'b'], ['a', 'c'], ['d']]
 
-    >>> # Can still iterate (inherited from PathsView)
+    >>> # Iterate over the expanded paths, as with PathsView
     >>> list(cpaths)
     [['a'], ['a', 'b'], ['a', 'c'], ['d']]
 
@@ -345,7 +379,8 @@ class CompactPathsView(_CPaths):
 
     - ``[['a'], ['b']]`` → two independent paths: ``['a']`` and ``['b']``
     - ``[['a', 'b', 'c']]`` → paths: ``['a']``, ``['a', 'b']``, ``['a', 'c']``
-    - ``[['a', ['b', 'c']]]`` → equivalent to the above (explicit nesting)
+    - ``[['a', ['b', 'c']]]`` → paths: ``['a']``, ``['a', 'b']``, ``['a', 'b', 'c']``
+      (a nested list is a child that has children of its own)
 
     See Also
     --------
@@ -365,9 +400,33 @@ class CompactPathsView(_CPaths):
 
         Examples
         --------
+        >>> from ndict_tools import NestedDictionary
+        >>> nd = NestedDictionary({'a': {'b': 1, 'c': 2}, 'd': 3})
         >>> cpaths = nd.compact_paths()
         >>> paths = cpaths.to_paths()
         >>> type(paths).__name__
         'PathsView'
         """
         return PathsView(self._stacked_dict)
+
+    @override
+    def to_compact(self) -> "CompactPathsView":
+        """
+        Return a new CompactPathsView on the same nested dictionary.
+
+        Returns
+        -------
+        CompactPathsView
+            Compact representation with the same paths
+
+        Examples
+        --------
+        >>> from ndict_tools import NestedDictionary
+        >>> cpaths = NestedDictionary({'a': {'b': 1}, 'c': 2}).compact_paths()
+        >>> compact = cpaths.to_compact()
+        >>> type(compact).__name__
+        'CompactPathsView'
+        >>> compact.structure == cpaths.structure
+        True
+        """
+        return CompactPathsView(self._stacked_dict)

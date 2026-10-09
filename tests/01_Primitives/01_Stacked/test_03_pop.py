@@ -445,6 +445,25 @@ class TestPopFunctionExtrasStrict:
         assert strict_f_sd.pop("__does_not_exist__", sentinel) is sentinel
 
     def test_pop_flat_key_missing_raises_key_error(self, strict_f_sd):
+        # Without a default, a missing flat key raises, as dict.pop does
+        with pytest.raises(KeyError):
+            strict_f_sd.pop("__does_not_exist__")
+        with pytest.raises(
+            StackedKeyError,
+            match=re.escape("Key '__does_not_exist__' does not exist."),
+        ):
+            strict_f_sd.pop("__does_not_exist__")
+
+    def test_pop_flat_key_missing_with_none_default(self, strict_f_sd):
+        assert strict_f_sd.pop("__does_not_exist__", None) is None
+
+    def test_pop_hier_missing_with_none_default(self, strict_f_sd):
+        assert strict_f_sd.pop(["global_settings", "does_not"], None) is None
+        assert (
+            strict_f_sd.pop(["global_settings", "__nok__", "x"], default=None) is None
+        )
+
+    def test_pop_hier_final_missing_raises_key_error(self, strict_f_sd):
         with pytest.raises(
             StackedKeyError,
             match=re.escape(
@@ -497,7 +516,26 @@ class TestPopFunctionExtrasSmooth:
         sentinel = object()
         assert smooth_f_sd.pop("__does_not_exist__", sentinel) is sentinel
 
-    def test_pop_flat_key_missing_raises_keyerror(self, smooth_f_sd):
+    def test_pop_flat_key_missing_raises_key_error(self, smooth_f_sd):
+        # Without a default, a missing flat key raises, as dict.pop does
+        with pytest.raises(KeyError):
+            smooth_f_sd.pop("__does_not_exist__")
+        with pytest.raises(
+            StackedKeyError,
+            match=re.escape("Key '__does_not_exist__' does not exist."),
+        ):
+            smooth_f_sd.pop("__does_not_exist__")
+
+    def test_pop_flat_key_missing_with_none_default(self, smooth_f_sd):
+        assert smooth_f_sd.pop("__does_not_exist__", None) is None
+
+    def test_pop_hier_missing_with_none_default(self, smooth_f_sd):
+        assert smooth_f_sd.pop(["global_settings", "does_not"], None) is None
+        assert (
+            smooth_f_sd.pop(["global_settings", "__nok__", "x"], default=None) is None
+        )
+
+    def test_pop_hier_final_missing_raises_key_error(self, smooth_f_sd):
         with pytest.raises(
             StackedKeyError,
             match=re.escape(

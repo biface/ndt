@@ -24,7 +24,7 @@ prochaines étapes.
 
 ## Prérequis
 
-- Python 3.10 (version de référence)
+- Python 3.11 (version de référence)
 - [uv](https://docs.astral.sh/uv/) installé sur le système
 - Git
 
@@ -42,24 +42,23 @@ cd ndt
 ### 2. Créer l'environnement virtuel
 
 ```bash
-uv venv --python 3.10
+uv venv --python 3.11
 source .venv/bin/activate       # Linux / macOS
 # .venv\Scripts\activate        # Windows
 ```
 
-### 3. Installer les dépendances de développement
+### 3. Installer le paquet et tox
 
 ```bash
-uv sync --extra dev --extra docs
+uv pip install -e . tox tox-uv
 ```
 
-### 4. Installer tox et tox-uv
+Les outils de développement (pytest, basedpyright, black, Sphinx…) ne sont
+pas installés dans `.venv/` : tox les installe dans ses propres
+environnements, à partir des fichiers de `.tox-config/requirements/`. Pour
+utiliser l'un d'eux dans votre IDE, installez-le à la main dans `.venv/`.
 
-```bash
-uv pip install tox tox-uv
-```
-
-### 5. Vérifier l'installation
+### 4. Vérifier l'installation
 
 ```bash
 tox --version
@@ -104,6 +103,10 @@ feature/*  ──PR──▶  update/X.Y.Z  ──PR──▶  staging/X.Y.Z  �
 
 ## Environnements tox
 
+Les environnements sont définis dans `pyproject.toml` (`[tool.tox]`), comme
+les réglages des autres outils. Leurs dépendances viennent de
+`.tox-config/requirements/<rôle>.txt`.
+
 ### Développement local
 
 | Commande | Usage |
@@ -113,8 +116,9 @@ feature/*  ──PR──▶  update/X.Y.Z  ──PR──▶  staging/X.Y.Z  �
 | `tox -e basedpyright` | Vérification de types uniquement |
 | `tox -e flake8` | Analyse statique uniquement |
 | `tox -e bandit` | Analyse de sécurité uniquement |
-| `tox -e py310` | Tests sur Python 3.10 |
+| `tox -e py311` | Tests sur Python 3.11 |
 | `tox -e coverage` | Génération du rapport de couverture |
+| `tox -e docs` | Build de la documentation (anglais, français) et de ses doctests |
 | `tox -e pre-push` | Workflow complet avant push |
 | `tox -e local` | Alias de `pre-push` |
 
@@ -123,9 +127,11 @@ feature/*  ──PR──▶  update/X.Y.Z  ──PR──▶  staging/X.Y.Z  �
 | Environnement | Usage |
 |---|---|
 | `ci-quality` | Contrôle qualité (format + lint + types + sécurité) |
-| `ci-tests` | Exécution de la matrice de tests (Python 3.10–3.14) |
 
-> **Important :** `ci-quality` et `ci-tests` sont conçus pour GitHub Actions.
+Le workflow de tests lance `py311` à `py314` (`py315` et `py314t` sans
+garantie), puis `coverage`.
+
+> **Important :** `ci-quality` est conçu pour GitHub Actions.
 > Utilisez `tox -e pre-push` ou `tox -e check` pour les vérifications locales.
 
 ---
@@ -135,7 +141,7 @@ feature/*  ──PR──▶  update/X.Y.Z  ──PR──▶  staging/X.Y.Z  �
 | Événement | Workflow déclenché | Résultat |
 |---|---|---|
 | Push sur n'importe quelle branche | Python CI - Quality | Contrôles qualité |
-| Quality réussie | Python CI - Tests | Tests multi-versions (3.10–3.14) |
+| Quality réussie | Python CI - Tests | Tests multi-versions (3.11–3.14 ; 3.15 et 3.14t sans garantie) |
 | Tests réussis (staging/**, master) | Python CI - Coverage | Upload Codecov |
 | Push tag `vX.Y.Zrc1` | Python CI - Build → Publish TestPyPI | RC sur TestPyPI |
 | Push tag `vX.Y.Z` | Python CI - Build → Publish PyPI | Release finale sur PyPI |
@@ -161,6 +167,95 @@ Cela exécute dans l'ordre :
 4. Analyse de sécurité (bandit)
 5. Tests multi-versions séquentiels (`.tox-config/scripts/test.sh`)
 6. Rapport de couverture (`.tox-config/scripts/coverage.sh`)
+
+---
+
+## Documentation
+
+La documentation est construite avec Sphinx à partir de `docs/source/`. Ses
+dépendances sont figées dans `docs/source/requirements.txt`, que lit Read the
+Docs, et installées par tox dans l'environnement `docs`. Les builds doivent
+passer sans avertissement, en anglais et en français, et les doctests doivent
+passer dans les deux langues :
+
+```bash
+tox -e docs
+```
+
+Les commandes ci-dessous s'exécutent dans cet environnement par
+`tox exec -e docs --`.
+
+### Traductions
+
+La documentation est rédigée en anglais. Les traductions passent par les
+catalogues gettext de Sphinx, un par page source, dans
+`docs/source/locales/<langue>/LC_MESSAGES/`. Les chaînes non traduites
+s'affichent en anglais.
+
+1. Extraire les messages. Les fichiers `.pot` sont des produits de build et ne
+   sont pas commités :
+
+   ```bash
+   tox exec -e docs -- sphinx-build -b gettext docs/source docs/build/gettext
+   ```
+
+2. Créer ou mettre à jour les catalogues d'une langue (ici le français) :
+
+   ```bash
+   tox exec -e docs -- sphinx-intl update -p docs/build/gettext -l fr -d docs/source/locales
+   ```
+
+3. Renseigner les entrées `msgstr` des fichiers `.po` et les commiter. Les
+   fichiers `.mo` sont compilés par Sphinx au moment du build et ne sont pas
+   commités.
+
+   Les blocs de code et de doctest sont extraits eux aussi. N'y traduire que
+   les commentaires et les annotations des schémas en texte ; recopier le
+   code et sa sortie sans changement, car le build traduit n'exécute pas les
+   doctests. `sphinx.po` contient les chaînes du thème et de Sphinx lui-même :
+   il n'a pas de modèle et se tient à la main.
+
+4. Vérifier ce qu'il reste à traduire. L'option `-d` est obligatoire depuis la
+   racine du dépôt : sans elle, sphinx-intl cherche `conf.py` dans le
+   répertoire courant et échoue avec une `TypeError`.
+
+   ```bash
+   tox exec -e docs -- sphinx-intl stat -d docs/source/locales -l fr
+   ```
+
+5. Construire la documentation traduite :
+
+   ```bash
+   tox exec -e docs -- sphinx-build -W -b html -D language=fr docs/source docs/build/html-fr
+   ```
+
+Le journal complet des modifications (`changelog/history.po`) reste en
+anglais : seuls le titre et l'introduction de la page sont traduits, si bien
+que `sphinx-intl stat` signale toujours des chaînes non traduites pour ce
+catalogue, et se termine avec le code 1.
+
+Une traduction est publiée dans l'archive GitHub Pages, sous
+`/<langue>/vX.Y.Z/`, dès que son code de langue figure dans
+`docs/source/locales/LANGUAGES`. N'y ajouter le code qu'une fois le catalogue
+traduit.
+
+### Glossaire de traduction
+
+La documentation et le code suivent l'usage anglais pour les formes d'arbre.
+Les termes français ne se traduisent pas mot à mot : un *arbre complet* en
+français est un *perfect tree* en anglais. Les traductions suivent ce tableau ;
+les définitions sont sur la page Concepts « The Forest of Keys ».
+
+| Anglais | Français | Sens |
+|---|---|---|
+| complete tree | arbre quasi complet (*tassé à gauche*) | tous les niveaux remplis sauf peut-être le dernier, rempli de gauche à droite |
+| perfect tree | arbre complet | tous les niveaux remplis |
+| full tree | arbre localement complet (*strict*) | chaque nœud interne a exactement n enfants |
+
+En français, un nom de classe qui désigne un objet est masculin (*un
+`PathsView`*). Les exceptions prennent le genre d'*une exception* (*lève une
+`KeyError`*) et les avertissements celui d'*un avertissement* (*émet un
+`UserWarning`*).
 
 ---
 

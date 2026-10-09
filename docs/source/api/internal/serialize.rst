@@ -12,8 +12,8 @@
    :no-members:
    :no-undoc-members:
 
-Key encoding (DD-021)
-----------------------
+Key encoding
+------------
 
 .. autofunction:: ndict_tools.serialize._encode_key
 

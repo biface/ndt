@@ -125,13 +125,13 @@ class TestPathStrictSD:
             (
                 [frozenset(["cache", "redis"]), ["config", "memory"]],
                 StackedTypeError,
-                "Nested lists are not allowed as keys in _StackedDict. (expected: str, got: list)",
+                "Nested lists are not allowed as keys in NestedDictionary. (expected: str, got: list)",
             ),
         ],
     )
     def test_change_paths_failed(self, strict_c_nd, false_path, error, error_msg):
         with pytest.raises(error, match=re.escape(error_msg)):
-            test = strict_c_nd[false_path]
+            strict_c_nd[false_path]
 
     @pytest.mark.parametrize(
         "false_keys_type, error, error_msg",
@@ -140,7 +140,7 @@ class TestPathStrictSD:
             (
                 [1, [1, 2]],
                 StackedTypeError,
-                "Nested lists are not allowed as keys in _StackedDict. (expected: str, got: list)",
+                "Nested lists are not allowed as keys in NestedDictionary. (expected: str, got: list)",
             ),
         ],
     )
@@ -263,13 +263,13 @@ class TestPathSmoothSD:
             (
                 [frozenset(["cache", "redis"]), ["config", "memory"]],
                 StackedTypeError,
-                "Nested lists are not allowed as keys in _StackedDict. (expected: str, got: list)",
+                "Nested lists are not allowed as keys in NestedDictionary. (expected: str, got: list)",
             )
         ],
     )
     def test_change_paths_failed(self, strict_c_nd, false_path, error, error_msg):
         with pytest.raises(error, match=re.escape(error_msg)):
-            test = strict_c_nd[false_path]
+            strict_c_nd[false_path]
 
     @pytest.mark.parametrize(
         "false_keys_type, error, error_msg",
@@ -278,7 +278,7 @@ class TestPathSmoothSD:
             (
                 [1, [1, 2]],
                 StackedTypeError,
-                "Nested lists are not allowed as keys in _StackedDict. (expected: str, got: list)",
+                "Nested lists are not allowed as keys in NestedDictionary. (expected: str, got: list)",
             ),
         ],
     )
@@ -419,128 +419,47 @@ class TestChildrenPaths:
                 [("env", "production"), "database"],
                 [
                     [("env", "production"), "database"],
-                    [("env", "production"), "database", "database"],
-                    [("env", "production"), "database", "database", "host"],
-                    [("env", "production"), "database", "database", "port"],
-                    [("env", "production"), "database", "database", "pools"],
-                    [("env", "production"), "database", "database", "replicas"],
-                    [("env", "production"), "database", "database", "replicas", 1],
+                    [("env", "production"), "database", "host"],
+                    [("env", "production"), "database", "port"],
+                    [("env", "production"), "database", "pools"],
+                    [("env", "production"), "database", "replicas"],
+                    [("env", "production"), "database", "replicas", 1],
+                    [("env", "production"), "database", "replicas", 1, "region"],
+                    [("env", "production"), "database", "replicas", 1, "status"],
+                    [("env", "production"), "database", "replicas", 1, "id"],
+                    [("env", "production"), "database", "replicas", 2],
+                    [("env", "production"), "database", "replicas", 2, "region"],
+                    [("env", "production"), "database", "replicas", 2, "status"],
+                    [("env", "production"), "database", "replicas", 2, "id"],
+                    [("env", "production"), "database", "instances"],
+                    [("env", "production"), "database", "instances", 42],
+                    [("env", "production"), "database", "instances", 42, "name"],
                     [
                         ("env", "production"),
-                        "database",
-                        "database",
-                        "replicas",
-                        1,
-                        "region",
-                    ],
-                    [
-                        ("env", "production"),
-                        "database",
-                        "database",
-                        "replicas",
-                        1,
-                        "status",
-                    ],
-                    [
-                        ("env", "production"),
-                        "database",
-                        "database",
-                        "replicas",
-                        1,
-                        "id",
-                    ],
-                    [("env", "production"), "database", "database", "replicas", 2],
-                    [
-                        ("env", "production"),
-                        "database",
-                        "database",
-                        "replicas",
-                        2,
-                        "region",
-                    ],
-                    [
-                        ("env", "production"),
-                        "database",
-                        "database",
-                        "replicas",
-                        2,
-                        "status",
-                    ],
-                    [
-                        ("env", "production"),
-                        "database",
-                        "database",
-                        "replicas",
-                        2,
-                        "id",
-                    ],
-                    [("env", "production"), "database", "database", "instances"],
-                    [("env", "production"), "database", "database", "instances", 42],
-                    [
-                        ("env", "production"),
-                        "database",
-                        "database",
-                        "instances",
-                        42,
-                        "name",
-                    ],
-                    [
-                        ("env", "production"),
-                        "database",
                         "database",
                         "instances",
                         42,
                         "max_connections",
                     ],
+                    [("env", "production"), "database", "instances", 42, "type"],
                     [
                         ("env", "production"),
-                        "database",
-                        "database",
-                        "instances",
-                        42,
-                        "type",
-                    ],
-                    [
-                        ("env", "production"),
-                        "database",
                         "database",
                         "instances",
                         42,
                         "maintenance_window",
                     ],
-                    [("env", "production"), "database", "database", "instances", 54],
+                    [("env", "production"), "database", "instances", 54],
+                    [("env", "production"), "database", "instances", 54, "name"],
                     [
                         ("env", "production"),
-                        "database",
-                        "database",
-                        "instances",
-                        54,
-                        "name",
-                    ],
-                    [
-                        ("env", "production"),
-                        "database",
                         "database",
                         "instances",
                         54,
                         "max_connections",
                     ],
-                    [
-                        ("env", "production"),
-                        "database",
-                        "database",
-                        "instances",
-                        54,
-                        "type",
-                    ],
-                    [
-                        ("env", "production"),
-                        "database",
-                        "database",
-                        "instances",
-                        54,
-                        "sync_lag",
-                    ],
+                    [("env", "production"), "database", "instances", 54, "type"],
+                    [("env", "production"), "database", "instances", 54, "sync_lag"],
                 ],
             ),
             (
@@ -768,6 +687,13 @@ class TestChildrenPaths:
     def test_get_subtree_paths(self, strict_c_nd, path, children):
         assert children == strict_c_nd.paths().get_subtree_paths(path)
 
+    def test_get_subtree_paths_matches_prefix_filter(self, strict_c_nd):
+        paths = strict_c_nd.paths()
+        all_paths = list(paths)
+        for prefix in all_paths:
+            expected = [p for p in all_paths if p[: len(prefix)] == prefix]
+            assert paths.get_subtree_paths(prefix) == expected
+
     @pytest.mark.parametrize(
         "key, length, expected",
         [
@@ -987,3 +913,8 @@ class TestChildrenPaths:
     )
     def test_not_leaf_paths(self, smooth_c_nd, branch):
         assert branch not in smooth_c_nd.paths().get_leaf_paths()
+
+
+def test_repr_uses_public_class_name():
+    paths = NestedDictionary({"a": {"b": 1}, "c": 2}).paths()
+    assert repr(paths) == "PathsView([['a'], ['a', 'b'], ['c']])"
