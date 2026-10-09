@@ -1,0 +1,914 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Deprecation Notices" href="deprecations.html"><link rel="prev" title="Changelog" href="index.html">
+        <link rel="prefetch" href="../_static/logo.svg" as="image">
+
+    <link rel="shortcut icon" href="../_static/logo.svg"><!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
+        <title>Full Changelog - Nested Dictionary Tools 1.3.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">Nested Dictionary Tools 1.3.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/logo.svg" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">Nested Dictionary Tools 1.3.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Concepts</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../concepts/index.html">Concepts</a><input aria-label="Toggle navigation of Concepts" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../concepts/nested_dict.html">Nested Dictionaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../concepts/key_forest.html">The Forest of Keys</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../concepts/paths.html">Paths</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../concepts/compact_paths.html">Compact Paths</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../concepts/coverage.html">Coverage</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../guide/index.html">Guide</a><input aria-label="Toggle navigation of Guide" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../guide/getting_started.html">Part 1 — Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/exploring.html">Part 2 — Exploring a Nested Dictionary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/paths.html">Part 3 — Working with Paths</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/serialization.html">Part 4 — Serialisation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/extending.html">Part 5 — Extending the Package</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Changelog</span></p>
+<ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Changelog</a><input aria-label="Toggle navigation of Changelog" checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Full Changelog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#changelog-ndict-tools">Changelog — ndict-tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deprecations.html">Deprecation Notices</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../api/public/index.html">Public API Reference</a><input aria-label="Toggle navigation of Public API Reference" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/public/core.html">Dictionary and Path Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/public/exceptions.html">Exceptions</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../api/internal/index.html">Internal API Reference</a><input aria-label="Toggle navigation of Internal API Reference" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/internal/tools.html"><code class="docutils literal notranslate"><span class="pre">tools</span></code> — Core Infrastructure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/internal/serialize.html"><code class="docutils literal notranslate"><span class="pre">serialize</span></code> — Serialisation Infrastructure</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/changelog/history.md.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="full-changelog">
+<h1>Full Changelog<a class="headerlink" href="#full-changelog" title="Link to this heading">¶</a></h1>
+<p>The content below is the canonical <code class="docutils literal notranslate"><span class="pre">CHANGELOG.md</span></code> from the repository root.
+It is included here without duplication — edit the root file to update this page.</p>
+</section>
+<section id="changelog-ndict-tools">
+<h1>Changelog — ndict-tools<a class="headerlink" href="#changelog-ndict-tools" title="Link to this heading">¶</a></h1>
+<p>All notable changes to this project are documented in this file.</p>
+<p>The format follows <a class="reference external" href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</a>.
+Versioning follows <a class="reference external" href="https://semver.org/">Semantic Versioning</a>.</p>
+<hr class="docutils" />
+<section id="id1">
+<h2>[1.3.0] — 2026-10-09<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h2>
+<section id="added">
+<h3>Added<a class="headerlink" href="#added" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><strong>Inline type information (PEP 561).</strong> The package ships a <code class="docutils literal notranslate"><span class="pre">py.typed</span></code>
+marker, so type checkers use its inline annotations instead of treating
+it as untyped. Downstream stubs for <code class="docutils literal notranslate"><span class="pre">ndict_tools</span></code> are no longer needed.
+Closes #129 (<a class="reference external" href="https://github.com/biface/ndt/issues/125">DD-027</a>).</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">verifytypes</span></code> tox environment.</strong> Runs <code class="docutils literal notranslate"><span class="pre">basedpyright</span> <span class="pre">--verifytypes</span></code> on the
+installed package; the type completeness of the exported API must stay at
+100%. Included in <code class="docutils literal notranslate"><span class="pre">pre-push</span></code> (hence <code class="docutils literal notranslate"><span class="pre">local</span></code>), <code class="docutils literal notranslate"><span class="pre">check</span></code> and <code class="docutils literal notranslate"><span class="pre">ci-quality</span></code>.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">typing</span></code> tox environment.</strong> Runs <code class="docutils literal notranslate"><span class="pre">basedpyright</span> <span class="pre">tests/typing</span></code>, where
+<code class="docutils literal notranslate"><span class="pre">assert_type</span></code> calls check the types inferred for the public API. Unlike the
+<code class="docutils literal notranslate"><span class="pre">basedpyright</span> <span class="pre">src</span></code> step, it fails on any error. Included in <code class="docutils literal notranslate"><span class="pre">basedpyright</span></code>,
+<code class="docutils literal notranslate"><span class="pre">pre-push</span></code> (hence <code class="docutils literal notranslate"><span class="pre">local</span></code>), <code class="docutils literal notranslate"><span class="pre">check</span></code> and <code class="docutils literal notranslate"><span class="pre">ci-quality</span></code>. Added with #75.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">docs</span></code> tox environment.</strong> Builds the documentation in English and
+French without warnings and runs its doctests in both languages. Its
+dependencies come from <code class="docutils literal notranslate"><span class="pre">.tox-config/requirements/docs.txt</span></code>, which includes
+<code class="docutils literal notranslate"><span class="pre">docs/source/requirements.txt</span></code>. Part of #130.</p></li>
+<li><p><strong>Concepts: “The Forest of Keys”.</strong> A new page defines the forest of keys of
+a nested dictionary (vertices, edges, roots, depth, leaves, height and
+levels), matches <code class="docutils literal notranslate"><span class="pre">len()</span></code>, <code class="docutils literal notranslate"><span class="pre">size()</span></code>, <code class="docutils literal notranslate"><span class="pre">leaves()</span></code>, <code class="docutils literal notranslate"><span class="pre">height()</span></code> and
+<code class="docutils literal notranslate"><span class="pre">occurrences()</span></code> with measures of the forest, explains why the <code class="docutils literal notranslate"><span class="pre">_HKey</span></code> tree
+operations apply, defines complete, perfect and full trees for an arity n,
+and states the limits of the model (shared references, cycles). Its
+diagrams are Mermaid flowcharts, rendered by <code class="docutils literal notranslate"><span class="pre">sphinxcontrib-mermaid</span></code> 2.1.1,
+added to <code class="docutils literal notranslate"><span class="pre">docs/source/requirements.txt</span></code>; the extension
+pins the Mermaid version it loads in the browser (11.12.1). The EN/FR
+table of tree shapes becomes the translation glossary of <code class="docutils literal notranslate"><span class="pre">CONTRIBUTING.md</span></code>
+and <code class="docutils literal notranslate"><span class="pre">CONTRIBUTING.fr.md</span></code> (<a class="reference external" href="https://github.com/biface/ndt/issues/153">DD-030</a>). Closes #146.</p></li>
+</ul>
+</section>
+<section id="changed">
+<h3>Changed<a class="headerlink" href="#changed" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><strong>Python 3.11 is the minimum version.</strong> Python 3.10 support is dropped
+(<code class="docutils literal notranslate"><span class="pre">requires-python</span> <span class="pre">=</span> <span class="pre">&quot;&gt;=3.11&quot;</span></code>). Closes #74.</p></li>
+<li><p><strong>CI matrix:</strong> Python 3.11, 3.12, 3.13 and 3.14 are required; 3.14 is added
+to the classifiers. Python 3.15 (pre-release) and free-threaded 3.14t run as
+best effort; the 3.14t job only checks that the package runs without the
+GIL and makes no thread-safety claim.</p></li>
+<li><p><strong>Development baseline:</strong> <code class="docutils literal notranslate"><span class="pre">.python-version</span></code> pins 3.11 (<code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">python</span> <span class="pre">pin</span> <span class="pre">3.11</span></code>);
+basedpyright checks against Python 3.11; black targets py311.</p></li>
+<li><p><strong>Type checking on Python 3.11.</strong> basedpyright in strict mode reports no
+error with <code class="docutils literal notranslate"><span class="pre">pythonVersion</span></code> 3.11; the remaining warnings are in the
+categories left for later (<code class="docutils literal notranslate"><span class="pre">reportAny</span></code>, <code class="docutils literal notranslate"><span class="pre">reportExplicitAny</span></code>,
+<code class="docutils literal notranslate"><span class="pre">reportUnknown*</span></code>). Closes #76.</p></li>
+<li><p><strong>Python 3.10 compatibility code removed.</strong> <code class="docutils literal notranslate"><span class="pre">Callable</span></code>, <code class="docutils literal notranslate"><span class="pre">Generator</span></code>,
+<code class="docutils literal notranslate"><span class="pre">Iterable</span></code>, <code class="docutils literal notranslate"><span class="pre">Iterator</span></code> and <code class="docutils literal notranslate"><span class="pre">Mapping</span></code> are imported from <code class="docutils literal notranslate"><span class="pre">collections.abc</span></code>,
+in <code class="docutils literal notranslate"><span class="pre">tools.py</span></code> and <code class="docutils literal notranslate"><span class="pre">serialize.py</span></code>; <code class="docutils literal notranslate"><span class="pre">typing.Type</span></code> is replaced by <code class="docutils literal notranslate"><span class="pre">type</span></code>;
+annotations whose target exists at import time are no longer quoted, and
+the local imports of <code class="docutils literal notranslate"><span class="pre">Path</span></code> are removed. Every <code class="docutils literal notranslate"><span class="pre">#</span> <span class="pre">type:</span> <span class="pre">ignore</span></code> comment,
+left over from mypy, is removed, and the issue templates no longer
+mention mypy. Closes #102, #128.</p></li>
+<li><p><strong>pytest configuration:</strong> <code class="docutils literal notranslate"><span class="pre">DeprecationWarning</span></code> is raised as an error, so
+deprecated calls surface before a later Python version removes them.</p></li>
+<li><p><strong>tox:</strong> <code class="docutils literal notranslate"><span class="pre">py310</span></code> environment removed; <code class="docutils literal notranslate"><span class="pre">py315</span></code> and <code class="docutils literal notranslate"><span class="pre">py314t</span></code> added;
+black commands no longer pass <code class="docutils literal notranslate"><span class="pre">--target-version</span></code> and read it from
+<code class="docutils literal notranslate"><span class="pre">[tool.black]</span></code> in <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">&#64;override</span></code> (PEP 698)</strong> on the 24 methods that override a base class
+method, through a private <code class="docutils literal notranslate"><span class="pre">_compat.py</span></code> shim: <code class="docutils literal notranslate"><span class="pre">typing.override</span></code> on Python
+3.12+, a local decorator that sets <code class="docutils literal notranslate"><span class="pre">__override__</span></code> on 3.11. No runtime
+dependency is added; <code class="docutils literal notranslate"><span class="pre">typing_extensions</span></code> is used by the type checker only.
+The shim is removed in 1.4.0. Closes #103.</p></li>
+<li><p><strong>Configuration propagation (<code class="docutils literal notranslate"><span class="pre">default_setup</span></code>).</strong> <code class="docutils literal notranslate"><span class="pre">update()</span></code> passes its
+configuration to inserted <code class="docutils literal notranslate"><span class="pre">_StackedDict</span></code> values through the
+<code class="docutils literal notranslate"><span class="pre">default_setup</span></code> setter, so every nested level of the inserted value is
+updated, not only its top level. An inserted <code class="docutils literal notranslate"><span class="pre">StrictNestedDictionary</span></code> or
+<code class="docutils literal notranslate"><span class="pre">SmoothNestedDictionary</span></code> keeps its own <code class="docutils literal notranslate"><span class="pre">default_factory</span></code>. Closes #137.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">_StackedDict.__init__</span></code></strong> takes <code class="docutils literal notranslate"><span class="pre">default_setup</span></code> as an explicit
+keyword-only parameter instead of reading it from <code class="docutils literal notranslate"><span class="pre">**kwargs</span></code>. Runtime
+behaviour is unchanged. <code class="docutils literal notranslate"><span class="pre">NestedDictionary</span></code>, <code class="docutils literal notranslate"><span class="pre">StrictNestedDictionary</span></code> and
+<code class="docutils literal notranslate"><span class="pre">SmoothNestedDictionary</span></code> no longer define <code class="docutils literal notranslate"><span class="pre">__init__</span></code>: their defaults and
+forced values go through the <code class="docutils literal notranslate"><span class="pre">_normalize_setup</span></code> class hook, which custom
+subclasses can override.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">from_dict()</span></code> and <code class="docutils literal notranslate"><span class="pre">from_json()</span></code> without <code class="docutils literal notranslate"><span class="pre">default_setup</span></code>.</strong> The
+alternate constructors resolve the configuration like the constructor,
+through <code class="docutils literal notranslate"><span class="pre">cls._normalize_setup</span></code>: <code class="docutils literal notranslate"><span class="pre">NestedDictionary.from_dict(d)</span></code> and
+<code class="docutils literal notranslate"><span class="pre">NestedDictionary.from_json(path)</span></code> use the default of the class, and the
+Strict and Smooth variants their own. A given <code class="docutils literal notranslate"><span class="pre">default_setup</span></code> is validated
+or forced as before. Only the base <code class="docutils literal notranslate"><span class="pre">_StackedDict</span></code>, which has no default,
+still raises <code class="docutils literal notranslate"><span class="pre">StackedKeyError</span></code>, now with the message of <code class="docutils literal notranslate"><span class="pre">_normalize_setup</span></code>.
+The deprecated <code class="docutils literal notranslate"><span class="pre">from_dict()</span></code> free function follows the same rule.
+Closes #151.</p></li>
+<li><p><strong>Type annotations completed on the exported API</strong> (part of #129, <a class="reference external" href="https://github.com/biface/ndt/issues/125">DD-027</a>).
+These signatures are now part of the public contract:</p>
+<ul>
+<li><p>constructors: <code class="docutils literal notranslate"><span class="pre">*args:</span> <span class="pre">Mapping[Any,</span> <span class="pre">Any]</span> <span class="pre">|</span> <span class="pre">Iterable[tuple[Any,</span> <span class="pre">Any]]</span></code>,
+<code class="docutils literal notranslate"><span class="pre">**kwargs:</span> <span class="pre">Any</span></code>;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">__eq__</span></code>, <code class="docutils literal notranslate"><span class="pre">__ne__</span></code>, <code class="docutils literal notranslate"><span class="pre">equal</span></code>, <code class="docutils literal notranslate"><span class="pre">similar</span></code>, <code class="docutils literal notranslate"><span class="pre">isomorph</span></code>: <code class="docutils literal notranslate"><span class="pre">other:</span> <span class="pre">object</span></code>,
+returning <code class="docutils literal notranslate"><span class="pre">bool</span></code>;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">__getitem__</span></code>, <code class="docutils literal notranslate"><span class="pre">__setitem__</span></code>, <code class="docutils literal notranslate"><span class="pre">__delitem__</span></code>: <code class="docutils literal notranslate"><span class="pre">key:</span> <span class="pre">Any</span></code>;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pop(key,</span> <span class="pre">default:</span> <span class="pre">Any</span> <span class="pre">=</span> <span class="pre">None)</span></code>, <code class="docutils literal notranslate"><span class="pre">popitem()</span> <span class="pre">-&gt;</span> <span class="pre">tuple[list[Any],</span> <span class="pre">Any]</span></code>,
+<code class="docutils literal notranslate"><span class="pre">ancestors(value:</span> <span class="pre">Any)</span> <span class="pre">-&gt;</span> <span class="pre">list[Any]</span></code>, <code class="docutils literal notranslate"><span class="pre">update(...,</span> <span class="pre">**kwargs:</span> <span class="pre">Any)</span></code>;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dfs(node:</span> <span class="pre">Mapping[Any,</span> <span class="pre">Any]</span> <span class="pre">|</span> <span class="pre">None,</span> <span class="pre">path:</span> <span class="pre">list[Any]</span> <span class="pre">|</span> <span class="pre">None)</span></code>;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">__str__(padding:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">0)</span></code>;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">**class_options:</span> <span class="pre">Any</span></code> on <code class="docutils literal notranslate"><span class="pre">from_dict</span></code>, <code class="docutils literal notranslate"><span class="pre">from_json</span></code>, <code class="docutils literal notranslate"><span class="pre">from_pickle</span></code> and the
+deprecated <code class="docutils literal notranslate"><span class="pre">from_dict</span></code> free function; <code class="docutils literal notranslate"><span class="pre">compare_dict(d1:</span> <span class="pre">Any,</span> <span class="pre">d2:</span> <span class="pre">Any)</span></code>;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CompactPathsView.is_covering</span></code>, <code class="docutils literal notranslate"><span class="pre">coverage</span></code>, <code class="docutils literal notranslate"><span class="pre">missing_paths</span></code>,
+<code class="docutils literal notranslate"><span class="pre">uncovered_paths</span></code>: <code class="docutils literal notranslate"><span class="pre">stacked_dict:</span> <span class="pre">_StackedDict</span></code>;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">NestedDictionaryEncoder.iterencode(...)</span> <span class="pre">-&gt;</span> <span class="pre">Iterator[str]</span></code>.</p></li>
+</ul>
+</li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">update()</span></code> first argument</strong> is annotated like <code class="docutils literal notranslate"><span class="pre">dict.update</span></code>:
+<code class="docutils literal notranslate"><span class="pre">SupportsKeysAndGetItem[Any,</span> <span class="pre">Any]</span> <span class="pre">|</span> <span class="pre">Iterable[tuple[Any,</span> <span class="pre">Any]]</span> <span class="pre">|</span> <span class="pre">None</span></code>,
+positional-only (<code class="docutils literal notranslate"><span class="pre">m,</span> <span class="pre">/</span></code> instead of <code class="docutils literal notranslate"><span class="pre">__m</span></code>). Objects with <code class="docutils literal notranslate"><span class="pre">keys()</span></code> and
+<code class="docutils literal notranslate"><span class="pre">__getitem__</span></code> were already accepted at runtime; the override of
+<code class="docutils literal notranslate"><span class="pre">MutableMapping.update</span></code> is now compatible and its suppression comment is
+removed. Closes #105.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">reportPropertyTypeMismatch</span></code></strong> (basedpyright): the <code class="docutils literal notranslate"><span class="pre">default_setup</span></code> and
+<code class="docutils literal notranslate"><span class="pre">structure</span></code> properties keep their asymmetric types on purpose (the setter
+accepts several sources, the getter returns the normalized form). Each
+setter carries a justified, rule-specific suppression, so the rule stays
+active for other properties. Closes #106.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">typing.Self</span></code> (PEP 673)</strong> as the return type of the methods that build
+an instance of the calling class: <code class="docutils literal notranslate"><span class="pre">from_dict</span></code>, <code class="docutils literal notranslate"><span class="pre">copy</span></code>, <code class="docutils literal notranslate"><span class="pre">deepcopy</span></code>,
+<code class="docutils literal notranslate"><span class="pre">__copy__</span></code> and <code class="docutils literal notranslate"><span class="pre">__deepcopy__</span></code> on <code class="docutils literal notranslate"><span class="pre">_StackedDict</span></code>, and <code class="docutils literal notranslate"><span class="pre">_HKey.build_forest</span></code>.
+<code class="docutils literal notranslate"><span class="pre">StrictNestedDictionary().copy()</span></code> is now typed <code class="docutils literal notranslate"><span class="pre">StrictNestedDictionary</span></code>
+instead of <code class="docutils literal notranslate"><span class="pre">_StackedDict</span></code>. No runtime change for these methods.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">from_json</span></code> and <code class="docutils literal notranslate"><span class="pre">from_pickle</span></code> check the type of what they load</strong> and
+are also annotated <code class="docutils literal notranslate"><span class="pre">-&gt;</span> <span class="pre">Self</span></code>. Their loaders return whatever the file
+holds, so both methods now raise <code class="docutils literal notranslate"><span class="pre">StackedTypeError</span></code> (a <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>) when
+the result is not an instance of the calling class: a pickle file holding
+another variant or a non-dictionary object, or a JSON document whose root
+is not an object. Before, the object was returned as is. Instances of a
+subclass are accepted: <code class="docutils literal notranslate"><span class="pre">NestedDictionary.from_pickle</span></code> still returns a
+pickled <code class="docutils literal notranslate"><span class="pre">StrictNestedDictionary</span></code>. Closes #75 (<a class="reference external" href="https://github.com/biface/ndt/issues/94">DD-022</a> amendment).</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">_HKey</span></code> tree predicates take an arity <code class="docutils literal notranslate"><span class="pre">n</span></code>, binary by default.</strong>
+<code class="docutils literal notranslate"><span class="pre">is_complete_tree(n=2)</span></code>, <code class="docutils literal notranslate"><span class="pre">is_perfect_tree(n=2)</span></code> and <code class="docutils literal notranslate"><span class="pre">is_full_tree(n=2)</span></code>.
+<code class="docutils literal notranslate"><span class="pre">is_complete_tree</span></code> no longer hard-codes arity 2, and <code class="docutils literal notranslate"><span class="pre">is_perfect_tree</span></code> and
+<code class="docutils literal notranslate"><span class="pre">is_full_tree</span></code> no longer infer it from the first internal node: a ternary
+tree needs <code class="docutils literal notranslate"><span class="pre">n=3</span></code>. <code class="docutils literal notranslate"><span class="pre">is_full_tree(n=None)</span></code> is no longer accepted. An <code class="docutils literal notranslate"><span class="pre">n</span></code> below
+the minimum (2 for complete and perfect, 1 for full) raises
+<code class="docutils literal notranslate"><span class="pre">StackedValueError</span></code>; a node with more than <code class="docutils literal notranslate"><span class="pre">n</span></code> children makes the predicate
+return <code class="docutils literal notranslate"><span class="pre">False</span></code>. Nodes created with <code class="docutils literal notranslate"><span class="pre">is_root=True</span></code> are still not checked.
+Terminology follows English usage (French <em>complet</em> is English <em>perfect</em>).</p></li>
+<li><p><strong>Test suite hygiene.</strong> The flake8 <code class="docutils literal notranslate"><span class="pre">per-file-ignores</span></code> on <code class="docutils literal notranslate"><span class="pre">tests/</span></code> are
+removed, and what they hid is fixed: three shadowed tests renamed
+(<code class="docutils literal notranslate"><span class="pre">test_get_depth_by_path</span></code>, <code class="docutils literal notranslate"><span class="pre">test_ne_empty</span></code>, <code class="docutils literal notranslate"><span class="pre">test_dfs_path</span></code>; 11 cases that
+never ran now run), unused results inside <code class="docutils literal notranslate"><span class="pre">pytest.raises</span></code> blocks turned
+into bare expressions or used in an assertion, unused imports removed,
+lambdas assigned to names turned into functions, <code class="docutils literal notranslate"><span class="pre">==</span> <span class="pre">None</span></code> / <code class="docutils literal notranslate"><span class="pre">==</span> <span class="pre">True</span></code> /
+<code class="docutils literal notranslate"><span class="pre">==</span> <span class="pre">False</span></code> comparisons replaced. Closes #136.</p></li>
+<li><p><strong>Docstrings</strong> of <code class="docutils literal notranslate"><span class="pre">NestedDictionary</span></code>, <code class="docutils literal notranslate"><span class="pre">StrictNestedDictionary</span></code> and
+<code class="docutils literal notranslate"><span class="pre">SmoothNestedDictionary</span></code> describe the current parameters. The <code class="docutils literal notranslate"><span class="pre">indent</span></code> and
+<code class="docutils literal notranslate"><span class="pre">strict</span></code> keyword settings were removed in 1.2.0 (#114); keyword arguments
+are data.</p></li>
+<li><p><strong>Documentation toolchain</strong> resolved for Python 3.11, with exact versions in
+<code class="docutils literal notranslate"><span class="pre">docs/source/requirements.txt</span></code>: Sphinx 9.0.4,
+myst-parser 5.1.0, furo 2025.12.19; <code class="docutils literal notranslate"><span class="pre">sphinx-intl</span></code> 2.4.0 added for the
+translation catalogs. <code class="docutils literal notranslate"><span class="pre">sphinx-multiversion-contrib</span></code> is removed, with its
+extension, its <code class="docutils literal notranslate"><span class="pre">smv_*</span></code> settings and the <code class="docutils literal notranslate"><span class="pre">versioning.html</span></code> sidebar template;
+versioned builds move to a per-tag archive (<a class="reference external" href="https://github.com/biface/ndt/issues/126">DD-028</a>). The build runs without
+warnings. Closes #130.</p></li>
+<li><p><strong>Read the Docs configuration</strong> moves from <code class="docutils literal notranslate"><span class="pre">docs/conf/.readthedocs.yaml</span></code> to
+<code class="docutils literal notranslate"><span class="pre">.readthedocs.yaml</span></code> at the repository root, the location Read the Docs reads
+by default, and builds with Python 3.11. Read the Docs serves <code class="docutils literal notranslate"><span class="pre">stable</span></code> and
+<code class="docutils literal notranslate"><span class="pre">latest</span></code> only (<a class="reference external" href="https://github.com/biface/ndt/issues/126">DD-028</a>). Part of #132.</p></li>
+<li><p><strong>GitHub Pages archive.</strong> <code class="docutils literal notranslate"><span class="pre">docs-ghpages.yml</span></code> no longer runs
+sphinx-multiversion on every push to <code class="docutils literal notranslate"><span class="pre">master</span></code>. It runs when a final
+release tag <code class="docutils literal notranslate"><span class="pre">vX.Y.Z</span></code> is pushed, like the package build and publication
+(or by hand through <code class="docutils literal notranslate"><span class="pre">workflow_dispatch</span></code> with <code class="docutils literal notranslate"><span class="pre">tag</span></code> and <code class="docutils literal notranslate"><span class="pre">python-version</span></code>),
+builds that tag once from its own sources and documentation requirements,
+and publishes it under <code class="docutils literal notranslate"><span class="pre">/vX.Y.Z/</span></code> without touching the other directories.
+Release candidates are not archived. The Python
+version comes from the tag’s <code class="docutils literal notranslate"><span class="pre">.readthedocs.yaml</span></code>. Translations listed in
+<code class="docutils literal notranslate"><span class="pre">docs/source/locales/LANGUAGES</span></code> go under <code class="docutils literal notranslate"><span class="pre">/&lt;lang&gt;/vX.Y.Z/</span></code>. The landing
+page lists the archived versions and links to Read the Docs <code class="docutils literal notranslate"><span class="pre">stable</span></code> and
+<code class="docutils literal notranslate"><span class="pre">latest</span></code>, replacing the hard-coded redirect to a <code class="docutils literal notranslate"><span class="pre">v1.2.0/</span></code> build that was
+never produced (<a class="reference external" href="https://github.com/biface/ndt/issues/126">DD-028</a>). Closes #131.</p></li>
+<li><p><strong>French translation of the documentation.</strong> Sphinx gettext catalogs,
+one per source page, in <code class="docutils literal notranslate"><span class="pre">docs/source/locales/&lt;lang&gt;/LC_MESSAGES/</span></code>
+(<code class="docutils literal notranslate"><span class="pre">locale_dirs</span></code>, <code class="docutils literal notranslate"><span class="pre">gettext_compact</span> <span class="pre">=</span> <span class="pre">False</span></code>, <code class="docutils literal notranslate"><span class="pre">gettext_location</span> <span class="pre">=</span> <span class="pre">False</span></code>).
+The French catalogs cover the Concepts, the Guide, the API reference and
+the Changelog axis; the full change log stays in English. Untranslated
+strings fall back to English. <code class="docutils literal notranslate"><span class="pre">docs/source/locales/LANGUAGES</span></code> lists <code class="docutils literal notranslate"><span class="pre">fr</span></code>,
+so the GitHub Pages archive publishes it under <code class="docutils literal notranslate"><span class="pre">/fr/vX.Y.Z/</span></code>. On Read the
+Docs the French documentation is a separate project linked as a
+translation; <code class="docutils literal notranslate"><span class="pre">conf.py</span></code> takes the language from <code class="docutils literal notranslate"><span class="pre">READTHEDOCS_LANGUAGE</span></code>.
+The extraction, update, check and build steps are documented in
+<code class="docutils literal notranslate"><span class="pre">CONTRIBUTING.md</span></code> and <code class="docutils literal notranslate"><span class="pre">CONTRIBUTING.fr.md</span></code>
+(<a class="reference external" href="https://github.com/biface/ndt/issues/126">DD-028</a>). Closes #133.</p></li>
+<li><p><strong>Tool configuration in <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>.</strong> tox (<code class="docutils literal notranslate"><span class="pre">[tool.tox]</span></code>), coverage
+(<code class="docutils literal notranslate"><span class="pre">[tool.coverage.*]</span></code>) and basedpyright (<code class="docutils literal notranslate"><span class="pre">[tool.basedpyright]</span></code>) are
+configured in <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>, next to black, isort and pytest. flake8,
+which does not read <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>, takes its options on its command
+line. Each tool’s command is written once, in the environment of that
+tool, and referenced by <code class="docutils literal notranslate"><span class="pre">check</span></code>, <code class="docutils literal notranslate"><span class="pre">ci-quality</span></code> and <code class="docutils literal notranslate"><span class="pre">pre-push</span></code>. The
+dependencies of each environment stay by role in
+<code class="docutils literal notranslate"><span class="pre">.tox-config/requirements/</span></code>, with <code class="docutils literal notranslate"><span class="pre">test.sh</span></code> and <code class="docutils literal notranslate"><span class="pre">coverage.sh</span></code>, so that
+tools used only through tox stay out of the project environment.
+<code class="docutils literal notranslate"><span class="pre">env_list</span></code> no longer includes <code class="docutils literal notranslate"><span class="pre">pre-push</span></code>, <code class="docutils literal notranslate"><span class="pre">local</span></code> or the auto-fix
+environments, so a bare <code class="docutils literal notranslate"><span class="pre">tox</span></code> does not run tox again through <code class="docutils literal notranslate"><span class="pre">test.sh</span></code>.
+The CI runs the same environments with the same commands. Part of #130.</p></li>
+<li><p><strong>Package metadata (PEP 639).</strong> The licence is declared as an SPDX
+expression (<code class="docutils literal notranslate"><span class="pre">license</span> <span class="pre">=</span> <span class="pre">&quot;CECILL-C&quot;</span></code>) with its file (<code class="docutils literal notranslate"><span class="pre">license-files</span></code>),
+which replaces the licence classifier; the build requires
+<code class="docutils literal notranslate"><span class="pre">hatchling&gt;=1.27</span></code>. The <code class="docutils literal notranslate"><span class="pre">Typing</span> <span class="pre">::</span> <span class="pre">Typed</span></code> classifier and <code class="docutils literal notranslate"><span class="pre">keywords</span></code> are
+added, and <code class="docutils literal notranslate"><span class="pre">dependencies</span> <span class="pre">=</span> <span class="pre">[]</span></code> states that the package has no runtime
+dependency. Part of #130.</p></li>
+<li><p><strong>Documentation rewritten for 1.3.0.</strong> The Guide follows one example, the
+inventory of a house, in five parts: Getting Started, Exploring a Nested
+Dictionary, Working with Paths, Serialisation and Extending the Package;
+every example is a doctest. The Concepts pages open with “Nested
+Dictionaries”, then “The Forest of Keys”. The API reference describes the
+public interface: its pages name no private class, show public names in
+signatures, and give NumPy-style docstrings whose examples run on their
+own. The READMEs state Python 3.11+, no runtime dependency and <code class="docutils literal notranslate"><span class="pre">py.typed</span></code>,
+and link Read the Docs <code class="docutils literal notranslate"><span class="pre">stable</span></code> and <code class="docutils literal notranslate"><span class="pre">latest</span></code> and the archive; the
+Changelog axis links each version from 0.9.0 to its archived
+documentation, and every DD identifier to its decision issue.
+CONTRIBUTING, <code class="docutils literal notranslate"><span class="pre">release-drafter.yml</span></code> and the issue templates follow the
+Python 3.11 baseline. Closes #134, #147, #148, #149, #150.</p></li>
+<li><p><strong>Comparisons (breaking).</strong> <code class="docutils literal notranslate"><span class="pre">==</span></code> is now strict, like <code class="docutils literal notranslate"><span class="pre">equal()</span></code>: same
+class, same <code class="docutils literal notranslate"><span class="pre">default_setup</span></code> and same content. A nested dictionary is no
+longer equal to a plain <code class="docutils literal notranslate"><span class="pre">dict</span></code> with the same content, in either order;
+<code class="docutils literal notranslate"><span class="pre">!=</span></code> follows. <code class="docutils literal notranslate"><span class="pre">similar()</span></code> and <code class="docutils literal notranslate"><span class="pre">isomorph()</span></code> exchange their behaviour:
+<code class="docutils literal notranslate"><span class="pre">isomorph()</span></code> compares the content of two dictionaries of the
+<code class="docutils literal notranslate"><span class="pre">_StackedDict</span></code> family, whatever their class and configuration, and is
+never true for a plain <code class="docutils literal notranslate"><span class="pre">dict</span></code>; <code class="docutils literal notranslate"><span class="pre">similar()</span></code> compares the content alone and
+accepts a plain <code class="docutils literal notranslate"><span class="pre">dict</span></code>. <code class="docutils literal notranslate"><span class="pre">equal()</span></code> implies <code class="docutils literal notranslate"><span class="pre">isomorph()</span></code>, which implies
+<code class="docutils literal notranslate"><span class="pre">similar()</span></code>. To compare a nested dictionary with a plain <code class="docutils literal notranslate"><span class="pre">dict</span></code>, use
+<code class="docutils literal notranslate"><span class="pre">similar()</span></code> or <code class="docutils literal notranslate"><span class="pre">to_dict()</span> <span class="pre">==</span></code> (<a class="reference external" href="https://github.com/biface/ndt/issues/156">DD-031</a>). Closes #157.</p></li>
+</ul>
+</section>
+<section id="removed">
+<h3>Removed<a class="headerlink" href="#removed" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><strong>Root <code class="docutils literal notranslate"><span class="pre">requirements.txt</span></code>, <code class="docutils literal notranslate"><span class="pre">requirements.dev.txt</span></code> and
+<code class="docutils literal notranslate"><span class="pre">requirements.test.txt</span></code>.</strong> No tool or workflow read them; development
+dependencies are in <code class="docutils literal notranslate"><span class="pre">.tox-config/requirements/</span></code> (<a class="reference external" href="https://github.com/biface/ndt/issues/116">DD-025</a>). Part of #130.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">tox.ini</span></code>, <code class="docutils literal notranslate"><span class="pre">.coveragerc</span></code> and <code class="docutils literal notranslate"><span class="pre">pyrightconfig.json</span></code></strong>, whose settings move
+to <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>, and the unused <code class="docutils literal notranslate"><span class="pre">[tool.flake8]</span></code> section of
+<code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> and <code class="docutils literal notranslate"><span class="pre">[isort]</span></code> section of <code class="docutils literal notranslate"><span class="pre">tox.ini</span></code>. Part of #130.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">dev</span></code> and <code class="docutils literal notranslate"><span class="pre">docs</span></code> extras.</strong> <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> declares only what the
+package needs. The development tools are installed by tox in its own
+environments; the documentation dependencies stay in
+<code class="docutils literal notranslate"><span class="pre">docs/source/requirements.txt</span></code>. Part of #130.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">ci-tests</span></code> tox environment and <code class="docutils literal notranslate"><span class="pre">[gh-actions]</span></code> section</strong>, which no
+workflow used. Part of #130.</p></li>
+</ul>
+</section>
+<section id="fixed">
+<h3>Fixed<a class="headerlink" href="#fixed" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">copy.deepcopy()</span></code></strong> raised <code class="docutils literal notranslate"><span class="pre">TypeError</span></code> on every nested dictionary:
+<code class="docutils literal notranslate"><span class="pre">__deepcopy__</span></code> did not accept the <code class="docutils literal notranslate"><span class="pre">memo</span></code> argument passed by the <code class="docutils literal notranslate"><span class="pre">copy</span></code>
+module. It now implements the protocol, so shared sub-structures stay
+shared in the copy and a dictionary that contains itself no longer
+raises <code class="docutils literal notranslate"><span class="pre">RecursionError</span></code>. Closes #127.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">deepcopy()</span></code></strong> shared mutable leaf values (lists, sets, custom objects)
+with the original, because the copy was rebuilt through
+<code class="docutils literal notranslate"><span class="pre">to_dict()</span></code> / <code class="docutils literal notranslate"><span class="pre">from_dict()</span></code>. Every value is now deep-copied.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">default_setup</span></code> setter</strong> stored the new configuration without applying
+it: <code class="docutils literal notranslate"><span class="pre">indent</span></code> and <code class="docutils literal notranslate"><span class="pre">default_factory</span></code> kept their old values. It now validates
+the configuration like the constructor, applies it and propagates it to
+every nested level; shared sub-structures and self-references are handled.
+On a strict or smooth dictionary, <code class="docutils literal notranslate"><span class="pre">default_factory</span></code> stays forced.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">_HKey.is_complete_tree()</span></code></strong> returned <code class="docutils literal notranslate"><span class="pre">True</span></code> for incomplete trees, including
+the example of its own docstring: after the first node with missing children,
+it checked the grandchildren instead of rejecting any later node that has
+children. Closes #135.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">CompactPathsView.structure</span></code> setter</strong> raised <code class="docutils literal notranslate"><span class="pre">StackedKeyError</span></code> when given
+a plain <code class="docutils literal notranslate"><span class="pre">dict</span></code>, although the docstring lists it as accepted: the dict was
+wrapped without a <code class="docutils literal notranslate"><span class="pre">default_setup</span></code>. It is now wrapped with
+<code class="docutils literal notranslate"><span class="pre">{'indent':</span> <span class="pre">0,</span> <span class="pre">'default_factory':</span> <span class="pre">None}</span></code>. Found while working on #106.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">StrictNestedDictionary</span></code> / <code class="docutils literal notranslate"><span class="pre">SmoothNestedDictionary</span></code></strong> modified the
+<code class="docutils literal notranslate"><span class="pre">default_setup</span></code> dict passed by the caller. They now work on a copy.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">str(CompactPathsView)</span></code></strong> showed the private class name
+(<code class="docutils literal notranslate"><span class="pre">_CPaths(3</span> <span class="pre">paths):</span> <span class="pre">...</span></code>): the prefix was hard-coded. It now uses the name
+of the actual class, like <code class="docutils literal notranslate"><span class="pre">repr()</span></code>. The same defect elsewhere in the public
+API is corrected: the error messages of <code class="docutils literal notranslate"><span class="pre">popitem()</span></code> on an empty dictionary
+and of a nested list in a key name the class of the instance
+(<code class="docutils literal notranslate"><span class="pre">popitem():</span> <span class="pre">NestedDictionary</span> <span class="pre">is</span> <span class="pre">empty</span></code>), so they follow every subclass;
+the error of the <code class="docutils literal notranslate"><span class="pre">structure</span></code> setter lists what it accepts in public terms;
+and <code class="docutils literal notranslate"><span class="pre">CompactPathsView.to_compact()</span></code> returns a <code class="docutils literal notranslate"><span class="pre">CompactPathsView</span></code>, as
+<code class="docutils literal notranslate"><span class="pre">PathsView.to_compact()</span></code> does, instead of the private class. Closes #138.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">PathsView.get_subtree_paths()</span></code></strong> returned wrong paths for any non-empty
+prefix: the key of the prefix node appeared twice
+(<code class="docutils literal notranslate"><span class="pre">[['a'],</span> <span class="pre">['a',</span> <span class="pre">'a'],</span> <span class="pre">['a',</span> <span class="pre">'a',</span> <span class="pre">'b'],</span> <span class="pre">...]</span></code>). The cause was
+<code class="docutils literal notranslate"><span class="pre">_HKey.get_all_paths()</span></code>, which added the key of a non-root node twice. It
+now returns the full path of the node followed by those of its
+descendants, and <code class="docutils literal notranslate"><span class="pre">get_subtree_paths()</span></code> returns that list as is. The
+expected values of the existing tests contained the duplicated key and are
+corrected. Closes #140.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">_HKey.is_valid_tree()</span></code></strong> printed debugging traces on standard output
+for every non-root node; the <code class="docutils literal notranslate"><span class="pre">print</span></code> calls are removed. The same method
+and <code class="docutils literal notranslate"><span class="pre">check_parent_consistency()</span></code> tested the parent of a node by its truth
+value, which for <code class="docutils literal notranslate"><span class="pre">_HKey</span></code> is its number of children: a leaf parent counted
+as missing. A node whose parent is a leaf that does not list it was not
+reported, and the message named its parent <code class="docutils literal notranslate"><span class="pre">None</span></code>. Both now compare with
+<code class="docutils literal notranslate"><span class="pre">None</span></code>. Closes #142.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">key_list()</span></code></strong> was annotated <code class="docutils literal notranslate"><span class="pre">-&gt;</span> <span class="pre">list[list[Any]]</span></code> but returns tuples, as
+its docstring shows. The annotation is now <code class="docutils literal notranslate"><span class="pre">list[tuple[Any,</span> <span class="pre">...]]</span></code>, like the
+paths yielded by <code class="docutils literal notranslate"><span class="pre">unpacked_keys()</span></code>. No runtime change; a type checker now
+sees the actual type. Checked by <code class="docutils literal notranslate"><span class="pre">tests/typing/check_key_list.py</span></code>.
+Closes #143.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">CompactPathsView.structure</span></code> setter</strong> accepted a structure whose keys are
+not hashable, such as a list in key position (<code class="docutils literal notranslate"><span class="pre">[[['a']]]</span></code>) or a set as a
+leaf; <code class="docutils literal notranslate"><span class="pre">expand()</span></code> then returned paths that no nested dictionary can have.
+Every key of the structure is now checked with <code class="docutils literal notranslate"><span class="pre">hash()</span></code>; an unhashable key
+raises <code class="docutils literal notranslate"><span class="pre">StackedTypeError</span></code>, with the key in the message, its type in
+<code class="docutils literal notranslate"><span class="pre">actual_type</span></code> and the path of its parent in <code class="docutils literal notranslate"><span class="pre">path</span></code>. Closes #141.</p></li>
+<li><p><strong>Concepts pages and compact-path docstrings</strong> stated behaviours the code
+does not have: a compact structure shown as <code class="docutils literal notranslate"><span class="pre">[['a',</span> <span class="pre">'b',</span> <span class="pre">'c'],</span> <span class="pre">['d']]</span></code>
+instead of <code class="docutils literal notranslate"><span class="pre">[['a',</span> <span class="pre">'b',</span> <span class="pre">'c'],</span> <span class="pre">'d']</span></code>, a coverage of <code class="docutils literal notranslate"><span class="pre">1.25</span></code> (coverage is the
+share of the dictionary’s paths found in the structure, always between 0
+and 1), an <code class="docutils literal notranslate"><span class="pre">uncovered_paths()</span></code> result of <code class="docutils literal notranslate"><span class="pre">[]</span></code> where it is
+<code class="docutils literal notranslate"><span class="pre">[['settings',</span> <span class="pre">'lang']]</span></code>, and a bijective compact format (only the
+canonical form is unique). They now state that <code class="docutils literal notranslate"><span class="pre">is_covering()</span></code> tests the
+equality of the two sets of paths, and that <code class="docutils literal notranslate"><span class="pre">['a',</span> <span class="pre">'b',</span> <span class="pre">'c']</span></code> and
+<code class="docutils literal notranslate"><span class="pre">['a',</span> <span class="pre">['b',</span> <span class="pre">'c']]</span></code> describe different trees. The examples of the Concepts
+pages are <code class="docutils literal notranslate"><span class="pre">..</span> <span class="pre">doctest::</span></code> blocks, checked by <code class="docutils literal notranslate"><span class="pre">sphinx-build</span> <span class="pre">-b</span> <span class="pre">doctest</span></code>.
+Closes #145.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">size()</span></code></strong> counted the leaf paths of the dictionary instead of its keys,
+although its docstring describes the number of keys at every level, which
+is the number of nodes of the forest of keys. It now counts every key:
+<code class="docutils literal notranslate"><span class="pre">{'a':</span> <span class="pre">{'b':</span> <span class="pre">{'c':</span> <span class="pre">1}},</span> <span class="pre">'d':</span> <span class="pre">2,</span> <span class="pre">'e':</span> <span class="pre">{}}</span></code> gives 5 instead of 3. The result
+changes for any dictionary with a nested level (<a class="reference external" href="https://github.com/biface/ndt/issues/153">DD-030</a>). Part of #144.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">leaves()</span></code></strong> dropped the value of a key whose value is an empty nested
+dictionary, although such a key has no children and is a leaf, as the
+docstring states and as <code class="docutils literal notranslate"><span class="pre">paths()</span></code>, <code class="docutils literal notranslate"><span class="pre">unpacked_values()</span></code> and <code class="docutils literal notranslate"><span class="pre">height()</span></code>
+already treat it. The empty dictionary is now in the result. Part of #144.</p></li>
+<li><p><strong>Docstrings of the traversal and measure methods</strong> described other
+results than the code returns. <code class="docutils literal notranslate"><span class="pre">bfs()</span></code> yields the terminal values only,
+in breadth-first order, not every node. <code class="docutils literal notranslate"><span class="pre">height()</span></code>, <code class="docutils literal notranslate"><span class="pre">PathsView.get_depth()</span></code>
+and <code class="docutils literal notranslate"><span class="pre">_HKey.get_max_depth()</span></code> called on the forest root return the number of
+levels, which is the greatest depth of a key plus 1 (top-level keys have
+depth 0). <code class="docutils literal notranslate"><span class="pre">_HKey.get_statistics()</span></code> counts the forest root in
+<code class="docutils literal notranslate"><span class="pre">total_nodes</span></code>; the examples of <code class="docutils literal notranslate"><span class="pre">get_statistics()</span></code> and <code class="docutils literal notranslate"><span class="pre">prune()</span></code> are
+corrected to the actual output. No runtime change. Closes #144.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">_HKey.is_binary_tree()</span></code></strong> also checked the root built by
+<code class="docutils literal notranslate"><span class="pre">build_forest()</span></code>, whose children are the top-level keys: a dictionary with
+more than two top-level keys was never binary, even when no key had more
+than two children. The root is now skipped, as in <code class="docutils literal notranslate"><span class="pre">is_complete_tree()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">is_perfect_tree()</span></code> and <code class="docutils literal notranslate"><span class="pre">is_full_tree()</span></code>, so the number of top-level keys
+is free. Found while writing the Concepts page of #146 (<a class="reference external" href="https://github.com/biface/ndt/issues/153">DD-030</a>).
+Closes #152.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">pop()</span></code></strong> used <code class="docutils literal notranslate"><span class="pre">None</span></code> both as its default value and as the mark of a
+missing default. A missing flat key without a default returned <code class="docutils literal notranslate"><span class="pre">None</span></code>
+instead of raising, unlike <code class="docutils literal notranslate"><span class="pre">dict.pop()</span></code> and the docstring, and a missing
+path with an explicit <code class="docutils literal notranslate"><span class="pre">default=None</span></code> raised instead of returning <code class="docutils literal notranslate"><span class="pre">None</span></code>. A
+private sentinel now marks the missing default: without a default, a
+missing key or path raises <code class="docutils literal notranslate"><span class="pre">StackedKeyError</span></code> (a <code class="docutils literal notranslate"><span class="pre">KeyError</span></code>); an explicit
+<code class="docutils literal notranslate"><span class="pre">None</span></code> is returned. The test named after the flat case tested a path; it is
+renamed and the flat case is tested. The sentinel has a readable <code class="docutils literal notranslate"><span class="pre">repr</span></code>, so
+the documented signature shows <code class="docutils literal notranslate"><span class="pre">default=&lt;no</span> <span class="pre">default&gt;</span></code> instead of an object
+address. Closes #155.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">equal()</span></code></strong> accepted an instance of a subclass in one direction only:
+for a subclass <code class="docutils literal notranslate"><span class="pre">Inventory</span></code> of <code class="docutils literal notranslate"><span class="pre">NestedDictionary</span></code> with the same
+configuration and content, <code class="docutils literal notranslate"><span class="pre">NestedDictionary(d).equal(Inventory(d))</span></code> was
+<code class="docutils literal notranslate"><span class="pre">True</span></code> and the reverse <code class="docutils literal notranslate"><span class="pre">False</span></code>. It tested <code class="docutils literal notranslate"><span class="pre">isinstance(other,</span> <span class="pre">type(self))</span></code>;
+it now requires the same type, as its docstring states. Part of #157.</p></li>
+<li><p><strong>Docstrings of the JSON key encoding</strong> (<code class="docutils literal notranslate"><span class="pre">to_json()</span></code>, <code class="docutils literal notranslate"><span class="pre">from_json()</span></code> and the
+<code class="docutils literal notranslate"><span class="pre">serialize</span></code> module) described a <code class="docutils literal notranslate"><span class="pre">__type__:value</span></code> prefix (<code class="docutils literal notranslate"><span class="pre">&quot;__int__:42&quot;</span></code>)
+and a collision with string keys of the same form. Keys are written in
+square brackets (<code class="docutils literal notranslate"><span class="pre">&quot;[42]&quot;</span></code>), and a string key that starts with <code class="docutils literal notranslate"><span class="pre">[</span></code> is
+escaped with a backslash, so that collision does not occur. No runtime
+change. Part of #148.</p></li>
+<li><p><strong>Exception messages</strong> of <code class="docutils literal notranslate"><span class="pre">StackedKeyError</span></code>, <code class="docutils literal notranslate"><span class="pre">StackedAttributeError</span></code>,
+<code class="docutils literal notranslate"><span class="pre">StackedTypeError</span></code>, <code class="docutils literal notranslate"><span class="pre">StackedValueError</span></code> and <code class="docutils literal notranslate"><span class="pre">StackedIndexError</span></code> did not
+show the path given to them, although <code class="docutils literal notranslate"><span class="pre">StackedDictionaryError</span></code> appends
+<code class="docutils literal notranslate"><span class="pre">&quot;</span> <span class="pre">(at</span> <span class="pre">path:</span> <span class="pre">k1</span> <span class="pre">|</span> <span class="pre">k2)&quot;</span></code> to its message. Each class called the
+initialiser of its standard exception a second time, which reset the
+message without the path. That call is removed: every exception of the
+family shows the path, for instance the <code class="docutils literal notranslate"><span class="pre">StackedKeyError</span></code> raised by
+<code class="docutils literal notranslate"><span class="pre">pop()</span></code> on a missing path. Closes #158.</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="persistence-serialize-2026-05-06">
+<h2>[1.2.0] — Persistence (Serialize) — 2026-05-06<a class="headerlink" href="#persistence-serialize-2026-05-06" title="Link to this heading">¶</a></h2>
+<section id="id2">
+<h3>Added<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">.tox-config/</span></code> — fragmented requirements by role (<code class="docutils literal notranslate"><span class="pre">base</span></code>, <code class="docutils literal notranslate"><span class="pre">format</span></code>, <code class="docutils literal notranslate"><span class="pre">linter</span></code>,
+<code class="docutils literal notranslate"><span class="pre">security</span></code>, <code class="docutils literal notranslate"><span class="pre">type-check</span></code>, <code class="docutils literal notranslate"><span class="pre">full</span></code>) with dedicated scripts <code class="docutils literal notranslate"><span class="pre">test.sh</span></code> and
+<code class="docutils literal notranslate"><span class="pre">coverage.sh</span></code> for sequential multi-version execution (<a class="reference external" href="https://github.com/biface/ndt/issues/116">DD-025</a>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> — <code class="docutils literal notranslate"><span class="pre">[project.optional-dependencies]</span></code> groups <code class="docutils literal notranslate"><span class="pre">dev</span></code> and <code class="docutils literal notranslate"><span class="pre">docs</span></code>
+enabling <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">sync</span> <span class="pre">--extra</span> <span class="pre">dev</span> <span class="pre">--extra</span> <span class="pre">docs</span></code> for environment bootstrap.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PUBLISHING.md</span></code> — bilingual (FR/EN) publication procedure covering the full
+RC → TestPyPI → PyPI chain.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CONTRIBUTING.md</span></code> / <code class="docutils literal notranslate"><span class="pre">CONTRIBUTING.fr.md</span></code> — bilingual contributor guide:
+uv setup, PyCharm configuration, tox environments, CI chain, branch strategy.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">README.fr.md</span></code> — French README split from the original bilingual file.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CODE_OF_CONDUCT.md</span></code> / <code class="docutils literal notranslate"><span class="pre">CODE_DE_CONDUITE.md</span></code> — aligned to ndict-tools.</p></li>
+</ul>
+</section>
+<section id="id3">
+<h3>Changed<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><strong>Build tooling:</strong> virtualenv + pip replaced by
+<a class="reference external" href="https://docs.astral.sh/uv/">uv</a> for virtual environment management,
+dependency installation, and CI. <code class="docutils literal notranslate"><span class="pre">tox-uv</span></code> adopted as tox provisioner
+(<a class="reference external" href="https://github.com/biface/ndt/issues/115">DD-024</a>). Closes #109.</p></li>
+<li><p><strong>Type checking:</strong> mypy replaced by basedpyright as the sole type checker.
+<code class="docutils literal notranslate"><span class="pre">pyrightconfig.json</span></code> is the single source of configuration (<a class="reference external" href="https://github.com/biface/ndt/issues/117">DD-026</a>).</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">tox.ini</span></code></strong> rewritten: new environments <code class="docutils literal notranslate"><span class="pre">ci-quality</span></code>, <code class="docutils literal notranslate"><span class="pre">ci-tests</span></code>,
+<code class="docutils literal notranslate"><span class="pre">pre-push</span></code>, <code class="docutils literal notranslate"><span class="pre">basedpyright</span></code>, <code class="docutils literal notranslate"><span class="pre">black-check</span></code>, <code class="docutils literal notranslate"><span class="pre">isort-check</span></code>, <code class="docutils literal notranslate"><span class="pre">format</span></code>,
+<code class="docutils literal notranslate"><span class="pre">check</span></code>, <code class="docutils literal notranslate"><span class="pre">coverage</span></code>. <code class="docutils literal notranslate"><span class="pre">local</span></code> kept as alias for <code class="docutils literal notranslate"><span class="pre">pre-push</span></code>. <code class="docutils literal notranslate"><span class="pre">gh-ci</span></code>
+and <code class="docutils literal notranslate"><span class="pre">lint</span></code> environments removed.</p></li>
+<li><p><strong>GitHub Actions</strong> — all workflows updated:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">actions/checkout&#64;v4</span></code> → <code class="docutils literal notranslate"><span class="pre">actions/checkout&#64;v6</span></code> across all workflows.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">python-ci-quality.yaml</span></code> introduced as the new quality gate (replaces
+the quality section of the former <code class="docutils literal notranslate"><span class="pre">gh-ci</span></code> tox env).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">python-ci-tests.yaml</span></code> now triggers via <code class="docutils literal notranslate"><span class="pre">workflow_run</span></code> after Quality;
+Python 3.14 runs with <code class="docutils literal notranslate"><span class="pre">continue-on-error:</span> <span class="pre">true</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">python-ci-coverage.yaml</span></code> updated to use <code class="docutils literal notranslate"><span class="pre">tox</span> <span class="pre">-e</span> <span class="pre">coverage</span></code>.</p></li>
+<li><p>Publication chain remains tag-based (<code class="docutils literal notranslate"><span class="pre">v*.*.*</span></code> and <code class="docutils literal notranslate"><span class="pre">v*.*.*rc*</span></code>).</p></li>
+</ul>
+</li>
+<li><p><strong>Dependencies</strong> updated: pytest 9.0.3 validated (unpinned). Closes #110,
+Closes #121.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[tool.isort]</span></code> in <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>: <code class="docutils literal notranslate"><span class="pre">known_first_party</span></code> corrected from
+<code class="docutils literal notranslate"><span class="pre">src</span></code> to <code class="docutils literal notranslate"><span class="pre">ndict_tools</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[tool.tox.*]</span></code> sections removed from <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> (now solely in
+<code class="docutils literal notranslate"><span class="pre">tox.ini</span></code>).</p></li>
+</ul>
+</section>
+<section id="id4">
+<h3>Fixed<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">tools.py:119</span></code> — E721: type comparison replaced by identity check
+(<code class="docutils literal notranslate"><span class="pre">type(d1)</span> <span class="pre">!=</span> <span class="pre">type(d2)</span></code> → <code class="docutils literal notranslate"><span class="pre">type(d1)</span> <span class="pre">is</span> <span class="pre">not</span> <span class="pre">type(d2)</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tools.py:1954–1955</span></code> — F841: unused local variables <code class="docutils literal notranslate"><span class="pre">ind</span></code> and <code class="docutils literal notranslate"><span class="pre">default</span></code>
+removed.</p></li>
+</ul>
+</section>
+<section id="deprecated">
+<h3>Deprecated<a class="headerlink" href="#deprecated" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>Flake8 violations in the test suite (<code class="docutils literal notranslate"><span class="pre">E711</span></code>, <code class="docutils literal notranslate"><span class="pre">E712</span></code>, <code class="docutils literal notranslate"><span class="pre">E731</span></code>, <code class="docutils literal notranslate"><span class="pre">F401</span></code>,
+<code class="docutils literal notranslate"><span class="pre">F541</span></code>, <code class="docutils literal notranslate"><span class="pre">F811</span></code>, <code class="docutils literal notranslate"><span class="pre">F841</span></code>) are suppressed via <code class="docutils literal notranslate"><span class="pre">per-file-ignores</span></code> and
+scheduled for cleanup in v1.3.0.</p></li>
+</ul>
+</section>
+</section>
+<section id="json-bridge-encoder-2026-04-05">
+<h2>[1.1.0] — JSON Bridge (Encoder) — 2026-04-05<a class="headerlink" href="#json-bridge-encoder-2026-04-05" title="Link to this heading">¶</a></h2>
+<section id="id5">
+<h3>Added<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">serialize.py</span></code> — new private module providing the serialization
+infrastructure (not part of the public API):</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">_encode_key</span></code> / <code class="docutils literal notranslate"><span class="pre">_decode_key</span></code>: JSON key encoding for non-string keys
+per <a class="reference external" href="https://github.com/biface/ndt/issues/87">DD-021</a> (supports <code class="docutils literal notranslate"><span class="pre">int</span></code>, <code class="docutils literal notranslate"><span class="pre">float</span></code>, <code class="docutils literal notranslate"><span class="pre">bool</span></code>, flat <code class="docutils literal notranslate"><span class="pre">tuple</span></code>,
+flat <code class="docutils literal notranslate"><span class="pre">frozenset</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">NestedDictionaryEncoder</span></code>: <code class="docutils literal notranslate"><span class="pre">json.JSONEncoder</span></code> subclass used by
+<code class="docutils literal notranslate"><span class="pre">to_json</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_make_decoder_hook</span></code>: factory for the <code class="docutils literal notranslate"><span class="pre">object_pairs_hook</span></code> used by
+<code class="docutils literal notranslate"><span class="pre">from_json</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_pickle_dump</span></code> / <code class="docutils literal notranslate"><span class="pre">_pickle_load</span></code>: pickle helpers with SHA-256 sidecar
+for integrity verification.</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_StackedDict.from_dict(cls,</span> <span class="pre">dictionary,</span> <span class="pre">**class_options)</span></code>: new
+<code class="docutils literal notranslate"><span class="pre">&#64;classmethod</span></code> alternative constructor. Inherited by all three public
+variants — <code class="docutils literal notranslate"><span class="pre">NestedDictionary.from_dict(...)</span></code>,
+<code class="docutils literal notranslate"><span class="pre">StrictNestedDictionary.from_dict(...)</span></code>,
+<code class="docutils literal notranslate"><span class="pre">SmoothNestedDictionary.from_dict(...)</span></code> are all available without any
+wrapper in <code class="docutils literal notranslate"><span class="pre">core.py</span></code>. Closes #42.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_StackedDict.to_json(path,</span> <span class="pre">indent=None)</span></code>: serialize to a JSON file.
+Non-string keys are encoded per <a class="reference external" href="https://github.com/biface/ndt/issues/87">DD-021</a>. Closes #43.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_StackedDict.from_json(cls,</span> <span class="pre">path,</span> <span class="pre">**class_options)</span></code>: reconstruct from a
+JSON file. <code class="docutils literal notranslate"><span class="pre">&#64;classmethod</span></code>, returns an instance of the calling class.
+Closes #43.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_StackedDict.to_pickle(path,</span> <span class="pre">protocol=None)</span></code>: serialize to a pickle
+file alongside a SHA-256 sidecar. Always emits <code class="docutils literal notranslate"><span class="pre">UserWarning</span></code> about
+pickle safety. Closes #44.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_StackedDict.from_pickle(cls,</span> <span class="pre">path,</span> <span class="pre">verify=True)</span></code>: reconstruct from a
+pickle file. <code class="docutils literal notranslate"><span class="pre">verify=True</span></code> (default) checks the SHA-256 sidecar and
+raises <code class="docutils literal notranslate"><span class="pre">StackedValueError</span></code> on mismatch. Closes #44.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_StackedDict.__reduce__</span></code>: native pickle support via the module-level
+<code class="docutils literal notranslate"><span class="pre">_reconstruct</span></code> helper, preserving <code class="docutils literal notranslate"><span class="pre">default_setup</span></code> and <code class="docutils literal notranslate"><span class="pre">default_factory</span></code>
+across the pickle round-trip.</p></li>
+<li><p>CI matrix: Python 3.13 added as stable target; Python 3.14 added as
+best-effort (<code class="docutils literal notranslate"><span class="pre">continue-on-error:</span> <span class="pre">true</span></code>). Closes #41.</p></li>
+</ul>
+</section>
+<section id="id6">
+<h3>Changed<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><strong>Python 3.9 support dropped.</strong> Minimum Python version is now 3.10.
+<code class="docutils literal notranslate"><span class="pre">python_requires</span> <span class="pre">&gt;=</span> <span class="pre">&quot;3.10&quot;</span></code> in <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>. Closes #41.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">__future__</span> <span class="pre">import</span> <span class="pre">annotations</span></code> removed from <code class="docutils literal notranslate"><span class="pre">tools.py</span></code>, <code class="docutils literal notranslate"><span class="pre">core.py</span></code>,
+and <code class="docutils literal notranslate"><span class="pre">exception.py</span></code>. All forward references are now explicitly quoted.
+Closes #38.</p></li>
+<li><p>Legacy <code class="docutils literal notranslate"><span class="pre">typing</span></code> generics replaced with built-in equivalents throughout
+<code class="docutils literal notranslate"><span class="pre">tools.py</span></code> and <code class="docutils literal notranslate"><span class="pre">exception.py</span></code>: <code class="docutils literal notranslate"><span class="pre">Dict→dict</span></code>, <code class="docutils literal notranslate"><span class="pre">List→list</span></code>, <code class="docutils literal notranslate"><span class="pre">Set→set</span></code>,
+<code class="docutils literal notranslate"><span class="pre">Tuple→tuple</span></code>. <code class="docutils literal notranslate"><span class="pre">Union</span></code> removed from <code class="docutils literal notranslate"><span class="pre">exception.py</span></code> (unused). Closes #39.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_type_name</span></code> compatibility helper removed from <code class="docutils literal notranslate"><span class="pre">exception.py</span></code>.
+<code class="docutils literal notranslate"><span class="pre">type.__name__</span></code> is used directly in <code class="docutils literal notranslate"><span class="pre">StackedTypeError</span></code>. Closes #40.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">black</span></code> configured with <code class="docutils literal notranslate"><span class="pre">--target-version</span> <span class="pre">py310</span></code> in <code class="docutils literal notranslate"><span class="pre">tox.ini</span></code> to ensure
+consistent formatting across all supported Python versions.</p></li>
+</ul>
+</section>
+<section id="id7">
+<h3>Deprecated<a class="headerlink" href="#id7" title="Link to this heading">¶</a></h3>
+<ul>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">from_dict</span></code> free function</strong> (<code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">ndict_tools.tools</span> <span class="pre">import</span> <span class="pre">from_dict</span></code>)
+is deprecated since 1.1.0 and will be <strong>removed in 1.5.0</strong>
+(issue #81, milestone v1.5.0).</p>
+<p>Calling the free function now emits a <code class="docutils literal notranslate"><span class="pre">DeprecationWarning</span></code> with an
+explicit removal notice. Migrate to the <code class="docutils literal notranslate"><span class="pre">classmethod</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Before (deprecated since 1.1.0, removed in 1.5.0)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ndict_tools.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">from_dict</span>
+<span class="n">nd</span> <span class="o">=</span> <span class="n">from_dict</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">NestedDictionary</span><span class="p">,</span> <span class="n">default_setup</span><span class="o">=</span><span class="p">{</span><span class="o">...</span><span class="p">})</span>
+
+<span class="c1"># After</span>
+<span class="n">nd</span> <span class="o">=</span> <span class="n">NestedDictionary</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">default_setup</span><span class="o">=</span><span class="p">{</span><span class="o">...</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>Closes #47.</p>
+</li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="path-manager-compass-2026-01-31">
+<h2>[1.0.0] — Path Manager (Compass) — 2026-01-31<a class="headerlink" href="#path-manager-compass-2026-01-31" title="Link to this heading">¶</a></h2>
+<p>First stable release.</p>
+<section id="id8">
+<h3>Added<a class="headerlink" href="#id8" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">_StackedDict</span></code> base class extending <code class="docutils literal notranslate"><span class="pre">collections.defaultdict</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_HKey</span></code> tree node with <code class="docutils literal notranslate"><span class="pre">__slots__</span></code>, immutable tuple children, DFS/BFS
+traversal.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_Paths</span></code> lazy view over all hierarchical paths.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_CPaths</span></code> compact/factorized view with coverage analysis (<code class="docutils literal notranslate"><span class="pre">is_covering</span></code>,
+<code class="docutils literal notranslate"><span class="pre">coverage</span></code>, <code class="docutils literal notranslate"><span class="pre">missing_paths</span></code>, <code class="docutils literal notranslate"><span class="pre">uncovered_paths</span></code>).</p></li>
+<li><p>Public API: <code class="docutils literal notranslate"><span class="pre">NestedDictionary</span></code>, <code class="docutils literal notranslate"><span class="pre">StrictNestedDictionary</span></code>,
+<code class="docutils literal notranslate"><span class="pre">SmoothNestedDictionary</span></code>, <code class="docutils literal notranslate"><span class="pre">PathsView</span></code>, <code class="docutils literal notranslate"><span class="pre">CompactPathsView</span></code>.</p></li>
+<li><p>Custom exception hierarchy: <code class="docutils literal notranslate"><span class="pre">StackedDictionaryError</span></code> and six
+specializations (<code class="docutils literal notranslate"><span class="pre">StackedKeyError</span></code>, <code class="docutils literal notranslate"><span class="pre">StackedTypeError</span></code>,
+<code class="docutils literal notranslate"><span class="pre">StackedValueError</span></code>, <code class="docutils literal notranslate"><span class="pre">StackedAttributeError</span></code>, <code class="docutils literal notranslate"><span class="pre">StackedIndexError</span></code>,
+<code class="docutils literal notranslate"><span class="pre">NestedDictionaryException</span></code>).</p></li>
+<li><p>Published on PyPI. CI on GitHub Actions and GitLab CI. Coverage reported
+to codecov.io.</p></li>
+</ul>
+</section>
+<section id="id9">
+<h3>Deprecated<a class="headerlink" href="#id9" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">DictPaths</span></code> deprecated at instantiation with <code class="docutils literal notranslate"><span class="pre">DeprecationWarning</span></code>.
+Scheduled for removal in 1.2.0. Use <code class="docutils literal notranslate"><span class="pre">CompactPathsView</span></code> or
+<code class="docutils literal notranslate"><span class="pre">nd.compact_paths()</span></code> instead.</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="id10">
+<h2>[0.9.0] — 2025-11-04<a class="headerlink" href="#id10" title="Link to this heading">¶</a></h2>
+<p>First version kept in the documentation archive; it gathers the work of the
+earlier 0.x releases, which are no longer documented.</p>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">default_setup</span></code> generalised.</strong> The configuration is given through
+<code class="docutils literal notranslate"><span class="pre">default_setup=</span></code>; the specific <code class="docutils literal notranslate"><span class="pre">indent=</span></code> and <code class="docutils literal notranslate"><span class="pre">strict=</span></code> attributes of
+<code class="docutils literal notranslate"><span class="pre">NestedDictionary.__init__</span></code> are removed. Started in 0.8.0, stabilised in
+0.9.0.</p></li>
+<li><p><strong>Python versions earlier than 3.9 are no longer supported.</strong></p></li>
+</ul>
+<hr class="docutils" />
+<p><em>For the full list of changes, see the
+<a class="reference external" href="https://github.com/biface/ndt/issues">GitHub issue tracker</a>.</em></p>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="deprecations.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Deprecation Notices</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="index.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Changelog</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2024-2026, biface
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=e3eff1ea"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>
