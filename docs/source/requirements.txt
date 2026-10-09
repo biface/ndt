@@ -1,7 +1,8 @@
 # Documentation build dependencies (Python 3.11 baseline).
 # Exact versions: each published tag is rebuilt from its own copy of this file
 # by the GitHub Pages archive workflow (DD-028), so a tag's build must not
-# depend on later releases. Keep in sync with the `docs` extra in pyproject.toml.
+# depend on later releases. tox -e docs reads it through
+# .tox-config/requirements/docs.txt.
 sphinx==9.0.4
 furo==2025.12.19
 myst-parser==5.1.0

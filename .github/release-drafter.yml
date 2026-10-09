@@ -107,7 +107,7 @@ autolabeler:
     files:
       - ".github/**"
       - ".codecov.yml"
-      - "tox.ini"
+      - ".tox-config/**"
       - "pyproject.toml"
 
   - label: "type: test"

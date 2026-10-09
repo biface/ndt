@@ -46,19 +46,18 @@ source .venv/bin/activate       # Linux / macOS
 # .venv\Scripts\activate        # Windows
 ```
 
-### 3. Install development dependencies
+### 3. Install the package and tox
 
 ```bash
-uv sync --extra dev --extra docs
+uv pip install -e . tox tox-uv
 ```
 
-### 4. Install tox and tox-uv
+The development tools (pytest, basedpyright, black, Sphinx…) are not
+installed in `.venv/`: tox installs them in its own environments, from the
+files of `.tox-config/requirements/`. To use one of them in your IDE,
+install it in `.venv/` by hand.
 
-```bash
-uv pip install tox tox-uv
-```
-
-### 5. Verify the setup
+### 4. Verify the setup
 
 ```bash
 tox --version
@@ -102,6 +101,10 @@ feature/*  ──PR──▶  update/X.Y.Z  ──PR──▶  staging/X.Y.Z  �
 
 ## Tox environments
 
+The environments are defined in `pyproject.toml` (`[tool.tox]`), like the
+settings of the other tools. Their dependencies come from
+`.tox-config/requirements/<role>.txt`.
+
 ### Local development
 
 | Command | Purpose |
@@ -113,6 +116,7 @@ feature/*  ──PR──▶  update/X.Y.Z  ──PR──▶  staging/X.Y.Z  �
 | `tox -e bandit` | Security analysis only |
 | `tox -e py311` | Run tests on Python 3.11 |
 | `tox -e coverage` | Generate coverage report |
+| `tox -e docs` | Build the documentation (English, French) and run its doctests |
 | `tox -e pre-push` | Full workflow before push |
 | `tox -e local` | Alias for `pre-push` |
 
@@ -121,9 +125,11 @@ feature/*  ──PR──▶  update/X.Y.Z  ──PR──▶  staging/X.Y.Z  �
 | Environment | Purpose |
 |---|---|
 | `ci-quality` | Quality gate (format + lint + type + security) |
-| `ci-tests` | Test matrix runner (Python 3.11–3.14; 3.15 and 3.14t best effort) |
 
-> **Important:** `ci-quality` and `ci-tests` are designed for GitHub Actions.
+The test workflow runs `py311` to `py314` (`py315` and `py314t` best
+effort), then `coverage`.
+
+> **Important:** `ci-quality` is designed for GitHub Actions.
 > Use `tox -e pre-push` or `tox -e check` for local verification.
 
 ---
@@ -164,13 +170,17 @@ This runs in sequence:
 
 ## Documentation
 
-The documentation is built with Sphinx from `docs/source/`; its dependencies are
-in the `docs` extra (`uv sync --extra docs`). The build must pass without
-warnings:
+The documentation is built with Sphinx from `docs/source/`. Its dependencies
+are pinned in `docs/source/requirements.txt`, which Read the Docs reads, and
+installed by tox in the `docs` environment. The builds must pass without
+warnings, in English and in French, and the doctests must pass in both
+languages:
 
 ```bash
-sphinx-build -W -b html docs/source docs/build/html
+tox -e docs
 ```
+
+The commands below run in that environment through `tox exec -e docs --`.
 
 ### Translations
 
@@ -182,13 +192,13 @@ Untranslated strings fall back to English.
    committed:
 
    ```bash
-   sphinx-build -b gettext docs/source docs/build/gettext
+   tox exec -e docs -- sphinx-build -b gettext docs/source docs/build/gettext
    ```
 
 2. Create or update the catalogs of a language (here French):
 
    ```bash
-   sphinx-intl update -p docs/build/gettext -l fr -d docs/source/locales
+   tox exec -e docs -- sphinx-intl update -p docs/build/gettext -l fr -d docs/source/locales
    ```
 
 3. Fill in the `msgstr` entries of the `.po` files and commit them. The `.mo`
@@ -205,18 +215,18 @@ Untranslated strings fall back to English.
    the current directory and fails with a `TypeError`.
 
    ```bash
-   sphinx-intl stat -d docs/source/locales -l fr
+   tox exec -e docs -- sphinx-intl stat -d docs/source/locales -l fr
    ```
 
 5. Build the translated documentation:
 
    ```bash
-   sphinx-build -W -b html -D language=fr docs/source docs/build/html-fr
+   tox exec -e docs -- sphinx-build -W -b html -D language=fr docs/source docs/build/html-fr
    ```
 
 The full change log (`changelog/history.po`) stays in English: only the
 title and introduction of the page are translated, so `sphinx-intl stat`
-always reports untranslated strings for this catalog.
+always reports untranslated strings for this catalog, and exits with status 1.
 
 A translation is published in the GitHub Pages archive, under
 `/<lang>/vX.Y.Z/`, once its language code is listed in

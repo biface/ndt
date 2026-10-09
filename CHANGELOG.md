@@ -22,6 +22,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   `assert_type` calls check the types inferred for the public API. Unlike the
   `basedpyright src` step, it fails on any error. Included in `basedpyright`,
   `pre-push` (hence `local`), `check` and `ci-quality`. Added with #75.
+- **`docs` tox environment.** Builds the documentation in English and
+  French without warnings and runs its doctests in both languages. Its
+  dependencies come from `.tox-config/requirements/docs.txt`, which includes
+  `docs/source/requirements.txt`. Part of #130.
 - **Concepts: "The Forest of Keys".** A new page defines the forest of keys of
   a nested dictionary (vertices, edges, roots, depth, leaves, height and
   levels), matches `len()`, `size()`, `leaves()`, `height()` and
@@ -29,7 +33,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   operations apply, defines complete, perfect and full trees for an arity n,
   and states the limits of the model (shared references, cycles). Its
   diagrams are Mermaid flowcharts, rendered by `sphinxcontrib-mermaid` 2.1.1,
-  added to the `docs` extra and `docs/source/requirements.txt`; the extension
+  added to `docs/source/requirements.txt`; the extension
   pins the Mermaid version it loads in the browser (11.12.1). The EN/FR
   table of tree shapes becomes the translation glossary of `CONTRIBUTING.md`
   and `CONTRIBUTING.fr.md`. Closes #146.
@@ -43,10 +47,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   best effort; the 3.14t job only checks that the package runs without the
   GIL and makes no thread-safety claim.
 - **Development baseline:** `.python-version` pins 3.11 (`uv python pin 3.11`);
-  `pyrightconfig.json` checks against Python 3.11; black targets py311.
+  basedpyright checks against Python 3.11; black targets py311.
 - **pytest configuration:** `DeprecationWarning` is raised as an error, so
   deprecated calls surface before a later Python version removes them.
-- **`tox.ini`:** `py310` environment removed; `py315` and `py314t` added;
+- **tox:** `py310` environment removed; `py315` and `py314t` added;
   black commands no longer pass `--target-version` and read it from
   `[tool.black]` in `pyproject.toml`.
 - **`@override` (PEP 698)** on the 24 methods that override a base class
@@ -135,7 +139,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   `strict` keyword settings were removed in 1.2.0 (#114); keyword arguments
   are data.
 - **Documentation toolchain** resolved for Python 3.11, with exact versions in
-  `docs/source/requirements.txt` and the `docs` extra: Sphinx 9.0.4,
+  `docs/source/requirements.txt`: Sphinx 9.0.4,
   myst-parser 5.1.0, furo 2025.12.19; `sphinx-intl` 2.4.0 added for the
   translation catalogs. `sphinx-multiversion-contrib` is removed, with its
   extension, its `smv_*` settings and the `versioning.html` sidebar template;
@@ -169,6 +173,18 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   The extraction, update, check and build steps are documented in
   `CONTRIBUTING.md` and `CONTRIBUTING.fr.md`
   ([DD-028](https://github.com/biface/ndt/issues/126)). Closes #133.
+- **Tool configuration in `pyproject.toml`.** tox (`[tool.tox]`), coverage
+  (`[tool.coverage.*]`) and basedpyright (`[tool.basedpyright]`) are
+  configured in `pyproject.toml`, next to black, isort and pytest. flake8,
+  which does not read `pyproject.toml`, takes its options on its command
+  line. Each tool's command is written once, in the environment of that
+  tool, and referenced by `check`, `ci-quality` and `pre-push`. The
+  dependencies of each environment stay by role in
+  `.tox-config/requirements/`, with `test.sh` and `coverage.sh`, so that
+  tools used only through tox stay out of the project environment.
+  `env_list` no longer includes `pre-push`, `local` or the auto-fix
+  environments, so a bare `tox` does not run tox again through `test.sh`.
+  The CI runs the same environments with the same commands. Part of #130.
 - **Package metadata (PEP 639).** The licence is declared as an SPDX
   expression (`license = "CECILL-C"`) with its file (`license-files`),
   which replaces the licence classifier; the build requires
@@ -191,6 +207,15 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **Root `requirements.txt`, `requirements.dev.txt` and
   `requirements.test.txt`.** No tool or workflow read them; development
   dependencies are in `.tox-config/requirements/` ([DD-025](https://github.com/biface/ndt/issues/116)). Part of #130.
+- **`tox.ini`, `.coveragerc` and `pyrightconfig.json`**, whose settings move
+  to `pyproject.toml`, and the unused `[tool.flake8]` section of
+  `pyproject.toml` and `[isort]` section of `tox.ini`. Part of #130.
+- **`dev` and `docs` extras.** `pyproject.toml` declares only what the
+  package needs. The development tools are installed by tox in its own
+  environments; the documentation dependencies stay in
+  `docs/source/requirements.txt`. Part of #130.
+- **`ci-tests` tox environment and `[gh-actions]` section**, which no
+  workflow used. Part of #130.
 
 ### Fixed
 

@@ -47,19 +47,18 @@ source .venv/bin/activate       # Linux / macOS
 # .venv\Scripts\activate        # Windows
 ```
 
-### 3. Installer les dépendances de développement
+### 3. Installer le paquet et tox
 
 ```bash
-uv sync --extra dev --extra docs
+uv pip install -e . tox tox-uv
 ```
 
-### 4. Installer tox et tox-uv
+Les outils de développement (pytest, basedpyright, black, Sphinx…) ne sont
+pas installés dans `.venv/` : tox les installe dans ses propres
+environnements, à partir des fichiers de `.tox-config/requirements/`. Pour
+utiliser l'un d'eux dans votre IDE, installez-le à la main dans `.venv/`.
 
-```bash
-uv pip install tox tox-uv
-```
-
-### 5. Vérifier l'installation
+### 4. Vérifier l'installation
 
 ```bash
 tox --version
@@ -104,6 +103,10 @@ feature/*  ──PR──▶  update/X.Y.Z  ──PR──▶  staging/X.Y.Z  �
 
 ## Environnements tox
 
+Les environnements sont définis dans `pyproject.toml` (`[tool.tox]`), comme
+les réglages des autres outils. Leurs dépendances viennent de
+`.tox-config/requirements/<rôle>.txt`.
+
 ### Développement local
 
 | Commande | Usage |
@@ -115,6 +118,7 @@ feature/*  ──PR──▶  update/X.Y.Z  ──PR──▶  staging/X.Y.Z  �
 | `tox -e bandit` | Analyse de sécurité uniquement |
 | `tox -e py311` | Tests sur Python 3.11 |
 | `tox -e coverage` | Génération du rapport de couverture |
+| `tox -e docs` | Build de la documentation (anglais, français) et de ses doctests |
 | `tox -e pre-push` | Workflow complet avant push |
 | `tox -e local` | Alias de `pre-push` |
 
@@ -123,9 +127,11 @@ feature/*  ──PR──▶  update/X.Y.Z  ──PR──▶  staging/X.Y.Z  �
 | Environnement | Usage |
 |---|---|
 | `ci-quality` | Contrôle qualité (format + lint + types + sécurité) |
-| `ci-tests` | Exécution de la matrice de tests (Python 3.11–3.14 ; 3.15 et 3.14t sans garantie) |
 
-> **Important :** `ci-quality` et `ci-tests` sont conçus pour GitHub Actions.
+Le workflow de tests lance `py311` à `py314` (`py315` et `py314t` sans
+garantie), puis `coverage`.
+
+> **Important :** `ci-quality` est conçu pour GitHub Actions.
 > Utilisez `tox -e pre-push` ou `tox -e check` pour les vérifications locales.
 
 ---
@@ -166,13 +172,18 @@ Cela exécute dans l'ordre :
 
 ## Documentation
 
-La documentation est construite avec Sphinx à partir de `docs/source/` ; ses
-dépendances sont dans l'extra `docs` (`uv sync --extra docs`). Le build doit
-passer sans avertissement :
+La documentation est construite avec Sphinx à partir de `docs/source/`. Ses
+dépendances sont figées dans `docs/source/requirements.txt`, que lit Read the
+Docs, et installées par tox dans l'environnement `docs`. Les builds doivent
+passer sans avertissement, en anglais et en français, et les doctests doivent
+passer dans les deux langues :
 
 ```bash
-sphinx-build -W -b html docs/source docs/build/html
+tox -e docs
 ```
+
+Les commandes ci-dessous s'exécutent dans cet environnement par
+`tox exec -e docs --`.
 
 ### Traductions
 
@@ -185,13 +196,13 @@ s'affichent en anglais.
    sont pas commités :
 
    ```bash
-   sphinx-build -b gettext docs/source docs/build/gettext
+   tox exec -e docs -- sphinx-build -b gettext docs/source docs/build/gettext
    ```
 
 2. Créer ou mettre à jour les catalogues d'une langue (ici le français) :
 
    ```bash
-   sphinx-intl update -p docs/build/gettext -l fr -d docs/source/locales
+   tox exec -e docs -- sphinx-intl update -p docs/build/gettext -l fr -d docs/source/locales
    ```
 
 3. Renseigner les entrées `msgstr` des fichiers `.po` et les commiter. Les
@@ -209,19 +220,19 @@ s'affichent en anglais.
    répertoire courant et échoue avec une `TypeError`.
 
    ```bash
-   sphinx-intl stat -d docs/source/locales -l fr
+   tox exec -e docs -- sphinx-intl stat -d docs/source/locales -l fr
    ```
 
 5. Construire la documentation traduite :
 
    ```bash
-   sphinx-build -W -b html -D language=fr docs/source docs/build/html-fr
+   tox exec -e docs -- sphinx-build -W -b html -D language=fr docs/source docs/build/html-fr
    ```
 
 Le journal complet des modifications (`changelog/history.po`) reste en
 anglais : seuls le titre et l'introduction de la page sont traduits, si bien
 que `sphinx-intl stat` signale toujours des chaînes non traduites pour ce
-catalogue.
+catalogue, et se termine avec le code 1.
 
 Une traduction est publiée dans l'archive GitHub Pages, sous
 `/<langue>/vX.Y.Z/`, dès que son code de langue figure dans

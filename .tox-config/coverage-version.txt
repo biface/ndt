@@ -16,7 +16,7 @@
 #
 # Modification :
 # Pour ajouter/retirer des versions, éditez simplement ce fichier
-# Pas besoin de modifier tox.ini
+# Pas besoin de modifier pyproject.toml
 #
 # ================================================
 
