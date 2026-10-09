@@ -70,10 +70,15 @@ dictionary[1]["a"][(2, 3)]
 pip install ndict-tools
 ```
 
+ndict-tools requires Python 3.11 or later and has no runtime dependency. The package
+ships a `py.typed` marker, so type checkers use its inline annotations.
+
 ## Documentation
 
-Full documentation is available at
-[ndict-tools.readthedocs.io](https://ndict-tools.readthedocs.io/en/latest/).
+The documentation of the development version is on Read the Docs, in
+[English](https://ndict-tools.readthedocs.io/en/latest/) and in
+[French](https://ndict-tools.readthedocs.io/fr/latest/). The documentation of each
+release, from 0.9.0, is archived at [biface.github.io/ndt](https://biface.github.io/ndt/).
 
 ## Contributing
 

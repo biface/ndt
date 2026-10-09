@@ -7,6 +7,19 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **READMEs.** `README.md` and `README.fr.md` state that ndict-tools requires
+  Python 3.11 or later, has no runtime dependency and ships `py.typed`, and link the
+  documentation on Read the Docs in English and French and the archive of each
+  release. The `[1.3.0]` entry on the documentation listed this change, but the
+  READMEs published with 1.3.0, also shown on PyPI, were the previous ones. Follow-up
+  of #149.
+
+---
+
 ## [1.3.0] — 2026-10-09
 
 ### Added
