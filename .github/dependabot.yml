@@ -1,0 +1,42 @@
+# Dependabot — maintenance updates (monthly).
+#
+# Updated:
+#   - GitHub Actions used by the workflows;
+#   - the pinned documentation dependencies in docs/source/requirements.txt,
+#     which Read the Docs and the GitHub Pages archive read from each tag.
+# Not updated: .tox-config/requirements/*.txt list tools without versions, so
+# tox installs their latest release; pyproject.toml has no runtime dependency.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 5
+    groups:
+      github-actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "type: ci"
+      - "scope: ci"
+
+  - package-ecosystem: "pip"
+    directory: "/docs/source"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 5
+    groups:
+      documentation:
+        patterns: ["*"]
+    # The documentation builds with Python 3.11 (.readthedocs.yaml);
+    # Sphinx 9.1 requires Python 3.12.
+    ignore:
+      - dependency-name: "sphinx"
+        versions: [">=9.1"]
+    commit-message:
+      prefix: "build(docs)"
+    labels:
+      - "type: chore"
+      - "scope: docs"
