@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [project]
@@ -10,7 +10,11 @@ authors = [
 ]
 description = "An implementation of nested dictionaries"
 readme = "README.md"
+license = "CECILL-C"
+license-files = ["LICENSE.md"]
 requires-python = ">=3.11"
+dependencies = []
+keywords = ["nested dictionary", "defaultdict", "hierarchical keys", "paths", "tree"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
@@ -19,9 +23,9 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
-    "License :: CeCILL-C Free Software License Agreement (CECILL-C)",
     "Operating System :: OS Independent",
     "Topic :: Utilities",
+    "Typing :: Typed",
 ]
 
 [project.optional-dependencies]

@@ -169,6 +169,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   The extraction, update, check and build steps are documented in
   `CONTRIBUTING.md` and `CONTRIBUTING.fr.md`
   ([DD-028](https://github.com/biface/ndt/issues/126)). Closes #133.
+- **Package metadata (PEP 639).** The licence is declared as an SPDX
+  expression (`license = "CECILL-C"`) with its file (`license-files`),
+  which replaces the licence classifier; the build requires
+  `hatchling>=1.27`. The `Typing :: Typed` classifier and `keywords` are
+  added, and `dependencies = []` states that the package has no runtime
+  dependency. Part of #130.
 - **Comparisons (breaking).** `==` is now strict, like `equal()`: same
   class, same `default_setup` and same content. A nested dictionary is no
   longer equal to a plain `dict` with the same content, in either order;
