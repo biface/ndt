@@ -30,7 +30,7 @@ def test_stacked_key_error():
 
     # Test with message, key, and path
     error = StackedKeyError("Key not found", "test_key", ["a", "b"])
-    # assert "Key not found (key: test_key) (at path: a -> b)" in str(error)
+    assert "Key not found (key: test_key) (at path: a | b)" in str(error)
     assert error.key == "test_key"
     assert error.path == ["a", "b"]
 
@@ -55,7 +55,7 @@ def test_stacked_attribute_error():
 
     # Test with message, attribute, and path
     error = StackedAttributeError("Attribute not found", "test_attr", ["a", "b"])
-    # assert "Attribute not found (attribute: test_attr) (at path: a -> b)" in str(error)
+    assert "Attribute not found (attribute: test_attr) (at path: a | b)" in str(error)
     assert error.attribute == "test_attr"
     assert error.path == ["a", "b"]
 
@@ -82,7 +82,7 @@ def test_stacked_type_error():
 
     # Test with message, types, and path
     error = StackedTypeError("Invalid type", str, int, ["a", "b"])
-    # assert "Invalid type (expected: str, got: int) (at path: a -> b)" in str(error)
+    assert "Invalid type (expected: str, got: int) (at path: a | b)" in str(error)
     assert error.expected_type is str
     assert error.actual_type is int
     assert error.path == ["a", "b"]
@@ -114,7 +114,7 @@ def test_stacked_value_error():
 
     # Test with message, value, and path
     error = StackedValueError("Invalid value", 42, ["a", "b"])
-    # assert "Invalid value (value: 42) (at path: a -> b)" in str(error)
+    assert "Invalid value (value: 42) (at path: a | b)" in str(error)
     assert error.value == 42
     assert error.path == ["a", "b"]
 
@@ -132,7 +132,7 @@ def test_stacked_index_error():
 
     # Test with message and path
     error = StackedIndexError("Index out of range", ["a", "b"])
-    # assert "Index out of range (at path: a -> b)" in str(error)
+    assert "Index out of range (at path: a | b)" in str(error)
     assert error.path == ["a", "b"]
 
     # Verify inheritance
@@ -178,3 +178,20 @@ def test_exception_raising_in_context():
     assert excinfo.value.expected_type is dict
     assert excinfo.value.actual_type is list
     assert excinfo.value.path == ["config"]
+
+
+@pytest.mark.parametrize(
+    "error_class",
+    [
+        StackedKeyError,
+        StackedAttributeError,
+        StackedTypeError,
+        StackedValueError,
+        StackedIndexError,
+    ],
+)
+def test_specialised_error_path_without_message(error_class):
+    """Without a message, a specialised error reports the path alone, as the base class."""
+    error = error_class(path=["a", "b"])
+    assert "Error at path: a | b" in str(error)
+    assert error.path == ["a", "b"]

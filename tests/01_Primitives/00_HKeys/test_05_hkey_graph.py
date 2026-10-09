@@ -7,8 +7,6 @@ and compute various metrics (balance, node counts, statistics).
 Uses specialized test trees in addition to the main key_tree fixture.
 """
 
-from copy import deepcopy
-
 import pytest
 
 from ndict_tools.tools import _HKey
@@ -500,7 +498,6 @@ class TestGraphStructure:
     def test_is_valid_tree_detects_cycle(self, cycle_tree):
         is_valid, issues = cycle_tree.is_valid_tree()
         assert not is_valid
-        print(issues)
 
     def test_is_valid_tree_detects_child_without_parent(self, simple_editable_tree):
         child = simple_editable_tree.get_child("B")
@@ -523,6 +520,27 @@ class TestGraphStructure:
         assert expected in issues
         expected = f"Node {child.key} has no parent but is not marked as root"
         assert expected in issues
+
+    def test_is_valid_tree_reports_node_missing_from_parent_children(
+        self, simple_editable_tree
+    ):
+        # D stays a child of B but points to C, which does not list it.
+        d = simple_editable_tree.get_child("B").get_child("D")
+        d.parent = simple_editable_tree.get_child("C")
+
+        is_valid, issues = simple_editable_tree.is_valid_tree()
+
+        assert not is_valid
+        assert "Node D not in parent's children list" in issues
+        # C is a leaf: a node with no children must still be reported as
+        # the parent, not as None.
+        assert "Inconsistent parent: child D has parent C but is child of B" in issues
+
+    def test_is_valid_tree_prints_nothing(self, simple_editable_tree, capsys):
+        _ = simple_editable_tree.is_valid_tree()
+        captured = capsys.readouterr()
+        assert captured.out == ""
+        assert captured.err == ""
 
     # ========================================================================
     # PARENT CONSISTENCY TESTS
@@ -587,19 +605,13 @@ class TestGraphStructure:
         assert is_complete, "Complete tree fixture should be complete"
 
     def test_is_complete_tree_incomplete(self, incomplete_binary_tree):
-        """Test on incomplete tree (last level not filled left-to-right)."""
-        is_complete = incomplete_binary_tree.is_complete_tree()
-        # Left child has no children, right child has children
-        # Note: The current implementation may consider this complete
-        # depending on the specific definition used (level-filling vs left-to-right filling)
-        # This test verifies the implementation's behavior
-        # Typically, this should NOT be complete in the strict sense
+        """Left child is a leaf while the right child has children (#135)."""
+        assert not incomplete_binary_tree.is_complete_tree()
 
     def test_is_complete_tree_linear(self, linear_chain_tree):
-        """Test completeness on linear chain."""
-        is_complete = linear_chain_tree.is_complete_tree()
-        # Linear chain is technically complete (each level has 1 node)
-        assert is_complete, "Linear chain should be complete"
+        """A chain is judged as a binary tree by default: not complete (#135)."""
+        assert not linear_chain_tree.is_complete_tree()
+        assert linear_chain_tree.is_full_tree(n=1), "A chain is a full unary tree"
 
     # ========================================================================
     # PERFECT TREE TESTS
@@ -852,14 +864,31 @@ class TestGraphStructure:
         """
         is_binary = key_tree.is_binary_tree()
 
+        # The root built by build_forest holds the top-level keys and is not
+        # checked, like in the other shape predicates.
         max_children = max(
-            (len(n.children) for n in key_tree.dfs_preorder()), default=0
+            (len(n.children) for n in key_tree.dfs_preorder() if not n.is_root),
+            default=0,
         )
 
         # Consistency check
         assert is_binary == (
             max_children <= 2
         ), "is_binary_tree should match max_children check"
+
+    @pytest.mark.parametrize(
+        "data, expected",
+        [
+            ({"a": {"b": 1, "c": 2}, "d": 3, "e": 4}, True),
+            ({"a": 1, "b": 2, "c": 3, "d": 4}, True),
+            ({"a": {"b": 1, "c": 2, "x": 3}, "d": 4}, False),
+        ],
+    )
+    def test_is_binary_tree_forest_root_not_checked(self, data, expected):
+        """
+        The number of top-level keys is free: only the keys are checked.
+        """
+        assert _HKey.build_forest(data).is_binary_tree() is expected
 
     # ========================================================================
     # FULL TREE TESTS
@@ -871,13 +900,9 @@ class TestGraphStructure:
 
         Full tree: all internal nodes have same number of children (n).
         """
-        is_full_auto = full_ternary_tree.is_full_tree(n=None)
-        is_full_3 = full_ternary_tree.is_full_tree(n=3)
-        is_full_2 = full_ternary_tree.is_full_tree(n=2)
-
-        # Should be full with n=3 (or auto-detected)
-        # Should not be full with n=2
-        assert not is_full_2, "Ternary tree should not be full with n=2"
+        assert not full_ternary_tree.is_full_tree(), "Binary by default"
+        assert full_ternary_tree.is_full_tree(n=3), "Ternary tree is full with n=3"
+        assert not full_ternary_tree.is_full_tree(n=2)
 
     def test_is_full_tree_binary(self, perfect_binary_tree):
         """
@@ -885,24 +910,15 @@ class TestGraphStructure:
 
         Perfect binary tree is also a full binary tree.
         """
-        is_full_auto = perfect_binary_tree.is_full_tree(n=None)
-        is_full_2 = perfect_binary_tree.is_full_tree(n=2)
+        assert perfect_binary_tree.is_full_tree(), "Binary by default"
+        assert perfect_binary_tree.is_full_tree(n=2)
 
-        # Perfect binary tree should be full with n=2
-        assert is_full_2, "Perfect binary tree should be full with n=2"
-
-    @pytest.mark.parametrize("n", [None, 2, 3, 4])
+    @pytest.mark.parametrize("n", [1, 2, 3, 4])
     def test_is_full_tree_parameterized(self, balanced_tree, n):
         """
-        Test full tree detection with different n values.
-
-        Checks if tree is full for various branching factors.
+        Internal nodes of balanced_tree have 2, 1 and 2 children: never full.
         """
-        is_full = balanced_tree.is_full_tree(n=n)
-
-        # Result depends on actual tree structure and n value
-        # This test ensures no crashes and returns boolean
-        assert isinstance(is_full, bool), "Should return boolean"
+        assert balanced_tree.is_full_tree(n=n) is False
 
 
 # ============================================================================
@@ -1388,6 +1404,29 @@ class TestTreeMetrics:
             assert (
                 len(path) <= simple_tree.get_max_depth() + 1
             ), "Path length should not exceed max depth + 1"
+
+    def test_get_all_paths_on_inner_node(self):
+        """
+        On a non-root node, get_all_paths lists the node and its descendants,
+        each with its full path from the root, and the node key only once.
+        """
+        root = _HKey.build_forest({"a": {"b": {"c": 1}, "d": 2}, "e": 3})
+        node = root.find_by_path(["a"])
+        assert node.get_all_paths() == [["a"], ["a", "b"], ["a", "b", "c"], ["a", "d"]]
+        assert root.find_by_path(["a", "b", "c"]).get_all_paths() == [["a", "b", "c"]]
+
+    def test_get_all_paths_matches_prefix_filter(self, simple_tree):
+        """
+        For every node, get_all_paths equals the paths of the whole tree that
+        start with the path of that node.
+        """
+        all_paths = simple_tree.get_all_paths()
+        for node in simple_tree.dfs_preorder():
+            if node.is_root:
+                continue
+            prefix = node.get_path()
+            expected = [p for p in all_paths if p[: len(prefix)] == prefix]
+            assert node.get_all_paths() == expected
 
     def test_path_analysis_leaf_paths(self, perfect_binary_tree):
         """

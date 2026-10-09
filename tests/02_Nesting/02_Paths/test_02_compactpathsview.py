@@ -9,9 +9,9 @@ import re
 import pytest
 
 import ndict_tools
-from ndict_tools import CompactPathsView, NestedDictionary, PathsView
-from ndict_tools.exception import StackedKeyError
-from ndict_tools.tools import _CPaths, _HKey, _StackedDict
+from ndict_tools import CompactPathsView, NestedDictionary
+from ndict_tools.exception import StackedKeyError, StackedTypeError
+from ndict_tools.tools import _HKey
 
 
 def test_init_empty():
@@ -1033,7 +1033,7 @@ class TestCompactPathsViewInit:
                 "[this [is not [a list]]]",
                 "Structure must be a list, got str",
                 TypeError,
-                "Unsupported type for structure: str. Expected _StackedDict, _HKey or list.",
+                "Unsupported type for structure: str. Expected a nested dictionary, a dict or a list.",
             ),
             (
                 [[1, [2, [3, []]]]],
@@ -1052,6 +1052,24 @@ class TestCompactPathsViewInit:
 
         with pytest.raises(error, match=re.escape(setter_msg_error)):
             c_paths.structure = compact_paths
+
+    @pytest.mark.parametrize(
+        "compact_paths, key, path",
+        [
+            ([[["a"]]], ["a"], []),
+            ([["a", ["b", {"x"}]]], {"x"}, ["a", "b"]),
+            ([("t", [1])], ("t", [1]), []),
+            (["a", {"k": 1}], {"k": 1}, []),
+        ],
+    )
+    def test_structure_setter_rejects_unhashable_keys(self, compact_paths, key, path):
+        c_paths = CompactPathsView()
+        with pytest.raises(StackedTypeError) as exc_info:
+            c_paths.structure = compact_paths
+        assert exc_info.value.actual_type is type(key)
+        assert exc_info.value.path == path
+        assert repr(key) in str(exc_info.value)
+        assert c_paths._structure is None
 
     # Maximum depth is defined in ndict_tools.tools.MAX_DEPTH
     def test_structure_with_too_deeply_nested(self):
@@ -1566,3 +1584,17 @@ class TestCPathsCovering:
         assert c_paths.coverage(strict_c_nd) == coverage
         assert c_paths.uncovered_paths(strict_c_nd) == uncovered
         assert c_paths.missing_paths(strict_c_nd) == missing
+
+
+class TestCompactPathsViewRepresentation:
+
+    def test_repr_uses_public_class_name(self):
+        c_paths = NestedDictionary({"a": {"b": 1}, "c": 2}).compact_paths()
+        assert repr(c_paths) == "CompactPathsView([['a', 'b'], 'c'])"
+
+    def test_str_uses_public_class_name(self):
+        c_paths = NestedDictionary({"a": {"b": 1}, "c": 2}).compact_paths()
+        assert str(c_paths) == "CompactPathsView(3 paths): [['a', 'b'], 'c']"
+
+    def test_str_does_not_expose_private_name(self, strict_c_nd):
+        assert "_CPaths" not in str(strict_c_nd.compact_paths())

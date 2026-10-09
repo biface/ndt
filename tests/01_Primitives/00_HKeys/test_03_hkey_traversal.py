@@ -5,7 +5,6 @@ These tests use a key tree (key_tree) built from a complex stacked dictionary
 (_StackedDict) representing a multi-environment configuration.
 """
 
-from collections import defaultdict, deque
 from typing import Any
 
 import pytest
@@ -410,7 +409,10 @@ class TestTreeTraversal:
         Demonstrates using traversal to filter by key type.
         Useful for extracting only certain types (str, int, tuple, etc.)
         """
-        filter_func = lambda node: isinstance(node.key, key_type)
+
+        def filter_func(node):
+            return isinstance(node.key, key_type)
+
         filtered_nodes = self.collect_nodes_with_traversal(
             key_tree, method="dfs_preorder", filter_func=filter_func
         )
@@ -749,7 +751,9 @@ class TestTreeTraversal:
         self.print_test_header(f"BFS DEPTH FILTERING (target_depth={target_depth})")
 
         # Collect only nodes at target depth
-        filter_func = lambda node: node.get_depth() == target_depth
+        def filter_func(node):
+            return node.get_depth() == target_depth
+
         collected_nodes = self.collect_nodes_with_traversal(
             key_tree, method="bfs", filter_func=filter_func
         )
@@ -863,7 +867,9 @@ class TestTreeTraversal:
         self.print_test_header(f"BFS EARLY TERMINATION (max_depth={max_depth})")
 
         # Collect only nodes up to max_depth
-        filter_func = lambda node: node.get_depth() <= max_depth
+        def filter_func(node):
+            return node.get_depth() <= max_depth
+
         collected_nodes = self.collect_nodes_with_traversal(
             key_tree, method="bfs", filter_func=filter_func
         )
@@ -1104,7 +1110,7 @@ class TestTreeSearch:
         )
 
         if result:
-            assert result.is_leaf(), f"Found node should be a leaf"
+            assert result.is_leaf(), "Found node should be a leaf"
             assert result.parent is not None, "Leaf should have a parent"
             assert (
                 result.parent.key == parent_key
@@ -1446,10 +1452,13 @@ class TestTreeTransformation:
 
         Transform each node into tuple containing metadata.
         """
-        if include_depth:
-            mapper = lambda n: (n.key, n.get_depth()) if not n.is_root else None
-        else:
-            mapper = lambda n: (n.key, tuple(n.get_path())) if not n.is_root else None
+
+        def mapper(n):
+            if n.is_root:
+                return None
+            if include_depth:
+                return (n.key, n.get_depth())
+            return (n.key, tuple(n.get_path()))
 
         self.mapped_data = key_tree.map_nodes(mapper)
         valid_pairs = [p for p in self.mapped_data if p is not None]
@@ -1601,7 +1610,6 @@ class TestTreeTransformation:
         Combines filter_paths with leaf detection to find
         all terminal paths in the tree.
         """
-        all_paths = key_tree.get_all_paths()
         leaf_paths = key_tree.filter_paths(
             lambda p: (
                 key_tree.find_by_path(p).is_leaf()

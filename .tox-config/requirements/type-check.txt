@@ -1,1 +1,2 @@
 basedpyright
+typing_extensions

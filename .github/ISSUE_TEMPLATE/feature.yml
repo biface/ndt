@@ -39,7 +39,7 @@ body:
         a unit test or documentation test.
       placeholder: |
         - [ ] `pytest` passes — coverage ≥ 85 %
-        - [ ] `flake8` and `mypy`: 0 errors
+        - [ ] `flake8` and `basedpyright`: 0 errors
         - [ ] doctest examples compile and pass
         - [ ] Existing public API unchanged
         - [ ] `CHANGELOG.md` updated

@@ -41,9 +41,8 @@ class TestFromDict:
     def test_default_setup_failed(self, function_system_config):
         with pytest.raises(
             StackedKeyError,
-            match=re.escape(
-                "The key 'default_setup' must be present in class options : {'none_setup': {}} (key: default_setup)"
-            ),
+            match=re.escape("Missing 'default_setup' argument"),
         ):
+            # The base class has no default configuration.
             with pytest.warns(DeprecationWarning, match="1.5.0"):
-                from_dict(function_system_config, _StackedDict, none_setup={})
+                from_dict(function_system_config, _StackedDict)

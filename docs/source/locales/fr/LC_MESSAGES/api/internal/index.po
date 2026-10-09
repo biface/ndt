@@ -1,0 +1,191 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2024-2026, biface
+# This file is distributed under the same license as the Nested Dictionary
+# Tools package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Nested Dictionary Tools 1.3.0b1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-03 08:15+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+msgid "Internal API Reference"
+msgstr "Référence de l’API interne"
+
+msgid ""
+"This section documents **private implementation classes** (underscore-"
+"prefixed). They are intended for developers who extend or maintain the "
+"package."
+msgstr ""
+"Cette section documente les **classes d’implémentation privées** "
+"(préfixées par un tiret bas). Elles s’adressent aux développeurs qui "
+"étendent ou maintiennent le paquet."
+
+msgid ""
+"Internal APIs are **subject to change without notice** between any two "
+"releases and are not covered by the project's stability guarantees. Do "
+"not rely on them in production code."
+msgstr ""
+"Les API internes **peuvent changer sans préavis** entre deux versions "
+"quelconques et ne sont pas couvertes par les garanties de stabilité du "
+"projet. Ne vous appuyez pas sur elles dans du code de production."
+
+msgid "``tools`` module"
+msgstr "Module ``tools``"
+
+msgid ""
+":py:obj:`ndict_tools.tools.compare_dict "
+"<ndict_tools.tools.compare_dict>`\\ \\(d1\\, d2\\)"
+msgstr ""
+":py:obj:`ndict_tools.tools.compare_dict "
+"<ndict_tools.tools.compare_dict>`\\ \\(d1\\, d2\\)"
+
+msgid "Recursively compare two potentially nested structures for equality."
+msgstr ""
+"Compare récursivement l’égalité de deux structures éventuellement "
+"imbriquées."
+
+msgid ""
+":py:obj:`ndict_tools.tools.unpack_items "
+"<ndict_tools.tools.unpack_items>`\\ \\(dictionary\\)"
+msgstr ""
+":py:obj:`ndict_tools.tools.unpack_items "
+"<ndict_tools.tools.unpack_items>`\\ \\(dictionary\\)"
+
+msgid "Recursively flatten a nested dictionary into (path, value) pairs."
+msgstr "Aplatit récursivement un dictionnaire imbriqué en paires (chemin, valeur)."
+
+msgid ""
+":py:obj:`ndict_tools.tools._HKey <ndict_tools.tools._HKey>`\\ "
+"\\(key\\[\\, parent\\, is\\_root\\]\\)"
+msgstr ""
+":py:obj:`ndict_tools.tools._HKey <ndict_tools.tools._HKey>`\\ "
+"\\(key\\[\\, parent\\, is\\_root\\]\\)"
+
+msgid "Private tree node representing a hierarchical key in a nested dictionary."
+msgstr ""
+"Nœud d’arbre privé représentant une clé hiérarchique dans un dictionnaire"
+" imbriqué."
+
+msgid ""
+":py:obj:`ndict_tools.tools._StackedDict "
+"<ndict_tools.tools._StackedDict>`\\ \\(\\*args\\[\\, ...\\]\\)"
+msgstr ""
+":py:obj:`ndict_tools.tools._StackedDict "
+"<ndict_tools.tools._StackedDict>`\\ \\(\\*args\\[\\, ...\\]\\)"
+
+msgid "Internal base class for hierarchical nested dictionary structures."
+msgstr ""
+"Classe de base interne des structures de dictionnaires imbriqués "
+"hiérarchiques."
+
+msgid ""
+":py:obj:`ndict_tools.tools._Paths <ndict_tools.tools._Paths>`\\ "
+"\\(\\[stacked\\_dict\\]\\)"
+msgstr ""
+":py:obj:`ndict_tools.tools._Paths <ndict_tools.tools._Paths>`\\ "
+"\\(\\[stacked\\_dict\\]\\)"
+
+msgid ""
+"A lazy view providing access to all hierarchical paths in a nested "
+"dictionary."
+msgstr ""
+"Une vue paresseuse qui donne accès à tous les chemins hiérarchiques d’un "
+"dictionnaire imbriqué."
+
+msgid ""
+":py:obj:`ndict_tools.tools._CPaths <ndict_tools.tools._CPaths>`\\ "
+"\\(\\[stacked\\_dict\\]\\)"
+msgstr ""
+":py:obj:`ndict_tools.tools._CPaths <ndict_tools.tools._CPaths>`\\ "
+"\\(\\[stacked\\_dict\\]\\)"
+
+msgid "A lazy view providing compact representation of hierarchical paths."
+msgstr ""
+"Une vue paresseuse qui donne une représentation compacte des chemins "
+"hiérarchiques."
+
+msgid "``serialize`` module"
+msgstr "Module ``serialize``"
+
+msgid ""
+":py:obj:`ndict_tools.serialize._encode_key "
+"<ndict_tools.serialize._encode_key>`\\ \\(key\\)"
+msgstr ""
+":py:obj:`ndict_tools.serialize._encode_key "
+"<ndict_tools.serialize._encode_key>`\\ \\(key\\)"
+
+msgid "Encode a ``_StackedDict`` key to a JSON-safe string."
+msgstr "Encode une clé ``_StackedDict`` en chaîne compatible avec JSON."
+
+msgid ""
+":py:obj:`ndict_tools.serialize._decode_key "
+"<ndict_tools.serialize._decode_key>`\\ \\(encoded\\)"
+msgstr ""
+":py:obj:`ndict_tools.serialize._decode_key "
+"<ndict_tools.serialize._decode_key>`\\ \\(encoded\\)"
+
+msgid "Decode an encoded JSON key back to its original Python type."
+msgstr "Décode une clé JSON encodée vers son type Python d’origine."
+
+msgid ""
+":py:obj:`ndict_tools.serialize.NestedDictionaryEncoder "
+"<ndict_tools.serialize.NestedDictionaryEncoder>`\\ \\(\\*\\)"
+msgstr ""
+":py:obj:`ndict_tools.serialize.NestedDictionaryEncoder "
+"<ndict_tools.serialize.NestedDictionaryEncoder>`\\ \\(\\*\\)"
+
+msgid "JSON encoder for ``_StackedDict`` instances."
+msgstr "Encodeur JSON pour les instances de ``_StackedDict``."
+
+msgid ""
+":py:obj:`ndict_tools.serialize._make_decoder_hook "
+"<ndict_tools.serialize._make_decoder_hook>`\\ \\(...\\)"
+msgstr ""
+":py:obj:`ndict_tools.serialize._make_decoder_hook "
+"<ndict_tools.serialize._make_decoder_hook>`\\ \\(...\\)"
+
+msgid ""
+"Return an ``object_pairs_hook`` that reconstructs a ``_StackedDict`` (or "
+"subclass) from JSON key-value pairs."
+msgstr ""
+"Renvoie un ``object_pairs_hook`` qui reconstruit un ``_StackedDict`` (ou "
+"une sous-classe) à partir des paires clé-valeur JSON."
+
+msgid ""
+":py:obj:`ndict_tools.serialize._pickle_dump "
+"<ndict_tools.serialize._pickle_dump>`\\ \\(nd\\, path\\)"
+msgstr ""
+":py:obj:`ndict_tools.serialize._pickle_dump "
+"<ndict_tools.serialize._pickle_dump>`\\ \\(nd\\, path\\)"
+
+msgid "Write a ``_StackedDict`` to a pickle file with a SHA-256 sidecar."
+msgstr ""
+"Écrit un ``_StackedDict`` dans un fichier pickle, accompagné d’un fichier"
+" d’empreinte SHA-256."
+
+msgid ""
+":py:obj:`ndict_tools.serialize._pickle_load "
+"<ndict_tools.serialize._pickle_load>`\\ \\(path\\[\\, ...\\]\\)"
+msgstr ""
+":py:obj:`ndict_tools.serialize._pickle_load "
+"<ndict_tools.serialize._pickle_load>`\\ \\(path\\[\\, ...\\]\\)"
+
+msgid ""
+"Load a ``_StackedDict`` from a pickle file, optionally verifying its "
+"SHA-256 sidecar."
+msgstr ""
+"Charge un ``_StackedDict`` depuis un fichier pickle, en vérifiant "
+"éventuellement son fichier d’empreinte SHA-256."
+

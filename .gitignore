@@ -34,6 +34,8 @@ media
 develop-eggs/ 
 dist/ 
 docs/build/
+# Compiled translation catalogs (built by Sphinx from the .po files)
+docs/source/locales/**/*.mo
 downloads/ 
 eggs/ 
 .eggs/ 

@@ -9,6 +9,7 @@ to illustrate it.
    :maxdepth: 1
 
    nested_dict
+   key_forest
    paths
    compact_paths
    coverage

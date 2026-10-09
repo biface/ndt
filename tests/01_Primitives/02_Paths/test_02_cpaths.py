@@ -9,7 +9,7 @@ import re
 import pytest
 
 import ndict_tools
-from ndict_tools.exception import StackedKeyError
+from ndict_tools.exception import StackedKeyError, StackedTypeError
 from ndict_tools.tools import _CPaths, _HKey, _StackedDict
 
 
@@ -1032,7 +1032,7 @@ class TestCPathsInit:
                 "[this [is not [a list]]]",
                 "Structure must be a list, got str",
                 TypeError,
-                "Unsupported type for structure: str. Expected _StackedDict, _HKey or list.",
+                "Unsupported type for structure: str. Expected a nested dictionary, a dict or a list.",
             ),
             (
                 [[1, [2, [3, []]]]],
@@ -1051,6 +1051,24 @@ class TestCPathsInit:
 
         with pytest.raises(error, match=re.escape(setter_msg_error)):
             c_paths.structure = compact_paths
+
+    @pytest.mark.parametrize(
+        "compact_paths, key, path",
+        [
+            ([[["a"]]], ["a"], []),
+            ([["a", ["b", {"x"}]]], {"x"}, ["a", "b"]),
+            ([("t", [1])], ("t", [1]), []),
+            (["a", {"k": 1}], {"k": 1}, []),
+        ],
+    )
+    def test_structure_setter_rejects_unhashable_keys(self, compact_paths, key, path):
+        c_paths = _CPaths()
+        with pytest.raises(StackedTypeError) as exc_info:
+            c_paths.structure = compact_paths
+        assert exc_info.value.actual_type is type(key)
+        assert exc_info.value.path == path
+        assert repr(key) in str(exc_info.value)
+        assert c_paths._structure is None
 
     # Maximum depth is defined in ndict_tools.tools.MAX_DEPTH
     def test_structure_with_too_deeply_nested(self):
@@ -1560,3 +1578,23 @@ class TestCPathsCovering:
         assert c_paths.coverage(strict_c_sd) == coverage
         assert c_paths.uncovered_paths(strict_c_sd) == uncovered
         assert c_paths.missing_paths(strict_c_sd) == missing
+
+
+class TestCPathsRepresentation:
+
+    SETUP = {"indent": 2, "default_factory": None}
+
+    def test_repr(self):
+        c_paths = _CPaths(_StackedDict({"a": 1}, default_setup=self.SETUP))
+        assert repr(c_paths) == "_CPaths(['a'])"
+
+    def test_str(self):
+        sd = _StackedDict({"a": {"b": 1}, "c": 2}, default_setup=self.SETUP)
+        assert str(_CPaths(sd)) == "_CPaths(3 paths): [['a', 'b'], 'c']"
+
+    def test_str_follows_subclass_name(self):
+        class _Custom(_CPaths):
+            pass
+
+        sd = _StackedDict({"a": 1}, default_setup=self.SETUP)
+        assert str(_Custom(sd)).startswith("_Custom(1 paths): ")

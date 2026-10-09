@@ -53,7 +53,7 @@ def test_nested_smoot_option(nd):
 
 def test_nested_smooth_behavior(nd):
     value = nd["b"]["b"]
-    assert isinstance(nd["b"]["b"], NestedDictionary)
+    assert isinstance(value, NestedDictionary)
 
 
 # Testing SmoothNestedDictionary where default_factory is always SmoothNestedDictionary
@@ -89,4 +89,4 @@ def test_smooth_nested_option(snd):
 
 def test_smooth_nested_behavior(snd):
     value = snd["b"]["b"]
-    assert isinstance(snd["b"]["b"], SmoothNestedDictionary)
+    assert isinstance(value, SmoothNestedDictionary)

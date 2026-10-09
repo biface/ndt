@@ -2,7 +2,7 @@ import re
 
 import pytest
 
-from ndict_tools import NestedDictionary, SmoothNestedDictionary
+from ndict_tools import SmoothNestedDictionary
 from ndict_tools.exception import StackedKeyError, StackedTypeError
 
 
@@ -91,7 +91,7 @@ class TestKeysSmoothNestedDictionary:
             (
                 [1, [1, 2]],
                 StackedTypeError,
-                "Nested lists are not allowed as keys in _StackedDict. (expected: str, got: list)",
+                "Nested lists are not allowed as keys in SmoothNestedDictionary. (expected: str, got: list)",
             ),
         ],
     )

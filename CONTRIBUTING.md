@@ -23,7 +23,7 @@ Maintainers will review your application and contact you to discuss next steps.
 
 ## Prerequisites
 
-- Python 3.10 (baseline version)
+- Python 3.11 (baseline version)
 - [uv](https://docs.astral.sh/uv/) installed system-wide
 - Git
 
@@ -41,24 +41,23 @@ cd ndt
 ### 2. Create the virtual environment
 
 ```bash
-uv venv --python 3.10
+uv venv --python 3.11
 source .venv/bin/activate       # Linux / macOS
 # .venv\Scripts\activate        # Windows
 ```
 
-### 3. Install development dependencies
+### 3. Install the package and tox
 
 ```bash
-uv sync --extra dev --extra docs
+uv pip install -e . tox tox-uv
 ```
 
-### 4. Install tox and tox-uv
+The development tools (pytest, basedpyright, black, Sphinx…) are not
+installed in `.venv/`: tox installs them in its own environments, from the
+files of `.tox-config/requirements/`. To use one of them in your IDE,
+install it in `.venv/` by hand.
 
-```bash
-uv pip install tox tox-uv
-```
-
-### 5. Verify the setup
+### 4. Verify the setup
 
 ```bash
 tox --version
@@ -102,6 +101,10 @@ feature/*  ──PR──▶  update/X.Y.Z  ──PR──▶  staging/X.Y.Z  �
 
 ## Tox environments
 
+The environments are defined in `pyproject.toml` (`[tool.tox]`), like the
+settings of the other tools. Their dependencies come from
+`.tox-config/requirements/<role>.txt`.
+
 ### Local development
 
 | Command | Purpose |
@@ -111,8 +114,9 @@ feature/*  ──PR──▶  update/X.Y.Z  ──PR──▶  staging/X.Y.Z  �
 | `tox -e basedpyright` | Type checking only |
 | `tox -e flake8` | Linting only |
 | `tox -e bandit` | Security analysis only |
-| `tox -e py310` | Run tests on Python 3.10 |
+| `tox -e py311` | Run tests on Python 3.11 |
 | `tox -e coverage` | Generate coverage report |
+| `tox -e docs` | Build the documentation (English, French) and run its doctests |
 | `tox -e pre-push` | Full workflow before push |
 | `tox -e local` | Alias for `pre-push` |
 
@@ -121,9 +125,11 @@ feature/*  ──PR──▶  update/X.Y.Z  ──PR──▶  staging/X.Y.Z  �
 | Environment | Purpose |
 |---|---|
 | `ci-quality` | Quality gate (format + lint + type + security) |
-| `ci-tests` | Test matrix runner (Python 3.10–3.14) |
 
-> **Important:** `ci-quality` and `ci-tests` are designed for GitHub Actions.
+The test workflow runs `py311` to `py314` (`py315` and `py314t` best
+effort), then `coverage`.
+
+> **Important:** `ci-quality` is designed for GitHub Actions.
 > Use `tox -e pre-push` or `tox -e check` for local verification.
 
 ---
@@ -133,7 +139,7 @@ feature/*  ──PR──▶  update/X.Y.Z  ──PR──▶  staging/X.Y.Z  �
 | Event | Workflow triggered | Outcome |
 |---|---|---|
 | Push to any branch | Python CI - Quality | Quality checks |
-| Quality succeeded | Python CI - Tests | Multi-version tests (3.10–3.14) |
+| Quality succeeded | Python CI - Tests | Multi-version tests (3.11–3.14; 3.15 and 3.14t best effort) |
 | Tests succeeded (staging/**, master) | Python CI - Coverage | Codecov upload |
 | Push tag `vX.Y.Zrc1` | Python CI - Build → Publish TestPyPI | RC on TestPyPI |
 | Push tag `vX.Y.Z` | Python CI - Build → Publish PyPI | Final release on PyPI |
@@ -159,6 +165,91 @@ This runs in sequence:
 4. Security analysis (bandit)
 5. Sequential multi-version tests (`.tox-config/scripts/test.sh`)
 6. Coverage report (`.tox-config/scripts/coverage.sh`)
+
+---
+
+## Documentation
+
+The documentation is built with Sphinx from `docs/source/`. Its dependencies
+are pinned in `docs/source/requirements.txt`, which Read the Docs reads, and
+installed by tox in the `docs` environment. The builds must pass without
+warnings, in English and in French, and the doctests must pass in both
+languages:
+
+```bash
+tox -e docs
+```
+
+The commands below run in that environment through `tox exec -e docs --`.
+
+### Translations
+
+The documentation is written in English. Translations use Sphinx gettext
+catalogs, one per source page, in `docs/source/locales/<lang>/LC_MESSAGES/`.
+Untranslated strings fall back to English.
+
+1. Extract the messages. The `.pot` files are build output and are not
+   committed:
+
+   ```bash
+   tox exec -e docs -- sphinx-build -b gettext docs/source docs/build/gettext
+   ```
+
+2. Create or update the catalogs of a language (here French):
+
+   ```bash
+   tox exec -e docs -- sphinx-intl update -p docs/build/gettext -l fr -d docs/source/locales
+   ```
+
+3. Fill in the `msgstr` entries of the `.po` files and commit them. The `.mo`
+   files are compiled by Sphinx at build time and are not committed.
+
+   Code and doctest blocks are extracted too. Translate only their comments
+   and the annotations of text diagrams; copy the code and its output
+   unchanged, since the translated build does not run the doctests.
+   `sphinx.po` holds the strings of the theme and of Sphinx itself: it has
+   no template and is kept by hand.
+
+4. Check what remains to translate. `-d` is required when the command runs
+   from the repository root: without it, sphinx-intl looks for `conf.py` in
+   the current directory and fails with a `TypeError`.
+
+   ```bash
+   tox exec -e docs -- sphinx-intl stat -d docs/source/locales -l fr
+   ```
+
+5. Build the translated documentation:
+
+   ```bash
+   tox exec -e docs -- sphinx-build -W -b html -D language=fr docs/source docs/build/html-fr
+   ```
+
+The full change log (`changelog/history.po`) stays in English: only the
+title and introduction of the page are translated, so `sphinx-intl stat`
+always reports untranslated strings for this catalog, and exits with status 1.
+
+A translation is published in the GitHub Pages archive, under
+`/<lang>/vX.Y.Z/`, once its language code is listed in
+`docs/source/locales/LANGUAGES`. Add the code when the catalog is translated,
+not before.
+
+### Translation glossary
+
+The documentation and the code follow English usage for tree shapes. The
+French terms do not map word for word: a French *arbre complet* is an English
+*perfect tree*. Translations use this table; the definitions are on the
+Concepts page "The Forest of Keys".
+
+| English | French | Meaning |
+|---|---|---|
+| complete tree | arbre quasi complet (*tassé à gauche*) | every level filled except possibly the last, filled left to right |
+| perfect tree | arbre complet | every level filled |
+| full tree | arbre localement complet (*strict*) | every internal node has exactly n children |
+
+In French, a class name that stands for an object is masculine (*un
+`PathsView`*). Exceptions take the gender of *une exception* (*lève une
+`KeyError`*) and warnings that of *un avertissement* (*émet un
+`UserWarning`*).
 
 ---
 

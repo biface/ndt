@@ -1,0 +1,5 @@
+# Documentation build (tox -e docs). The pinned list itself is
+# docs/source/requirements.txt, which Read the Docs and the GitHub Pages
+# archive read from each tag; this file only points to it, so that the
+# documentation tools stay out of the project environment.
+-r ../../docs/source/requirements.txt
