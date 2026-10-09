@@ -27,7 +27,7 @@ documentation of 0.9.0 is kept until October 2027.
      - Date
      - Summary
    * - `1.3.0 <https://biface.github.io/ndt/v1.3.0/>`__
-     - *(planned)*
+     - 2026-10-09
      - Python 3.11 minimum, typed package (``py.typed``), strict ``==``
        (breaking), Guide and Concepts rewritten, French translation, per-version
        documentation archive.

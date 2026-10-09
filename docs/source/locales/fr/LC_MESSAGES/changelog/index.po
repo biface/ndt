@@ -57,8 +57,8 @@ msgstr "Résumé"
 msgid "`1.3.0 <https://biface.github.io/ndt/v1.3.0/>`__"
 msgstr "`1.3.0 <https://biface.github.io/ndt/v1.3.0/>`__"
 
-msgid "*(planned)*"
-msgstr "*(prévue)*"
+msgid "2026-10-09"
+msgstr "2026-10-09"
 
 msgid ""
 "Python 3.11 minimum, typed package (``py.typed``), strict ``==`` "

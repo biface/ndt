@@ -50,7 +50,7 @@ msgstr ""
 "La numérotation des versions suit [Semantic "
 "Versioning](https://semver.org/lang/fr/)."
 
-msgid "[1.3.0] — Unreleased"
+msgid "[1.3.0] — 2026-10-09"
 msgstr ""
 
 msgid "Added"
